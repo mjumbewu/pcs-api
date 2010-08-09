@@ -1,0 +1,16 @@
+application: crowded-market
+version: 1
+runtime: python
+api_version: 1
+
+handlers:
+
+- url: /login
+  script: pcs/login.py
+
+- url: /newreservation
+  script: pcs/login.py
+
+- url: /cookies
+  script: pcs/login.py
+
