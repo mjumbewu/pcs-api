@@ -76,7 +76,7 @@ class MessagesHandler (webapp.RequestHandler):
 
 class NewReservationHandler (webapp.RequestHandler):
     def __init__(self, host="reservations.phillycarshare.org",
-                 path="/my_reservations.php?_r=1"):
+                 path="/my_reservations.php"):
         super(NewReservationHandler, self).__init__()
         self.__host = host
         self.__path = path
@@ -85,11 +85,41 @@ class NewReservationHandler (webapp.RequestHandler):
         session = Session.FromRequest(self.request)
         
         # fetch_new_reservation_page
-        conn = httplib.HTTPSConnection(self.__host)
-        conn.request('GET', self.__path, headers={'cookie':'sid='+session.id})
+        conn = httplib.HTTPConnection(self.__host)
+        conn.request('GET', self.__path, None, {'Cookie':'sid='+session.id})
         response = conn.getresponse()
         
+        forwards = 0
+        while response.status == 302 and forwards < 10:
+            location = response.getheader('location')
+
+            import urlparse
+            scheme, host, path, query, _ = urlparse.urlsplit(location)
+            if scheme == 'https':
+                conn = httplib.HTTPSConnection(host)
+            elif scheme == 'http':
+                conn = httplib.HTTPConnection(host)
+            else:
+                raise Exception()
+            conn.request('GET', '?'.join([path,query]), None, {'Cookie':'sid='+session.id})
+            
+            response = conn.getresponse()
+            forwards += 1
+        
+        self.response.out.write('<html><textarea>')
+        self.response.out.write('sid='+session.id)
+        self.response.out.write('\n')
+        self.response.out.write(self.request.headers)
+        self.response.out.write('\n')
+        self.response.out.write('\n')
+        self.response.out.write(forwards)
+        self.response.out.write('\n')
+        self.response.out.write(response.status)
+        self.response.out.write('\n')
+        self.response.out.write(response.getheaders())
+        self.response.out.write('\n')
         self.response.out.write(response.read())
+        self.response.out.write('</textarea></html>')
     
 
 application = webapp.WSGIApplication(
