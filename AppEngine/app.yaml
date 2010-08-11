@@ -1,4 +1,4 @@
-application: crowded-market
+application: phillycarshare-processor
 version: 1
 runtime: python
 api_version: 1
@@ -13,4 +13,8 @@ handlers:
 
 - url: /cookies
   script: pcs/login.py
+
+- url: /test.*
+  login: admin
+  script: gaeunit.py
 

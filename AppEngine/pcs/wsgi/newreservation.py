@@ -5,7 +5,7 @@ import Cookie as cookielib
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 
-from pcs.data.session import Session
+from pcs.session import Session
 from util.BeautifulSoup import BeautifulSoup
 
 class PcsTimeBlock (object):

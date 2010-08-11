@@ -6,7 +6,7 @@ import HTMLParser as htmlparserlib
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 
-from pcs.data.session import Session
+from pcs.session import Session
 
 class LoginHtmlView (object):
     @staticmethod
