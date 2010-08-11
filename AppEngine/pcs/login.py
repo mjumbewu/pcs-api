@@ -1,11 +1,64 @@
 import httplib
-import Cookie as cookie
+import urllib
+import Cookie as cookielib
+import HTMLParser as htmlparserlib
 
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 
 from pcs.session import Session
 
+class LoginHtmlView (object):
+    @staticmethod
+    def FailureResponse(username):
+        return """
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <title>Login Failed</title>
+  </head>
+  
+  <body>
+    <h1>Login Failed</h1>
+    <p>Check your username and password and try again</p>
+    <form action="/login" method="POST">
+      <label for="username">User ID:</label>
+      <input type="text" value="%s" name="username" />
+      <label for="password">Password:</label>
+      <input type="password" name="password" />
+      <input type="submit" />
+    </form>
+  </body>
+</html>
+        """ % (username)
+        
+    @staticmethod
+    def SuccessResponse(session):
+        return """
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <title>Logged In</title>
+  </head>
+  
+  <body>
+    <h1>Welcome, %s</h1>
+    <p><a href="%s">Make a New Reservation</a></p>
+    <p><a href="%s">Manage Existing Reservations</a></p>
+    <p><a href="%s">View Messages</a></p>
+    <p><a href="%s">Manage Account Info</a></p>
+    <p><a href="%s">Give Feedback</a></p>
+  </body>
+</html>
+          """ % (session.name,
+                 session.get_new_reservation_url(),
+                 session.get_existing_reservations_url(),
+                 session.get_messages_url(),
+                 session.get_account_info_url(),
+                 session.get_feedback_url())
+    
 class LoginHandler (webapp.RequestHandler):
     """
     Handles requests sent to the list of products
@@ -22,110 +75,105 @@ class LoginHandler (webapp.RequestHandler):
         
         return username, password
     
-    def login(self, username, password):
-        loginConn = httplib.HTTPSConnection(self.__host)
-        loginCookie = cookie.SimpleCookie()
+    def login_to_pcs(self, username, password):
+        """
+        Attempts to login with the given username and password.
+        @return: The server response
+        @raise: DownloadError if getting response from the server fails.
+        """
+        conn = httplib.HTTPSConnection(self.__host)
         
-        loginParameters = '&'.join([
-            'login[name]=%s',
-            'login[password]=%s',
-            'login[tid]=2']) % (username, password)
-        loginConn.request("POST", self.__path,
-            loginParameters)
-        loginResponse = loginConn.getresponse()
+        parameters = urllib.urlencode({
+            'login[name]': username,
+            'login[password]': password})
+        conn.request("POST", self.__path,
+            parameters)
+        conn._follow_redirects = True
         
-        loginCookie.load(loginResponse.getheader('set-cookie'))
-        loginSession = Session(loginCookie['sid'].value)
+        try:
+            response = conn.getresponse()
+        except:
+            return "<html><head><title>Please Login</title></head><body></body></html>", []
         
-        for header, value in loginResponse.getheaders():
-            self.response.headers.add_header(header, value)
+        return response.read(), response.getheaders()
+    
+    def login_was_successful(self, response_body):
+        """
+        Check the server response to see whether the login was sucessful.
+        @return: Whether the login was successful or not
+        @raises: Exception if success of login cannot be discerned
+        """
+        class LoginParser (htmlparserlib.HTMLParser):
+
+            def __init__(self):
+                htmlparserlib.HTMLParser.__init__(self)
+                self.in_title = False
+                self.title = ''
+            
+            def handle_starttag(self, tag, attrs):
+                if tag.lower() == 'title':
+                    self.in_title = True
+            
+            def handle_data(self, data):
+                TRIGGER_TEXT = 'Please Login'
+                if self.in_title:
+                    self.title += data
+            
+            def handle_endtag(self, tag):
+                if tag.lower() == 'title':
+                    self.in_title = False
         
-        return loginSession
+        parser = LoginParser()
+        parser.feed(response_body)
+        parser.close()
+        
+        if parser.title == 'Please Login':
+            return False
+        elif parser.title == 'My Message Manager':
+            return True
+        else:
+            raise Exception('Unknown Login Title: %r' % parser.title)
+    
+    def save_session(self, session):
+        """
+        Attempt to save the given login session to a cookie on the user's 
+        machine.
+        """
+        self.response.headers.add_header('Set-Cookie',str('sid='+session.id+'; path=/'))
+        self.response.headers.add_header('Set-Cookie',str('suser='+session.user+'; path=/'))
+        self.response.headers.add_header('Set-Cookie',str('sname='+session.name+'; path=/'))
         
     def get(self):
         username, password = self.get_credentials()
-        session = self.login(username, password)
+        pcs_login_body, pcs_login_headers = self.login_to_pcs(username, password)
         
-        response_body = """
-<!DOCTYPE html>
-
-<html>
-  <head>
-    <title>Logged In</title>
-  </head>
-  
-  <body>
-    <p><a href="%s">Make a New Reservation</a></p>
-    <p><a href="%s">Manage Existing Reservations</a></p>
-    <p><a href="%s">View Messages</a></p>
-    <p><a href="%s">Manage Account Info</a></p>
-    <p><a href="%s">Give Feedback</a></p>
-  </body>
-</html>
-          """ % (session.get_new_reservation_url(),
-                 session.get_existing_reservations_url(),
-                 session.get_messages_url(),
-                 session.get_account_info_url(),
-                 session.get_feedback_url())
+        if self.login_was_successful(pcs_login_body):
+            session = Session.FromLoginResponse(username, pcs_login_body, pcs_login_headers)
+            response_body = LoginHtmlView.SuccessResponse(session)
+            self.save_session(session)
+        else:
+            response_body = LoginHtmlView.FailureResponse(username)
         
         self.response.out.write(response_body);
+        pcs_login_body.replace('-->', 'end_comment')
+        self.response.out.write('<!-- %s -->' % pcs_login_body)
         self.response.set_status(200);
-
-class MessagesHandler (webapp.RequestHandler):
-    pass
-
-class NewReservationHandler (webapp.RequestHandler):
-    def __init__(self, host="reservations.phillycarshare.org",
-                 path="/my_reservations.php"):
-        super(NewReservationHandler, self).__init__()
-        self.__host = host
-        self.__path = path
     
+    def post(self):
+        self.get()
+
+class CookiesHandler (webapp.RequestHandler):
     def get(self):
         session = Session.FromRequest(self.request)
         
-        # fetch_new_reservation_page
-        conn = httplib.HTTPConnection(self.__host)
-        conn.request('GET', self.__path, None, {'Cookie':'sid='+session.id})
-        response = conn.getresponse()
-        
-        forwards = 0
-        while response.status == 302 and forwards < 10:
-            location = response.getheader('location')
-
-            import urlparse
-            scheme, host, path, query, _ = urlparse.urlsplit(location)
-            if scheme == 'https':
-                conn = httplib.HTTPSConnection(host)
-            elif scheme == 'http':
-                conn = httplib.HTTPConnection(host)
-            else:
-                raise Exception()
-            conn.request('GET', '?'.join([path,query]), None, {'Cookie':'sid='+session.id})
-            
-            response = conn.getresponse()
-            forwards += 1
-        
         self.response.out.write('<html><textarea>')
         self.response.out.write('sid='+session.id)
-        self.response.out.write('\n')
-        self.response.out.write(self.request.headers)
-        self.response.out.write('\n')
-        self.response.out.write('\n')
-        self.response.out.write(forwards)
-        self.response.out.write('\n')
-        self.response.out.write(response.status)
-        self.response.out.write('\n')
-        self.response.out.write(response.getheaders())
-        self.response.out.write('\n')
-        self.response.out.write(response.read())
         self.response.out.write('</textarea></html>')
-    
+
 
 application = webapp.WSGIApplication(
         [('/login', LoginHandler),
-         ('/messages', MessagesHandler),
-         ('/newreservation', NewReservationHandler)],
+         ('/cookies', CookiesHandler)],
         debug=True)
 
 def main():

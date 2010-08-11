@@ -9,7 +9,7 @@ handlers:
   script: pcs/login.py
 
 - url: /newreservation
-  script: pcs/login.py
+  script: pcs/newreservation.py
 
 - url: /cookies
   script: pcs/login.py
