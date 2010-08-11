@@ -78,7 +78,12 @@ class LoginScreenscrapeSource (object):
             raise Exception('Unknown Login Title: %r' % parser.title)
     
     def get_new_session(self, username, password):
-        
+        """
+        @todo: Creating the connection here introduces a dependency for testing.
+               It should be passed in as a parameter.  However, in practice, 
+               creating it here has no effect on the tests.  It should be moved,
+               but it is not a high priority.
+        """
         conn = httplib.HTTPSConnection(self.__host)
         
         pcs_login_body, pcs_login_headers = self.login_to_pcs(conn, username, password)
