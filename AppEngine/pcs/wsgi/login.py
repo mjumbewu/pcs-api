@@ -8,6 +8,7 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 
 from pcs.data.session import Session
 from pcs.view.login import LoginHtmlView
+from pcs.screenscrape.login import LoginScreenscrapeSource
 
 class LoginHandler (webapp.RequestHandler):
     """
@@ -25,65 +26,6 @@ class LoginHandler (webapp.RequestHandler):
         
         return username, password
     
-    def login_to_pcs(self, username, password):
-        """
-        Attempts to login with the given username and password.
-        @return: The server response
-        @raise: DownloadError if getting response from the server fails.
-        """
-        conn = httplib.HTTPSConnection(self.__host)
-        
-        parameters = urllib.urlencode({
-            'login[name]': username,
-            'login[password]': password})
-        conn.request("POST", self.__path,
-            parameters)
-        conn._follow_redirects = True
-        
-        try:
-            response = conn.getresponse()
-        except:
-            return "<html><head><title>Please Login</title></head><body></body></html>", []
-        
-        return response.read(), response.getheaders()
-    
-    def login_was_successful(self, response_body):
-        """
-        Check the server response to see whether the login was sucessful.
-        @return: Whether the login was successful or not
-        @raises: Exception if success of login cannot be discerned
-        """
-        class LoginParser (htmlparserlib.HTMLParser):
-
-            def __init__(self):
-                htmlparserlib.HTMLParser.__init__(self)
-                self.in_title = False
-                self.title = ''
-            
-            def handle_starttag(self, tag, attrs):
-                if tag.lower() == 'title':
-                    self.in_title = True
-            
-            def handle_data(self, data):
-                TRIGGER_TEXT = 'Please Login'
-                if self.in_title:
-                    self.title += data
-            
-            def handle_endtag(self, tag):
-                if tag.lower() == 'title':
-                    self.in_title = False
-        
-        parser = LoginParser()
-        parser.feed(response_body)
-        parser.close()
-        
-        if parser.title == 'Please Login':
-            return False
-        elif parser.title == 'My Message Manager':
-            return True
-        else:
-            raise Exception('Unknown Login Title: %r' % parser.title)
-    
     def save_session(self, session):
         """
         Attempt to save the given login session to a cookie on the user's 
@@ -95,19 +37,24 @@ class LoginHandler (webapp.RequestHandler):
         
     def get(self):
         username, password = self.get_credentials()
-        pcs_login_body, pcs_login_headers = self.login_to_pcs(username, password)
         
-        if self.login_was_successful(pcs_login_body):
-            session = Session.FromLoginResponse(username, pcs_login_body, pcs_login_headers)
-            response_body = LoginHtmlView.SuccessResponse(session)
+        source = LoginScreenscrapeSource()
+        view = LoginHtmlView()
+        
+        session = source.get_new_session(username, password)
+        if session:
+            response_body = view.SuccessResponse(session)
             self.save_session(session)
         else:
-            response_body = LoginHtmlView.FailureResponse(username)
+            response_body = view.FailureResponse(username)
         
         self.response.out.write(response_body);
+        self.response.set_status(200);
+        
+        # Put the original body in a comment.
+        pcs_login_body = source._body
         pcs_login_body.replace('-->', 'end_comment')
         self.response.out.write('<!-- %s -->' % pcs_login_body)
-        self.response.set_status(200);
     
     def post(self):
         self.get()
