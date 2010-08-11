@@ -5,16 +5,16 @@ api_version: 1
 
 handlers:
 
-- url: /login
-  script: pcs/login.py
-
-- url: /newreservation
-  script: pcs/newreservation.py
-
-- url: /cookies
-  script: pcs/login.py
-
 - url: /test.*
   login: admin
   script: gaeunit.py
+
+- url: /login
+  script: pcs/wsgi/login.py
+
+- url: /newreservation
+  script: pcs/wsgi/newreservation.py
+
+- url: /cookies
+  script: pcs/wsgi/login.py
 
