@@ -4,7 +4,6 @@ import Cookie as cookielib
 import HTMLParser as htmlparserlib
 
 from pcs.data.session import Session
-from pcs.view.login import LoginHtmlView
 
 class LoginScreenscrapeSource (object):
     """
