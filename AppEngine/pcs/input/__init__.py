@@ -1,0 +1,1 @@
+"""This package is for objects that handle receiving input from a user or from any other system.  For now, this is limited to wsgi handlers, but it could be extended to GUI event handlers as well.  Though it's not likely that that will ever happen, I still prefer this tree."""

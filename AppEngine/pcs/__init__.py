@@ -1,0 +1,1 @@
+"""This is the root package for the project.  The packages are arranged as they are according to the idea that a request comes from some INPUT, the information to satisfy the request is retrieved from some SOURCE and stored in the project's DATA format, and then that data is returned to the requester by some VIEW."""

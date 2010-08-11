@@ -10,11 +10,11 @@ handlers:
   script: gaeunit.py
 
 - url: /login
-  script: pcs/wsgi/login.py
+  script: pcs/input/wsgi/login.py
 
 - url: /newreservation
-  script: pcs/wsgi/newreservation.py
+  script: pcs/input/wsgi/newreservation.py
 
 - url: /cookies
-  script: pcs/wsgi/login.py
+  script: pcs/input/wsgi/login.py
 

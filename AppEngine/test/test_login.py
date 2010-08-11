@@ -1,6 +1,6 @@
 import unittest
 
-from pcs.screenscrape.login import LoginScreenscrapeSource
+from pcs.source.screenscrape.login import LoginScreenscrapeSource
 class login_screenscrape_TestCase (unittest.TestCase):
     def test1(self):
         """Login is successful if the response document has the correct title."""

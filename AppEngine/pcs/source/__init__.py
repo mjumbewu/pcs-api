@@ -1,0 +1,1 @@
+"""This package is for objects that handle retrieving information from PhillyCarShare and storing that information in this project's data model.  For now the primary source package uses screenscraping, but who knows, PhillyCarShare may employ a public-facing API at some point."""
