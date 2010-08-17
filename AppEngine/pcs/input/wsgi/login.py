@@ -7,53 +7,28 @@ from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 
 from pcs.view.html.login import LoginHtmlView
+from pcs.view.html.session import SessionHtmlView
 from pcs.source.screenscrape.login import LoginScreenscrapeSource
 
 class LoginHandler (webapp.RequestHandler):
     """
     Handles requests sent to the list of products
     """
-    def __init__(self, host="reservations.phillycarshare.org",
-                 path="/my_reservations.php"):
+    def __init__(self):
         super(LoginHandler, self).__init__()
-        self.__host = host
-        self.__path = path
     
-    def get_credentials(self):
+    def get_user(self):
         username = self.request.get('username')
-        password = self.request.get('password')
-        
-        return username, password
+        return username
     
-    def save_session(self, session):
-        """
-        Attempt to save the given login session to a cookie on the user's 
-        machine.
-        """
-        self.response.headers.add_header('Set-Cookie',str('sid='+session.id+'; path=/'))
-        self.response.headers.add_header('Set-Cookie',str('suser='+session.user+'; path=/'))
-        self.response.headers.add_header('Set-Cookie',str('sname='+session.name+'; path=/'))
-        
     def get(self):
-        username, password = self.get_credentials()
+        username = self.get_user()
         
-        source = LoginScreenscrapeSource()
         view = LoginHtmlView()
-        
-        session = source.get_new_session(username, password)
-        if session:
-            response_body = view.SuccessResponse(session)
-            self.save_session(session)
-        else:
-            response_body = view.FailureResponse(username)
+        response_body = view.show_login_form(username)
         
         self.response.out.write(response_body);
         self.response.set_status(200);
-        
-        # Put the original body in a comment.
-        pcs_login_body = source._body
-        pcs_login_body.replace('-->', 'end_comment')
-        self.response.out.write('<!-- %s -->' % pcs_login_body)
     
     def post(self):
         self.get()

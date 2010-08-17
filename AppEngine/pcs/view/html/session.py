@@ -1,14 +1,14 @@
 import os
 from google.appengine.ext.webapp import template
 
-class LoginHtmlView (object):
+class SessionHtmlView (object):
     @staticmethod
-    def get_login_form(username=''):
+    def get_session_overview(session):
         values = {
-            'username': username
+            'session': session
         }
         
-        path = os.path.join(os.path.dirname(__file__), 'login.html')
+        path = os.path.join(os.path.dirname(__file__), 'session_home.html')
         response = template.render(path, values)
         return response
     

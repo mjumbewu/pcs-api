@@ -6,13 +6,13 @@ class login_screenscrape_TestCase (unittest.TestCase):
         """Login is successful if the response document has the correct title."""
         source = LoginScreenscrapeSource()
         document = "<html><head><title>My Message Manager</title></head><body></body></html>"
-        self.assertEqual(source.login_was_successful(document), True)
+        self.assertEqual(source.body_is_valid_session(document), True)
     
     def test2(self):
         """Login is failure if the response document has the correct title."""
         source = LoginScreenscrapeSource()
         document = "<html><head><title>Please Login</title></head><body></body></html>"
-        self.assertEqual(source.login_was_successful(document), False)
+        self.assertEqual(source.body_is_valid_session(document), False)
     
     def test3(self):
         """Expected session is returned from a failed login (expected session is None)."""
@@ -45,10 +45,10 @@ class login_screenscrape_TestCase (unittest.TestCase):
         """Screenscrape source should have a simple document that triggers login failure"""
         source = LoginScreenscrapeSource()
         document = LoginScreenscrapeSource.SIMPLE_FAILURE_DOCUMENT
-        self.assert_(not source.login_was_successful(document))
+        self.assert_(not source.body_is_valid_session(document))
     
     def test6(self):
-        """Logging in will get response from connection"""
+        """Logging in will get the expected response from the connection"""
         source = LoginScreenscrapeSource()
         
         class StubConnection (object):
@@ -65,3 +65,21 @@ class login_screenscrape_TestCase (unittest.TestCase):
         self.assertEqual(body, 'Body Text')
         self.assertEqual(headers, {'h1':1,'h2':2})
     
+    def test7(self):
+        """Resuming session will get expected response from connection"""
+        source = LoginScreenscrapeSource()
+        
+        class StubConnection (object):
+            def request(self, method, path, data='', headers={}):
+                self.requestheaders = headers
+            def getresponse(self):
+                from StringIO import StringIO
+                response = StringIO('Body Text')
+                response.getheaders = lambda: {'h1':1,'h2':2}
+                return response
+        
+        conn = StubConnection()
+        body, headers = source.reconnect_to_pcs(conn, '1234567')
+        self.assertEqual(conn.requestheaders, {'Cookie':'sid=1234567'})
+        self.assertEqual(body, 'Body Text')
+        self.assertEqual(headers, {'h1':1,'h2':2})

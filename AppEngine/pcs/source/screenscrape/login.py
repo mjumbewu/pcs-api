@@ -13,7 +13,7 @@ class LoginScreenscrapeSource (object):
     SIMPLE_FAILURE_DOCUMENT = "<html><head><title>Please Login</title></head><body></body></html>"
     
     def __init__(self, host="reservations.phillycarshare.org",
-                 path="/my_reservations.php"):
+                 path="/index.php"):
         super(LoginScreenscrapeSource, self).__init__()
         self.__host = host
         self.__path = path
@@ -23,8 +23,8 @@ class LoginScreenscrapeSource (object):
         Attempts to login to the given connection with the given username and 
         password.
         
-        @return: The server response
-        @raise: DownloadError if getting response from the server fails.
+        @return: The server response  If login failed, the response
+          body should be identifiable as an invalid session.
         """
         parameters = urllib.urlencode({
             'login[name]': username,
@@ -40,11 +40,32 @@ class LoginScreenscrapeSource (object):
         
         return (response.read(), response.getheaders())
     
-    def login_was_successful(self, response_body):
+    def reconnect_to_pcs(self, conn, session_id):
+        """
+        Attempts to load a session from the connection with the given session
+        id.
+        
+        @return: The server response.  If reconnection failed, the response
+          body should be identifiable as an invalid session.
+        """
+        headers = {
+            'Cookie': 'sid=%s' % session_id}
+        conn.request("POST", self.__path,
+            {}, headers)
+        conn._follow_redirects = True
+        
+        try:
+            response = conn.getresponse()
+        except:
+            return (self.SIMPLE_FAILURE_DOCUMENT, [])
+        
+        return (response.read(), response.getheaders())
+    
+    def body_is_valid_session(self, response_body):
         """
         Check the server response to see whether the login was sucessful.
-        @return: Whether the login was successful or not
-        @raises: Exception if success of login cannot be discerned
+        @return: Whether the connection was successful or not
+        @raises: Exception if success of connection cannot be discerned
         """
         class LoginParser (htmlparserlib.HTMLParser):
 
@@ -72,7 +93,9 @@ class LoginScreenscrapeSource (object):
         
         if parser.title == 'Please Login':
             return False
-        elif parser.title == 'My Message Manager':
+        elif parser.title == 'My Message Manager': # First access after login
+            return True
+        elif parser.title == 'Reservation Manager': # Subsequent accesss
             return True
         else:
             raise Exception('Unknown Login Title: %r' % parser.title)
@@ -86,12 +109,29 @@ class LoginScreenscrapeSource (object):
         """
         conn = httplib.HTTPSConnection(self.__host)
         
-        pcs_login_body, pcs_login_headers = self.login_to_pcs(conn, username, password)
+        pcs_login_body, pcs_login_headers = \
+            self.login_to_pcs(conn, username, password)
         self._body = pcs_login_body
         self._headers = pcs_login_headers
         
-        if self.login_was_successful(pcs_login_body):
-            return Session.FromLoginResponse(username, pcs_login_body, pcs_login_headers)
+        if self.body_is_valid_session(pcs_login_body):
+            return Session.FromLoginResponse(username, pcs_login_body, 
+                                             pcs_login_headers)
+        else:
+            return None
+    
+    def get_existing_session(self, username, session_id):
+        conn = httplib.HTTPSConnection(self.__host)
+        
+        pcs_reconnect_body, pcs_reconnect_headers = \
+            self.reconnect_to_pcs(conn, session_id)
+        self._body = pcs_reconnect_body
+        self._headers = pcs_reconnect_headers
+        
+        if self.body_is_valid_session(pcs_reconnect_body):
+            return Session.FromReconnectResponse(username, session_id,
+                                                 pcs_reconnect_body, 
+                                                 pcs_reconnect_headers)
         else:
             return None
 

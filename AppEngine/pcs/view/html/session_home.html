@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <title>Welcome to Philly Car Share</title>
+  </head>
+  
+  <body>
+    {% if session %}
+      
+      <h1>Welcome, {{ session.name }}</h1>
+      
+      {% if session.current_res %}
+        <div id="current-reservation">
+          <h2>Current Reservation</h2>
+          <div class="reservation-info">
+            <p class="reservation-overview">
+              {{ session.current_res.car.make_and_model }} at 
+              {{ session.current_res.pod.address }} until
+              {{ session.current_res.end_time|date:"D d M Y" }}</p>
+            <p class="reservation-note">
+              {{ session.current_res.note }}</p>
+            <a href="">Change end time</a>
+          </div>
+        </div>
+      {% endif %}
+      
+      {% if session.upcoming_ress %}
+        <div id="upcoming-reservations">
+          <h2>Upcoming Reservations</h2>
+          {% for upcoming_res in session.upcoming_ress %}
+            <div class="reservation-info">
+              <p class="reservation-overview">
+                {{ session.upcoming_res.car.make_and_model }} at 
+                {{ session.upcoming_res.pod.address }} until
+                {{ session.upcoming_res.end_time|date:"D d M Y" }}</p>
+              <p class="reservation-note">
+                {{ session.upcoming_res.note }}</p>
+              <a href="">Change start/end time</a>
+              <a href="">Cancel reservation</a>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+      
+      <p><a href="">Make a New Reservation</a></p>
+      <p><a href="">View Messages</a></p>
+      <p><a href="">Manage Account Info</a></p>
+      <p><a href="">Give Feedback</a></p>
+      
+    {% else %}
+      
+      <h1>Please Login</h1>
+      <p>Check your username and password and 
+        <a href="/login">try again</a>.</p>
+      
+    {% endif %}
+  </body>
+</html>
+

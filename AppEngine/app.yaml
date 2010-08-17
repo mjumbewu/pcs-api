@@ -12,6 +12,9 @@ handlers:
 - url: /login
   script: pcs/input/wsgi/login.py
 
+- url: /session
+  script: pcs/input/wsgi/session.py
+
 - url: /newreservation
   script: pcs/input/wsgi/newreservation.py
 

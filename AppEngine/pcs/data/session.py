@@ -41,6 +41,13 @@ class Session (object):
         parser.feed(response_body)
         parser.close()
         return Session(cookie['sid'].value, suser, parser.fullname)
+    
+    @staticmethod
+    def FromReconnectResponse(suser, sid, response_body, response_headers):
+        parser = SessionParser()
+        parser.feed(response_body)
+        parser.close()
+        return Session(sid, suser, parser.fullname)
 
 class SessionParser (htmlparserlib.HTMLParser):
 
