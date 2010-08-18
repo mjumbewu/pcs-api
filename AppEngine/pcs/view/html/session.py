@@ -4,6 +4,9 @@ from google.appengine.ext.webapp import template
 class SessionHtmlView (object):
     @staticmethod
     def get_session_overview(session):
+        """
+        Return a response with overview information about the given session.
+        """
         values = {
             'session': session
         }
