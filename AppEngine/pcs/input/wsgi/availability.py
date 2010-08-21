@@ -6,7 +6,7 @@ import HTMLParser as htmlparserlib
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 
-from pcs.source.screenscrape.login import LoginScreenscrapeSource
+from pcs.source.screenscrape.session import SessionScreenscrapeSource
 from pcs.view.html.availability import AvailabilityHtmlView
 
 class AvailabilityHandler (webapp.RequestHandler):
@@ -24,7 +24,7 @@ class AvailabilityHandler (webapp.RequestHandler):
         if login_source is not None:
             self.login_source = login_source
         else:
-            self.login_source = LoginScreenscrapeSource()
+            self.login_source = SessionScreenscrapeSource()
         
         if availability_view is not None:
             self.availability_view = availability_view

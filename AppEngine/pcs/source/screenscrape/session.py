@@ -5,7 +5,7 @@ import HTMLParser as htmlparserlib
 
 from pcs.data.session import Session
 
-class LoginScreenscrapeSource (object):
+class SessionScreenscrapeSource (object):
     """
     Responsible for logging in and constructing a session from a screenscrape
     of a PhillyCarShare response.
@@ -14,7 +14,7 @@ class LoginScreenscrapeSource (object):
     
     def __init__(self, host="reservations.phillycarshare.org",
                  path="/index.php"):
-        super(LoginScreenscrapeSource, self).__init__()
+        super(SessionScreenscrapeSource, self).__init__()
         self.__host = host
         self.__path = path
     

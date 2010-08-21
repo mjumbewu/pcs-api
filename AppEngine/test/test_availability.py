@@ -1,5 +1,6 @@
 import unittest
 import datetime
+import new
 
 from pcs.input.wsgi.availability import AvailabilityHandler
 class AvailabilityHandlerTest (unittest.TestCase):
