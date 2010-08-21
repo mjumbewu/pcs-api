@@ -65,6 +65,7 @@ import time
 import logging
 import cgi
 import django.utils.simplejson
+import traceback
 
 from google.appengine.ext import webapp
 from google.appengine.api import apiproxy_stub_map  
@@ -113,6 +114,7 @@ class MainTestPageHandler(webapp.RequestHandler):
         if not error:
             self.response.out.write(_MAIN_PAGE_CONTENT % (_test_suite_to_json(suite), _WEB_TEST_DIR, __version__))
         else:
+            self.response.headers["Content-Type"] = "text/plain"
             self.error(404)
             self.response.out.write(error)
         
@@ -227,7 +229,8 @@ def _create_suite(request):
             raise Exception("'%s' is not found or does not contain any tests." %  \
                             (test_name or package_name or 'local directory: \"%s\"' % _LOCAL_TEST_DIR))
     except Exception, e:
-        error = e.__class__.__name__ + ":" + str(e)
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        error = ''.join(traceback.format_tb(exc_traceback))
         _log_error(error)
 
     return (suite, error)
