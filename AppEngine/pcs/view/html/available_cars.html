@@ -1,0 +1,55 @@
+{% extends "session_base.html" %}
+
+{% block title %} Available Cars {% endblock %}
+
+{% block content %}
+  
+  <style>
+    .available-vehicle {
+      border: 1px solid green;
+    }
+    .unavailable-vehicle {
+      border: 1px solid red;
+    }
+    .partially-available-vehicle {
+      border: 1px solid yellow;
+    }
+  </style>
+  
+  <h1>Available Cars</h1>
+  
+  <div class="availability-options">
+    <span>Showing cars near {{ location }}</span>
+    <span>from {{ start_time|time }} {{ start_time|date:"D M d Y" }}</span>
+    <span>until {{ end_time|time }} {{ end_time|date:"D M d Y" }}</span>
+  </div>
+  
+  {% regroup vehicles by pod as pods %}
+  {% for pod in pods %}
+    <div class="available-pod">
+      <div class="pod-name">{{ pod.grouper.name }}</div>
+      {% for vehicle in pod.list %}
+        {% ifequal vehicle.availability 0 %}
+          <div class="unavailabe-vehicle">
+        {% else %}{% ifequal vehicle.availability 1 %}
+          <div class="available-vehicle">
+        {% else %}
+          <div class="partially-available-vehicle">
+        {% endifequal %}{% endifequal %}
+          
+          <span>{{ vehicle.make }} {{ vehicle.model }}</span>
+          <div class="vehicle-stipulations">
+            {% if vehicle.available_at %}
+              <span>Available at {{ vehicle.available_at|time }}</span>
+            {% endif %}
+            {% if vehicle.available_until %}
+              <span>Available until {{ vehicle.available_until|time }}</span>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+  
+{% endblock content %}
+

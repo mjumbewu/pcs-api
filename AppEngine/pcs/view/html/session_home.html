@@ -1,12 +1,8 @@
-<!DOCTYPE html>
+{% extend session_base.html %}
 
-<html>
-  <head>
-    <title>Welcome to Philly Car Share</title>
-  </head>
-  
-  <body>
-    {% if session %}
+{% block title %} Welcome to PhillyCarShare {% endblock %}
+
+{% block content %}
       
       <h1>Welcome, {{ session.name }}</h1>
       
@@ -48,13 +44,5 @@
       <p><a href="">Manage Account Info</a></p>
       <p><a href="">Give Feedback</a></p>
       
-    {% else %}
-      
-      <h1>Please Login</h1>
-      <p>Check your username and password and 
-        <a href="/login">try again</a>.</p>
-      
-    {% endif %}
-  </body>
-</html>
+{% endblock content %}
 
