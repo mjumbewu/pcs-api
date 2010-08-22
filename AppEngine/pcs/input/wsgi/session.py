@@ -8,17 +8,18 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 
 from pcs.view.html.login import LoginHtmlView
 from pcs.view.html.session import SessionHtmlView
-from pcs.source.screenscrape.login import LoginScreenscrapeSource
+from pcs.source.screenscrape.session import SessionScreenscrapeSource
 
-class LoginHandler (webapp.RequestHandler):
+class SessionHandler (webapp.RequestHandler):
     """
     Handles requests sent to the list of products
     """
-    def __init__(self, host="reservations.phillycarshare.org",
-                 path="/my_reservations.php"):
-        super(LoginHandler, self).__init__()
-        self.__host = host
-        self.__path = path
+    def __init__(self,
+                 session_source,
+                 session_view):
+        super(SessionHandler, self).__init__()
+        self.session_source = session_source
+        self.session_view = session_view
     
     def get_credentials(self):
         username = self.request.get('username')
@@ -41,12 +42,10 @@ class LoginHandler (webapp.RequestHandler):
         username, password = self.get_credentials()
         
         if username and password:
-            source = LoginScreenscrapeSource()
-            session = source.get_new_session(username, password)
+            session = self.session_source.get_new_session(username, password)
         else:
             username, session_id = self.get_session_id()
-            source = LoginScreenscrapeSource()
-            session = source.get_existing_session(username, session_id)
+            session = self.session_source.get_existing_session(username, session_id)
         
         return session
     
@@ -60,40 +59,30 @@ class LoginHandler (webapp.RequestHandler):
         self.response.headers.add_header('Set-Cookie',str('sname='+session.name+'; path=/'))
         
     def get(self):
-#        session = self.get_session()
-        username, password = self.get_credentials()
+        session = self.get_session()
         
-        if username and password:
-            source = LoginScreenscrapeSource()
-            session = source.get_new_session(username, password)
-        else:
-            username, session_id = self.get_session_id()
-            source = LoginScreenscrapeSource()
-            session = source.get_existing_session(username, session_id)
-        
-        if session:
-            view = SessionHtmlView()
-            response_body = view.get_session_overview(session)
-            self.save_session(session)
-        else:
-            view = LoginHtmlView()
-            response_body = view.get_login_form()
+        response_body = self.session_view.get_session_overview(session)
+        if session: self.save_session(session)
         
         self.response.out.write(response_body);
         self.response.set_status(200);
         
         # Put the original body in a comment.
-        pcs_login_body = source._body
-        pcs_login_body.replace('-->', 'end_comment')
-        self.response.out.write('<!-- %s -->' % pcs_login_body)
+#        pcs_login_body = self.session_source._body
+#        pcs_login_body.replace('-->', 'end_comment')
+#        self.response.out.write('<!-- %s -->' % pcs_login_body)
     
     def post(self):
         self.get()
 
+class SessionHtmlHandler (SessionHandler):
+    def __init__(self):
+        super(SessionHtmlHandler, self).__init__(SessionScreenscrapeSource(), SessionHtmlView())
+
 
 
 application = webapp.WSGIApplication(
-        [('/session', LoginHandler)],
+        [('/session.html', SessionHtmlHandler)],
         debug=True)
 
 def main():

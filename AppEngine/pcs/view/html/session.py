@@ -1,9 +1,12 @@
 import os
 from google.appengine.ext.webapp import template
 
-class SessionHtmlView (object):
-    @staticmethod
-    def get_session_overview(session):
+from pcs.view import _SessionViewInterface
+from util.abstract import override
+
+class SessionHtmlView (_SessionViewInterface):
+    @override
+    def get_session_overview(self, session):
         """
         Return a response with overview information about the given session.
         """

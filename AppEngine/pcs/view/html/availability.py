@@ -3,9 +3,12 @@ import os
 
 from google.appengine.ext.webapp import template
 
-class AvailabilityHtmlView (object):
-    @staticmethod
-    def get_vehicle_availability(session, start_time, end_time, vehicles, location):
+from pcs.view import _AvailabilityViewInterface
+from util.abstract import override
+
+class AvailabilityHtmlView (_AvailabilityViewInterface):
+    @override
+    def get_vehicle_availability(self, session, start_time, end_time, vehicles, location):
         """
         Return a response with overview information about the given session.
         """

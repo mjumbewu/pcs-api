@@ -9,14 +9,17 @@ handlers:
   login: admin
   script: gaeunit.py
 
-- url: /login
+- url: /login.*
   script: pcs/input/wsgi/login.py
 
-- url: /session
+- url: /session.*
   script: pcs/input/wsgi/session.py
 
-- url: /newreservation
+- url: /newreservation.*
   script: pcs/input/wsgi/newreservation.py
+
+- url: /availability.*
+  script: pcs/input/wsgi/availability.py
 
 - url: /cookies
   script: pcs/input/wsgi/login.py

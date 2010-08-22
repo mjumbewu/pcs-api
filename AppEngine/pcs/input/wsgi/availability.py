@@ -13,23 +13,13 @@ class AvailabilityHandler (webapp.RequestHandler):
     """
     Handles requests availability information
     """
-    def __init__(self, host="reservations.phillycarshare.org",
-                 path="/my_reservations.php",
-                 login_source=None,
-                 availability_view=None):
+    def __init__(self,
+                 session_source,
+                 availability_view):
         super(AvailabilityHandler, self).__init__()
-        self.__host = host
-        self.__path = path
         
-        if login_source is not None:
-            self.login_source = login_source
-        else:
-            self.login_source = SessionScreenscrapeSource()
-        
-        if availability_view is not None:
-            self.availability_view = availability_view
-        else:
-            self.availability_view = AvailabilityHtmlView()
+        self.session_source = session_source
+        self.availability_view = availability_view
     
     def get_session_id(self):
         username = self.request.cookies.get('suser', None)
@@ -44,27 +34,45 @@ class AvailabilityHandler (webapp.RequestHandler):
         @return: A valid session or None
         """
         username, session_id = self.get_session_id()
-        session = self.login_source.get_existing_session(username, session_id)
+        session = self.session_source.get_existing_session(username, session_id)
         
         return session
     
     def get_available_vehicles(self, start_time, end_time):
+        # This is a stub
         return []
-        
-    def get(self):
-        session = self.get_session()
-        
+    
+    def get_location(self):
+        # This is a stub
+        'My Current Location'
+    
+    def get_time_range(self):
         import datetime
         start_time_str = self.request.get('start_time')
         end_time_str = self.request.get('end_time')
         
-        start_time = datetime.datetime.fromtimestamp(int(start_time_str))
-        end_time = datetime.datetime.fromtimestamp(int(end_time_str))
+        now_time = datetime.datetime.now()
+        if start_time_str:
+            start_time = datetime.datetime.fromtimestamp(int(start_time_str))
+        else:
+            start_time = now_time
         
+        if end_time_str:
+            end_time = datetime.datetime.fromtimestamp(int(end_time_str))
+        else:
+            end_time = now_time + datetime.timedelta(hours=3)
+        
+        return start_time, end_time
+        
+        
+    def get(self):
+        session = self.get_session()
+        start_time, end_time = self.get_time_range()
+        location = self.get_location()
         vehicles = self.get_available_vehicles(start_time, end_time)
         
         response_body = self.availability_view.get_vehicle_availability(
-            session, start_time, end_time, vehicles)
+            session, start_time, end_time, vehicles, location)
         
         self.response.out.write(response_body);
         self.response.set_status(200);
@@ -72,10 +80,16 @@ class AvailabilityHandler (webapp.RequestHandler):
     def post(self):
         self.get()
 
+class AvailabilityHtmlHandler (AvailabilityHandler):
+    def __init__(self):
+        super(AvailabilityHtmlHandler, self).__init__(
+            SessionScreenscrapeSource(),
+            AvailabilityHtmlView())
+    
 
 
 application = webapp.WSGIApplication(
-        [('/check_availability', AvailabilityHandler)],
+        [('/availability.html', AvailabilityHtmlHandler)],
         debug=True)
 
 def main():

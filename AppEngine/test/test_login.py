@@ -1,85 +1,97 @@
 import unittest
+import StringIO
 
-from pcs.source.screenscrape.session import SessionScreenscrapeSource
-class SessionScreenscrapeSourceTest (unittest.TestCase):
-    def test1(self):
-        """Login is successful if the response document has the correct title."""
-        source = SessionScreenscrapeSource()
-        document = "<html><head><title>My Message Manager</title></head><body></body></html>"
-        self.assertEqual(source.body_is_valid_session(document), True)
-    
-    def test2(self):
-        """Login is failure if the response document has the correct title."""
-        source = SessionScreenscrapeSource()
-        document = "<html><head><title>Please Login</title></head><body></body></html>"
-        self.assertEqual(source.body_is_valid_session(document), False)
-    
-    def test3(self):
-        """Expected session is returned from a failed login (expected session is None)."""
-        source = SessionScreenscrapeSource()
-        source.login_to_pcs = lambda conn, username, password: \
-            ("<html><head><title>Please Login</title></head><body></body></html>", {})
-        session = source.get_new_session('uid', 'pass')
-        self.assert_(session is None)
-    
-    def test4(self):
-        """Expected session is returned from a successful login."""
-        source = SessionScreenscrapeSource()
-        source.login_to_pcs = lambda conn, username, password: \
-            ("""<html>
-                  <head>
-                    <title>My Message Manager</title>
-                  </head>
-                  <body>
-                    <p>Mr. Bojangles, you are signed in. Yay!</p>
-                  </body>
-                </html>
-             """,
-             {'set-cookie':'sid=abcde'})
-        session = source.get_new_session('uid', 'pass')
-        self.assertEqual(session.id, 'abcde')
-        self.assertEqual(session.user, 'uid')
-        self.assertEqual(session.name, 'Mr. Bojangles')
-    
-    def test5(self):
-        """Screenscrape source should have a simple document that triggers login failure"""
-        source = SessionScreenscrapeSource()
-        document = SessionScreenscrapeSource.SIMPLE_FAILURE_DOCUMENT
-        self.assert_(not source.body_is_valid_session(document))
-    
-    def test6(self):
-        """Logging in will get the expected response from the connection"""
-        source = SessionScreenscrapeSource()
+from pcs.input.wsgi.login import LoginHandler
+class LoginHandlerTest (unittest.TestCase):
+    def testShouldRespondWithLoginForm(self):
+        # Given...
+        class StubLoginView (object):
+            def get_login_form(self, username=''):
+                return 'LoginForm'
         
-        class StubConnection (object):
-            def request(self, method, path, data='', headers={}):
-                pass
-            def getresponse(self):
-                from StringIO import StringIO
-                response = StringIO('Body Text')
-                response.getheaders = lambda: {'h1':1,'h2':2}
-                return response
+        class StubRequest (dict):
+            pass
         
-        conn = StubConnection()
-        body, headers = source.login_to_pcs(conn, 'uid', 'pass')
-        self.assertEqual(body, 'Body Text')
-        self.assertEqual(headers, {'h1':1,'h2':2})
+        class StubResponse (object):
+            out = StringIO.StringIO()
+            def set_status(self, status):
+                self.status = status
+        
+        login_view = StubLoginView()
+        handler = LoginHandler(login_view)
+        handler.request = StubRequest()
+        handler.response = StubResponse()
+        
+        # When...
+        handler.get()
+        
+        # Then...
+        response_body = handler.response.out.getvalue()
+        self.assertEqual(response_body, 'LoginForm')
+
+from pcs.input.wsgi.login import LoginHtmlHandler
+from pcs.view.html.login import LoginHtmlView
+class LoginHtmlHandlerTest (unittest.TestCase):
+    def setUp(self):
+        class StubRequest (dict):
+            pass
+        
+        class StubResponse (object):
+            out = StringIO.StringIO()
+            def set_status(self, status):
+                self.status = status
+        
+        self.request = StubRequest()
+        self.response = StubResponse()
     
-    def test7(self):
-        """Resuming session will get expected response from connection"""
-        source = SessionScreenscrapeSource()
+    def testShouldBeInitializedWithALoginHtmlView(self):
+        handler = LoginHtmlHandler()
         
-        class StubConnection (object):
-            def request(self, method, path, data='', headers={}):
-                self.requestheaders = headers
-            def getresponse(self):
-                from StringIO import StringIO
-                response = StringIO('Body Text')
-                response.getheaders = lambda: {'h1':1,'h2':2}
-                return response
+        self.assertEqual(handler.login_view.__class__.__name__, 'LoginHtmlView')
+    
+    def testShouldRespondWithAnEmptyLoginFormWhenNoUserIdIsProvided(self):
+        handler = LoginHtmlHandler()
+        handler.request = self.request
+        handler.response = self.response
+
+from pcs.view.html.login import LoginHtmlView
+class LoginHtmlViewTest (unittest.TestCase):
+    def testShouldReturnHtmlContentForSigningIn(self):
+        """The HTML view returned should be a form for signing in."""
         
-        conn = StubConnection()
-        body, headers = source.reconnect_to_pcs(conn, '1234567')
-        self.assertEqual(conn.requestheaders, {'Cookie':'sid=1234567'})
-        self.assertEqual(body, 'Body Text')
-        self.assertEqual(headers, {'h1':1,'h2':2})
+        # Given...
+        view = LoginHtmlView()
+        
+        # When...
+        response_body = view.get_login_form('myuser')
+        
+        # Then...
+        expected_body = \
+"""<!DOCTYPE html>
+
+<html>
+  <head>
+    <title>Philly Car Share</title>
+  </head>
+  
+  <body>
+    <h1>Please Login</h1>
+    <form action="/session.html" method="POST">
+      <label for="username">User ID:</label>
+      <input type="text" value="myuser" name="username" />
+      <label for="password">Password:</label>
+      <input type="password" name="password" />
+      <input type="submit" />
+    </form>
+  </body>
+</html>
+
+"""
+        response_body = response_body.replace('<','&lt;')
+        response_body = response_body.replace('>','&gt;')
+        expected_body = expected_body.replace('<','&lt;')
+        expected_body = expected_body.replace('>','&gt;')
+        
+        self.assertEqual(response_body, expected_body)
+
+

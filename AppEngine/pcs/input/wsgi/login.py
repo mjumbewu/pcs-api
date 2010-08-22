@@ -8,14 +8,15 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 
 from pcs.view.html.login import LoginHtmlView
 from pcs.view.html.session import SessionHtmlView
-from pcs.source.screenscrape.login import LoginScreenscrapeSource
+from pcs.source.screenscrape.session import SessionScreenscrapeSource
 
 class LoginHandler (webapp.RequestHandler):
     """
-    Handles requests sent to the list of products
+    Handles requests for a mechanism to login
     """
-    def __init__(self):
+    def __init__(self, login_view):
         super(LoginHandler, self).__init__()
+        self.login_view = login_view
     
     def get_user(self):
         username = self.request.get('username')
@@ -24,14 +25,17 @@ class LoginHandler (webapp.RequestHandler):
     def get(self):
         username = self.get_user()
         
-        view = LoginHtmlView()
-        response_body = view.show_login_form(username)
+        response_body = self.login_view.get_login_form(username)
         
         self.response.out.write(response_body);
         self.response.set_status(200);
     
     def post(self):
         self.get()
+
+class LoginHtmlHandler (LoginHandler):
+    def __init__(self):
+        super(LoginHtmlHandler, self).__init__(LoginHtmlView())
 
 class CookiesHandler (webapp.RequestHandler):
     def get(self):
@@ -43,7 +47,7 @@ class CookiesHandler (webapp.RequestHandler):
 
 
 application = webapp.WSGIApplication(
-        [('/login', LoginHandler),
+        [('/login.html', LoginHtmlHandler),
          ('/cookies', CookiesHandler)],
         debug=True)
 

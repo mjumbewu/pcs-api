@@ -1,4 +1,4 @@
-{% extend session_base.html %}
+{% extends "session_base.html" %}
 
 {% block title %} Welcome to PhillyCarShare {% endblock %}
 
@@ -39,7 +39,7 @@
         </div>
       {% endif %}
       
-      <p><a href="">Make a New Reservation</a></p>
+      <p><a href="/availability.html">Make a New Reservation</a></p>
       <p><a href="">View Messages</a></p>
       <p><a href="">Manage Account Info</a></p>
       <p><a href="">Give Feedback</a></p>

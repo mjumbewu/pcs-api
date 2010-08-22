@@ -1,15 +1,18 @@
 import os
 from google.appengine.ext.webapp import template
 
-class LoginHtmlView (object):
-    @staticmethod
-    def get_login_form(username=''):
+from pcs.view import _LoginViewInterface
+from util.abstract import override
+
+class LoginHtmlView (_LoginViewInterface):
+    @override
+    def get_login_form(self, userid=''):
         """
         Return a response with a mechanism for logging in.  For HTML, this is
         a login form.
         """
         values = {
-            'username': username
+            'username': userid
         }
         
         path = os.path.join(os.path.dirname(__file__), 'login.html')

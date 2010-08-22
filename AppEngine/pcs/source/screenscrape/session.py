@@ -4,8 +4,10 @@ import Cookie as cookielib
 import HTMLParser as htmlparserlib
 
 from pcs.data.session import Session
+from pcs.source import _SessionSourceInterface
+from util.abstract import override
 
-class SessionScreenscrapeSource (object):
+class SessionScreenscrapeSource (_SessionSourceInterface):
     """
     Responsible for logging in and constructing a session from a screenscrape
     of a PhillyCarShare response.
@@ -18,16 +20,16 @@ class SessionScreenscrapeSource (object):
         self.__host = host
         self.__path = path
     
-    def login_to_pcs(self, conn, username, password):
+    def login_to_pcs(self, conn, userid, password):
         """
-        Attempts to login to the given connection with the given username and 
+        Attempts to login to the given connection with the given userid and 
         password.
         
         @return: The server response  If login failed, the response
           body should be identifiable as an invalid session.
         """
         parameters = urllib.urlencode({
-            'login[name]': username,
+            'login[name]': userid,
             'login[password]': password})
         conn.request("POST", self.__path,
             parameters)
@@ -100,7 +102,8 @@ class SessionScreenscrapeSource (object):
         else:
             raise Exception('Unknown Login Title: %r' % parser.title)
     
-    def get_new_session(self, username, password):
+    @override
+    def get_new_session(self, userid, password):
         """
         @todo: Creating the connection here introduces a dependency for testing.
                It should be passed in as a parameter.  However, in practice, 
@@ -110,17 +113,18 @@ class SessionScreenscrapeSource (object):
         conn = httplib.HTTPSConnection(self.__host)
         
         pcs_login_body, pcs_login_headers = \
-            self.login_to_pcs(conn, username, password)
+            self.login_to_pcs(conn, userid, password)
         self._body = pcs_login_body
         self._headers = pcs_login_headers
         
         if self.body_is_valid_session(pcs_login_body):
-            return Session.FromLoginResponse(username, pcs_login_body, 
+            return Session.FromLoginResponse(userid, pcs_login_body, 
                                              pcs_login_headers)
         else:
             return None
     
-    def get_existing_session(self, username, session_id):
+    @override
+    def get_existing_session(self, userid, session_id):
         conn = httplib.HTTPSConnection(self.__host)
         
         pcs_reconnect_body, pcs_reconnect_headers = \
@@ -129,7 +133,7 @@ class SessionScreenscrapeSource (object):
         self._headers = pcs_reconnect_headers
         
         if self.body_is_valid_session(pcs_reconnect_body):
-            return Session.FromReconnectResponse(username, session_id,
+            return Session.FromReconnectResponse(userid, session_id,
                                                  pcs_reconnect_body, 
                                                  pcs_reconnect_headers)
         else:
