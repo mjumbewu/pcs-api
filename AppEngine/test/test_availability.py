@@ -3,8 +3,10 @@ import datetime
 import new
 
 from pcs.input.wsgi.availability import AvailabilityHandler
+from pcs.source import _AvailabilitySourceInterface
 from pcs.source import _SessionSourceInterface
 from pcs.view import _AvailabilityViewInterface
+from util.testing import patch
 from util.testing import Stub
 
 class AvailabilityHandlerTest (unittest.TestCase):
@@ -26,6 +28,12 @@ class AvailabilityHandlerTest (unittest.TestCase):
         class StubSessionSource (object):
             pass
         
+        # A source for vehicle availability information
+        @Stub(_AvailabilitySourceInterface)
+        class StubAvailabilitySource (object):
+            def get_available_vehicles_near(self, sessionid, location, start_time, end_time):
+                pass
+        
         # A generator for a representation (view) of the availability information
         @Stub(_AvailabilityViewInterface)
         class StubAvailabilityView (object):
@@ -37,9 +45,11 @@ class AvailabilityHandlerTest (unittest.TestCase):
         
         # The system under test
         self.session_source = StubSessionSource()
+        self.availability_source = StubAvailabilitySource()
         self.availability_view = StubAvailabilityView()
         
         self.handler = AvailabilityHandler(session_source=self.session_source, 
+            availability_source=self.availability_source,
             availability_view=self.availability_view)
         self.handler.request = StubRequest()
         self.handler.response = StubResponse()
@@ -60,15 +70,15 @@ class AvailabilityHandlerTest (unittest.TestCase):
         #    different times.  However, they should have been calculated within
         #    a certain amount of seconds from each other.
         self.assert_(now_time - start_time < threshold, 
-            "%r - %r < %r" % (now_time, start_time, threshold))
+            "%r - %r >= %r" % (now_time, start_time, threshold))
         self.assert_(later_time - end_time < threshold,
-            "%r - %r < %r" % (later_time, end_time, threshold))
+            "%r - %r >= %r" % (later_time, end_time, threshold))
         
     def testShouldRespondWithFailureContentWhenSessionSourceCannotFindSessionWithGivenId(self):
         """With no valid session, the availability handler will give a failure document response."""
         
         # Given...
-        # ...the session cookies are as follows:
+        # ...the times and session cookies are as follows:
         self.handler.request['start_time'] = 100
         self.handler.request['end_time'] = 10000
         self.handler.request.cookies = {
@@ -77,11 +87,9 @@ class AvailabilityHandlerTest (unittest.TestCase):
         }
         
         # ...and the session source does not recognize the cookies:
-        def get_existing_session_patch(self, userid, sessionid):
+        @patch(self.session_source)
+        def get_existing_session(self, userid, sessionid):
             return None
-        self.session_source.get_existing_session = \
-            new.instancemethod(get_existing_session_patch, 
-                self.session_source, self.session_source.__class__)
         
         # When...
         self.handler.get()
@@ -94,7 +102,7 @@ class AvailabilityHandlerTest (unittest.TestCase):
         """With a valid session, the availability handler will give a success response."""
         
         # Given...
-        # ...the session cookies are as follows:
+        # ...the time and session cookies are as follows:
         self.handler.request['start_time'] = 100
         self.handler.request['end_time'] = 10000
         self.handler.request.cookies = {
@@ -103,15 +111,13 @@ class AvailabilityHandlerTest (unittest.TestCase):
         }
         
         # ...and the session source recognizes the cookies:
-        def get_existing_session_patch(self, userid, sessionid):
+        @patch(self.session_source)
+        def get_existing_session(self, userid, sessionid):
             class StubSession (object):
                 id = 5
                 user = '4600'
                 name = "Jim Jacobsen"
             return StubSession()
-        self.session_source.get_existing_session = \
-            new.instancemethod(get_existing_session_patch, 
-                self.session_source, self.session_source.__class__)
         
         # When...
         self.handler.get()
@@ -119,6 +125,65 @@ class AvailabilityHandlerTest (unittest.TestCase):
         # Then...
         response = self.handler.response.out.getvalue()
         self.assertEqual(response, "Success")
+    
+    def testShouldRespondWithVehicleDataFromTheAvailabilitySource(self):
+        pass
+
+from pcs.source.screenscrape.availability import AvailabilityScreenscrapeSource
+class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
+    def testShouldLoadAppropriateJsonObjectFromString(self):
+        # Given...
+        source = AvailabilityScreenscrapeSource()
+        
+        # When...
+        json_data = source.get_json_data(
+            '{"pods":["<div class=\\"pod_top\\"><\\/div>","<div class=\\"pod_bottom\\"><\/div>"]}')
+        
+        # Then...
+        self.assertEqual(json_data,
+            {'pods':['<div class="pod_top"></div>','<div class="pod_bottom"></div>']})
+    
+    def testShouldLoadAppropriateHtmlDocumentObjectFromPodsFieldOfJsonObject(self):
+        """Should load appropriate HTML document object from the 'pods' field of the JSON object"""
+        # Given...
+        source = AvailabilityScreenscrapeSource()
+        
+        # When...
+        html_data = source.get_html_data(
+            {'pods':['<div class="pod_top"></div>','<div class="pod_bottom"></div>']})
+        
+        # Then...
+        all_divs = html_data.findAll('div')
+        top_divs = html_data.findAll('div', {'class':'pod_top'})
+        
+        self.assertEqual(len(all_divs), 2)
+        self.assertEqual(len(top_divs), 1)
+    
+    def testShould(self):
+        # Given...
+        class StubConnection (object):
+            def request(self, method, path, data, headers):
+                pass
+            def getresponse(self):
+                import StringIO
+                class StubResponse (StringIO.StringIO):
+                    def getheaders(self):
+                        return {}
+                return StubResponse('{"pods":[' +
+                    ','.join(['"<div class=\\"pod_top\\"><\\/div>"',
+                              '"<div class=\\"pod_bottom\\"><\/div>"']) + 
+                    ']}')
+        
+        source = AvailabilityScreenscrapeSource()
+        @patch(source)
+        def create_host_connection(self):
+            return StubConnection()
+        
+        # When...
+        vehicles = source.get_available_vehicles_near('','','','')
+        
+        # Then...
+        self.assertEqual(len(vehicles), 3)
 
 from pcs.view.html.availability import AvailabilityHtmlView
 class AvailabilityHtmlViewTest (unittest.TestCase):

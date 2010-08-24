@@ -1,12 +1,16 @@
 import unittest
 import StringIO
 
+from util.testing import Stub
+
 from pcs.input.wsgi.login import LoginHandler
+from pcs.view import _LoginViewInterface
 class LoginHandlerTest (unittest.TestCase):
     def testShouldRespondWithLoginForm(self):
         # Given...
+        @Stub(_LoginViewInterface)
         class StubLoginView (object):
-            def get_login_form(self, username=''):
+            def get_login_form(self, userid):
                 return 'LoginForm'
         
         class StubRequest (dict):

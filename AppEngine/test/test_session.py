@@ -1,6 +1,9 @@
 import unittest
 import StringIO
 
+from util.testing import Stub
+from util.testing import patch
+
 from pcs.source.screenscrape.session import SessionScreenscrapeSource
 class SessionScreenscrapeSourceTest (unittest.TestCase):
     def testShouldThinkSessionDocumentIsValidIfTitleIsCorrect(self):
@@ -24,8 +27,9 @@ class SessionScreenscrapeSourceTest (unittest.TestCase):
     def testShouldCreateNoSessionIfLoginResultsInInvalidSessionDocument(self):
         """Expected session is returned from a failed login (expected session is None)."""
         source = SessionScreenscrapeSource()
-        source.login_to_pcs = lambda conn, username, password: \
-            ("<html><head><title>Please Login</title></head><body></body></html>", {})
+        @patch(source)
+        def login_to_pcs(self, conn, userid, password):
+            return ("<html><head><title>Please Login</title></head><body></body></html>", {})
             
         session = source.get_new_session('uid', 'pass')
         
@@ -34,8 +38,9 @@ class SessionScreenscrapeSourceTest (unittest.TestCase):
     def testShouldCreateNewSessionAccordingToContentInValidSessionDocument(self):
         """Expected session is returned from a successful login."""
         source = SessionScreenscrapeSource()
-        source.login_to_pcs = lambda conn, username, password: \
-            ("""<html>
+        @patch(source)
+        def login_to_pcs(self, conn, userid, password):
+            return ("""<html>
                   <head>
                     <title>My Message Manager</title>
                   </head>
@@ -99,6 +104,8 @@ class SessionScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(headers, {'h1':1,'h2':2})
 
 from pcs.input.wsgi.session import SessionHandler
+from pcs.source import _SessionSourceInterface
+from pcs.view import _SessionViewInterface
 class SessionHandlerTest (unittest.TestCase):
     def setUp(self):
         class StubRequest (dict):
@@ -115,9 +122,8 @@ class SessionHandlerTest (unittest.TestCase):
                 self.status = status
             headers = StubHeaders()
         
+        @Stub(_SessionSourceInterface)
         class StubSessionSource (object):
-            _body = ''
-            
             def get_existing_session(self, userid, sessionid):
                 return None
             def get_new_session(self, userid, password):
@@ -129,7 +135,9 @@ class SessionHandlerTest (unittest.TestCase):
                     return StubSession()
                 else:
                     return None
+        StubSessionSource._body = ''
         
+        @Stub(_SessionViewInterface)
         class StubSessionView (object):
             def get_session_overview(self, session):
                 if session:
