@@ -1,3 +1,45 @@
+"""
+A set of decorators useful for building tests.  Stub keeps stub object types up
+to date with the actual types.  It's used like this:
+
+    class ActualType (object):
+        ...
+    
+    @Stub(ActualClass)
+    class StubType (object):
+        ...
+        
+Now, if methods defined in the stub differ in signature from those defined in 
+the original, an exception will be raised (currently at run time).
+
+The patch decorator is similar, except that it acts on methods created on the
+fly.  For example:
+
+    class ActualType (object):
+        def my_method(self, ...):
+            ...
+    
+    inst = StubType()
+    
+    @patch(inst)
+    def my_method(self, ...):
+        ...
+
+Now, if the signature of my_method gets out of sync with the one defined in 
+ActualType, the test will raise an exception.  The patch decorator will also 
+detect when it is working with stub instances:
+    
+    @Stub(ActualClass)
+    class StubType (object):
+        pass
+    
+    stub_inst = StubType()
+    
+    @patch(stub_inst)
+    def my_method(self, ...):
+        ...
+
+"""
 import inspect
 import new
 
@@ -19,8 +61,8 @@ class Stub (object):
         """
         stub_member = getattr(stub_cls, member_name)
         stub_member_type = type(stub_member)
-        while hasattr(stub_member_type, '_stubbed_type'):
-            stub_member_type = stub_member_type._stubbed_type
+        while self.stubbed_type(stub_member_type) is not None:
+            stub_member_type = self.stubbed_type(stub_member_type)
         
         # Fail if the real class does not have the member
         if not hasattr(self.real_cls, member_name):
@@ -63,11 +105,71 @@ class Stub (object):
         Mark the given stub class as a stub of the real class.
         """
         stub_cls._stubbed_type = self.real_cls
+    
+    @staticmethod
+    def stubbed_type(inst_or_cls):
+        if hasattr(inst_or_cls, '_stubbed_type'):
+            return inst_or_cls._stubbed_type
+        
+        return None
         
     def __call__(self, stub_cls):
         self.verify_stub_class(stub_cls)
         self.mark_as_stub_class(stub_cls)
         return stub_cls
+
+class patch (object):
+    """A decorator to patch the given instance with a function."""
+    
+    def __init__(self, instance):
+        self.inst = instance
+    
+    def invalid_reason(self, inst_method):
+        # Detect the type of inst, or the stubbed type.
+        inst_type = Stub.stubbed_type(self.inst)
+        if not inst_type:
+            inst_type = type(self.inst)
+        
+        # If the type has no matching method name, fail.
+        if not hasattr(inst_type, inst_method.__name__):
+            return 'Instance %r does not have method %r' % (self.inst, inst_method.__name__)
+        
+        # If it has no matching method signature, fail.
+        orig_method = getattr(inst_type, inst_method.__name__)
+        
+        orig_sig = inspect.getargspec(orig_method)
+        inst_sig = inspect.getargspec(inst_method)
+        
+        if orig_sig != inst_sig:
+            return 'Method signatures differ.'
+        
+        # Otherwise, pass.
+        return None
+        
+    def verify_instance_patch(self, inst_method):
+        """
+        If an instance method with the same name as the new method exists on 
+        the instance's type, and if the two methods have the same signatures,
+        then all will be well.  If the instance's type was created with a Stub
+        decorator, then this function will verify against the stubbed type.
+        """
+        inst_type = type(self.inst)
+        
+        invalid_reason = self.invalid_reason(inst_method)
+        if invalid_reason is not None:
+            raise StubException('%s is not a valid patch for %s: %s'
+                % (inst_method.__name__, inst_type.__name__, invalid_reason))
+    
+    def __call__(self, method):
+        inst_method = new.instancemethod(method, self.inst, self.inst.__class__)
+        self.verify_instance_patch(inst_method)
+        
+        self.__name__ = method.__name__
+        self.__doc__ = method.__doc__
+        
+        setattr(self.inst, inst_method.__name__, inst_method)
+        return inst_method
+        
 
 #class Dec (object):
 #    def __init__(self, f):
