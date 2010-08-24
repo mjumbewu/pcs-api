@@ -7,6 +7,7 @@ from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 
 from pcs.source.screenscrape.session import SessionScreenscrapeSource
+from pcs.source.screenscrape.availability import AvailabilityScreenscrapeSource
 from pcs.view.html.availability import AvailabilityHtmlView
 
 class AvailabilityHandler (webapp.RequestHandler):
@@ -15,6 +16,7 @@ class AvailabilityHandler (webapp.RequestHandler):
     """
     def __init__(self,
                  session_source,
+                 availability_source,
                  availability_view):
         super(AvailabilityHandler, self).__init__()
         
@@ -84,6 +86,7 @@ class AvailabilityHtmlHandler (AvailabilityHandler):
     def __init__(self):
         super(AvailabilityHtmlHandler, self).__init__(
             SessionScreenscrapeSource(),
+            AvailabilityScreenscrapeSource(),
             AvailabilityHtmlView())
     
 
