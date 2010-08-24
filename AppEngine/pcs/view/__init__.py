@@ -5,7 +5,7 @@ class _LoginViewInterface (object):
         raise NotImplementedError()
 
 class _SessionViewInterface (object):
-    def get_session_overview(self):
+    def get_session_overview(self, session):
         raise NotImplementedError()
 
 class _AvailabilityViewInterface (object):
