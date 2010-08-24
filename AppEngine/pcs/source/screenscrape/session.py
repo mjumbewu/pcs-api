@@ -97,10 +97,26 @@ class SessionScreenscrapeSource (_SessionSourceInterface):
             return False
         elif parser.title == 'My Message Manager': # First access after login
             return True
-        elif parser.title == 'Reservation Manager': # Subsequent accesss
+        elif parser.title == 'Reservation Manager': # Subsequent accesses
             return True
         else:
-            raise Exception('Unknown Login Title: %r' % parser.title)
+            raise SessionParseError('Unknown session document title: %r' % parser.title)
+    
+    def create_session_from_login_response(self, suser, response_body, response_headers):
+        cookie = cookielib.SimpleCookie()
+        header_dict = dict(response_headers)
+        cookie.load(header_dict.get('set-cookie'))
+        
+        parser = SessionHtmlParser()
+        parser.feed(response_body)
+        parser.close()
+        return Session(cookie['sid'].value, suser, parser.fullname)
+    
+    def create_session_from_reconnect_response(self, suser, sid, response_body, response_headers):
+        parser = SessionHtmlParser()
+        parser.feed(response_body)
+        parser.close()
+        return Session(sid, suser, parser.fullname)
     
     @override
     def get_new_session(self, userid, password):
@@ -118,8 +134,8 @@ class SessionScreenscrapeSource (_SessionSourceInterface):
         self._headers = pcs_login_headers
         
         if self.body_is_valid_session(pcs_login_body):
-            return Session.FromLoginResponse(userid, pcs_login_body, 
-                                             pcs_login_headers)
+            return self.create_session_from_login_response(
+                userid, pcs_login_body, pcs_login_headers)
         else:
             return None
     
@@ -133,9 +149,33 @@ class SessionScreenscrapeSource (_SessionSourceInterface):
         self._headers = pcs_reconnect_headers
         
         if self.body_is_valid_session(pcs_reconnect_body):
-            return Session.FromReconnectResponse(userid, session_id,
-                                                 pcs_reconnect_body, 
-                                                 pcs_reconnect_headers)
+            return self.create_session_from_reconnect_response(
+                userid, session_id, pcs_reconnect_body, pcs_reconnect_headers)
         else:
             return None
+
+class SessionParseError (Exception):
+    pass
+
+class SessionHtmlParser (htmlparserlib.HTMLParser):
+
+    def __init__(self):
+        htmlparserlib.HTMLParser.__init__(self)
+        self.in_p = False
+        self.fullname = 'blah'
+    
+    def handle_starttag(self, tag, attrs):
+        if tag.lower() == 'p':
+            self.in_p = True
+    
+    def handle_data(self, data):
+        TRIGGER_TEXT = ', you are signed in'
+        if self.in_p and TRIGGER_TEXT in data:
+            trigger_pos = data.find(TRIGGER_TEXT)
+            self.fullname = data[:trigger_pos]
+    
+    def handle_endtag(self, tag):
+        if tag.lower() == 'p':
+            self.in_p = False
+
 
