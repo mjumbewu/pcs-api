@@ -78,6 +78,11 @@ class AvailabilityHandler (webapp.RequestHandler):
         
         self.response.out.write(response_body);
         self.response.set_status(200);
+        
+        self.response.out.write('<!-- %s vehicles\n' % len(vehicles))
+        for vehicle in vehicles:
+            self.response.out.write('%s %s\n' % (vehicle.pod.name, vehicle.model))
+        self.response.out.write('-->')
     
     def post(self):
         self.get()

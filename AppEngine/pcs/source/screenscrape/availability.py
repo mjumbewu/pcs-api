@@ -1,4 +1,5 @@
 import httplib
+import re
 import urllib
 import Cookie as cookielib
 import HTMLParser as htmlparserlib
@@ -8,6 +9,8 @@ try:
 except ImportError:
     from django.utils import simplejson as json
 
+from pcs.data.pod import Pod
+from pcs.data.vehicle import Vehicle
 from pcs.source import _AvailabilitySourceInterface
 from util.abstract import override
 from util.BeautifulSoup import BeautifulSoup
@@ -64,8 +67,43 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
         html_data = BeautifulSoup(html_body)
         return html_data
     
-    def create_vehicles_from_html_pod_data(self, html_data):
-        pass
+    def get_pod_and_distance_from_html_data(self, pod_info_div):
+        pod_link = pod_info_div.findAll('a')[0]
+        
+        matches = re.match(r'(?P<name>.*) - (?P<dist>[0-9]+\.?[0-9]*) mile\(s\)',
+                           pod_link.text)
+        pod_name = str(matches.group('name'))
+        pod_dist = float(matches.group('dist'))
+        
+        pod = Pod(pod_name)
+        return pod, pod_dist
+    
+    def get_vehicle_from_html_data(self, pod, vehicle_info_div):
+        vehicle_header = vehicle_info_div.findAll('h4')[0]
+        
+        vehicle_name = vehicle_header.text
+        
+        vehicle = Vehicle(vehicle_name, pod)
+        return vehicle
+    
+    def create_vehicles_from_pcs_availability_doc(self, pcs_results_doc):
+        vehicles = []
+        current_pod = None
+        current_dist = None
+        
+        bodies = pcs_results_doc.findAll('body')
+        body = bodies[0]
+        info_divs = body.findAll('div', recursive=False)
+        for info_div in info_divs:
+            if 'pod_top' in info_div['class']:
+                pod_div = info_div
+                current_pod, current_dist = self.get_pod_and_distance_from_html_data(pod_div)
+            elif 'pod_bot' in info_div['class']:
+                vehicle_div = info_div
+                vehicle = self.get_vehicle_from_html_data(current_pod, vehicle_div)
+                vehicles.append(vehicle)
+        
+        return vehicles
     
     def create_host_connection(self):
         return httplib.HTTPConnection(self.__host)
@@ -82,5 +120,5 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
         json_availability_data = self.get_json_data(pcs_available_body)
         html_pods_data = self.get_html_data(json_availability_data)
         
-        vehicles = self.create_vehicles_from_html_pod_data(html_pods_data)
+        vehicles = self.create_vehicles_from_pcs_availability_doc(html_pods_data)
         return vehicles

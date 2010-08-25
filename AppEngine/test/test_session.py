@@ -102,6 +102,56 @@ class SessionScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(conn.requestheaders, {'Cookie':'sid=1234567'})
         self.assertEqual(body, 'Body Text')
         self.assertEqual(headers, {'h1':1,'h2':2})
+    
+    def testShouldCreateNewSessionWhenGivenValidUserIdAndPassword(self):
+        # Given...
+        class StubConnection (object):
+            def request(self, method, path, data='', headers={}):
+                self.requestheaders = headers
+            def getresponse(self):
+                from StringIO import StringIO
+                response = StringIO('<html><head><title>My Message Manager</title></head><body><p>Jalani Bakari, you are signed in (Residential)!</body></html>')
+                response.getheaders = lambda: {'set-cookie':'sid=12345abcde'}
+                return response
+        conn = StubConnection()
+        
+        source = SessionScreenscrapeSource()
+        @patch(source)
+        def create_host_connection(self):
+            return conn
+        
+        # When...
+        session = source.get_new_session('valid_user', 'valid_pass')
+        
+        # Then...
+        self.assertEqual(session.user, 'valid_user')
+        self.assertEqual(session.name, 'Jalani Bakari')
+        self.assertEqual(session.id, '12345abcde')
+    
+    def testShouldRetrieveCurrentSessionWhenGivenValidSessionId(self):
+        # Given...
+        class StubConnection (object):
+            def request(self, method, path, data='', headers={}):
+                self.requestheaders = headers
+            def getresponse(self):
+                from StringIO import StringIO
+                response = StringIO('<html><head><title>Reservation Manager</title></head><body><p>Jalani Bakari, you are signed in (Residential)!</body></html>')
+                response.getheaders = lambda: {}
+                return response
+        conn = StubConnection()
+        
+        source = SessionScreenscrapeSource()
+        @patch(source)
+        def create_host_connection(self):
+            return conn
+        
+        # When...
+        session = source.get_existing_session('valid_user', '12345abcde')
+        
+        # Then...
+        self.assertEqual(session.user, 'valid_user')
+        self.assertEqual(session.name, 'Jalani Bakari')
+        self.assertEqual(session.id, '12345abcde')
 
 from pcs.input.wsgi.session import SessionHandler
 from pcs.source import _SessionSourceInterface

@@ -118,6 +118,10 @@ class SessionScreenscrapeSource (_SessionSourceInterface):
         parser.close()
         return Session(sid, suser, parser.fullname)
     
+    def create_host_connection(self):
+        conn = httplib.HTTPSConnection(self.__host)
+        return conn
+    
     @override
     def get_new_session(self, userid, password):
         """
@@ -126,7 +130,7 @@ class SessionScreenscrapeSource (_SessionSourceInterface):
                creating it here has no effect on the tests.  It should be moved,
                but it is not a high priority.
         """
-        conn = httplib.HTTPSConnection(self.__host)
+        conn = self.create_host_connection()
         
         pcs_login_body, pcs_login_headers = \
             self.login_to_pcs(conn, userid, password)
@@ -140,17 +144,17 @@ class SessionScreenscrapeSource (_SessionSourceInterface):
             return None
     
     @override
-    def get_existing_session(self, userid, session_id):
-        conn = httplib.HTTPSConnection(self.__host)
+    def get_existing_session(self, userid, sessionid):
+        conn = self.create_host_connection()
         
         pcs_reconnect_body, pcs_reconnect_headers = \
-            self.reconnect_to_pcs(conn, session_id)
+            self.reconnect_to_pcs(conn, sessionid)
         self._body = pcs_reconnect_body
         self._headers = pcs_reconnect_headers
         
         if self.body_is_valid_session(pcs_reconnect_body):
             return self.create_session_from_reconnect_response(
-                userid, session_id, pcs_reconnect_body, pcs_reconnect_headers)
+                userid, sessionid, pcs_reconnect_body, pcs_reconnect_headers)
         else:
             return None
 
