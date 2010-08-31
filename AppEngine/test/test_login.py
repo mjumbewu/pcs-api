@@ -81,10 +81,14 @@ class LoginHtmlViewTest (unittest.TestCase):
   <body>
     <h1>Please Login</h1>
     <form action="/session.html" method="POST">
-      <label for="username">User ID:</label>
-      <input type="text" value="myuser" name="username" />
-      <label for="password">Password:</label>
-      <input type="password" name="password" />
+      <div>
+        <label for="username">User ID:</label>
+        <input type="text" value="myuser" name="username" />
+      </div>
+      <div>
+        <label for="password">Password:</label>
+        <input type="password" name="password" />
+      </div>
       <input type="submit" />
     </form>
   </body>

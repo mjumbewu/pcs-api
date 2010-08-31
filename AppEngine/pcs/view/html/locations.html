@@ -1,0 +1,59 @@
+{% extends "session_base.html" %}
+
+{% block title %} My Locations {% endblock %}
+
+{% block content %}
+  
+  <style>
+    .locations {
+    }
+    
+    .location {
+    }
+    
+    .location:first-child {
+    }
+    
+    .reserve-near-link {
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    
+    .reserve-near-link {
+      width: 100%;
+    }
+    
+    .edit-link {
+      display: block;
+      float: right;
+      height: 100%;
+    }
+    
+    .location-name {
+    }
+    
+    .location-desc {
+      font-size: 0.7em;
+      font-weight: normal;
+    }
+  </style>
+  
+  <h1>Reserve a car near:</h1>
+  
+  <ul class="locations">
+  {% for location in locations %}
+    <li class="location">
+      <a class="edit-link" href="#{{ location.id }}">
+        <span>Edit</span>
+      </a>
+      <a class="reserve-near-link" href="/availability.html?location_id={{ location.id }}">
+        <span class="location-name">{{ location.name }}</span>
+        <span class="location-desc">{{ location.desc }}</span>
+      </a>
+    </li>
+  {% endfor %}
+  </div>
+  
+{% endblock content %}
+

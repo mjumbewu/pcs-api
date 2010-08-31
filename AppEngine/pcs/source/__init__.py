@@ -13,3 +13,17 @@ class _SessionSourceInterface (object):
 class _AvailabilitySourceInterface (object):
     def get_available_vehicles_near(self, sessionid, location, start_time, end_time):
         raise NotImplementedError()
+
+class _LocationsSourceInterface (object):
+    def get_location_profiles(self, sessionid):
+        raise NotImplementedError()
+    
+    def get_location_profile(self, sessionid, locationid):
+        raise NotImplementedError()
+    
+    def get_custom_location(self, location_name, location_key):
+        raise NotImplementedError()
+
+class _VehicleInfoSourceInterface (object):
+    def get_vehicle_information(self, sessionid, vehicleid):
+        raise NotImplementedError()

@@ -6,35 +6,42 @@
   
   <style>
     .available-vehicle {
-      border: 1px solid green;
+      background-color: #efe;
     }
     .unavailable-vehicle {
-      border: 1px solid red;
+      background-color: #fee;
     }
     .partially-available-vehicle {
-      border: 1px solid yellow;
+      background-color: #ffe;
+    }
+    
+    .availability-options span,
+    .availability-options a {
+      display: block;
     }
   </style>
   
   <h1>Available Cars</h1>
   
   <div class="availability-options">
-    <span>Showing cars near {{ location }}</span>
+    <span>Showing cars near {{ location.name }}</span>
     <span>from {{ start_time|time }} {{ start_time|date:"D M d Y" }}</span>
     <span>until {{ end_time|time }} {{ end_time|date:"D M d Y" }}</span>
+    <a href="/locations.html">Change Options</a>
   </div>
   
   {% regroup vehicles by pod as pods %}
   {% for pod in pods %}
     <div class="available-pod">
-      <div class="pod-name">{{ pod.grouper.name }}</div>
+      <h2 class="pod-name">{{ pod.grouper.name }}</h2>
+      <ul class="pod-vehicles">
       {% for vehicle in pod.list %}
         {% ifequal vehicle.availability 0 %}
-          <div class="unavailabe-vehicle">
+          <li class="unavailabe-vehicle">
         {% else %}{% ifequal vehicle.availability 1 %}
-          <div class="available-vehicle">
+          <li class="available-vehicle">
         {% else %}
-          <div class="partially-available-vehicle">
+          <li class="partially-available-vehicle">
         {% endifequal %}{% endifequal %}
           
           <span>{{ vehicle.make }} {{ vehicle.model }}</span>
@@ -46,8 +53,9 @@
               <span>Available until {{ vehicle.available_until|time }}</span>
             {% endif %}
           </div>
-        </div>
+        </li>
       {% endfor %}
+      </ul> <!-- pod-vehicles -->
     </div>
   {% endfor %}
   

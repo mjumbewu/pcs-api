@@ -39,6 +39,7 @@ class LoginHtmlHandler (LoginHandler):
 
 class CookiesHandler (webapp.RequestHandler):
     def get(self):
+        from pcs.data.session import Session
         session = Session.FromRequest(self.request)
         
         self.response.out.write('<html><textarea>')

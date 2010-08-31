@@ -3,6 +3,7 @@
 <html>
   <head>
     <title>PhillyCarShare -{% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="/styles/pcs-basic-html.css" />
   </head>
   
   <body>
@@ -13,8 +14,8 @@
     {% else %}
       
       <h1>You must be logged in</h1>
-      <p>Check your username and password and 
-        <a href="/login.html">try again</a>.</p>
+      <p>{{ error_msg }}</p>
+      <p>Please <a href="/login.html">try again</a>.</p>
       
     {% endif %}
   </body>

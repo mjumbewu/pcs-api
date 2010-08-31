@@ -6,8 +6,10 @@ import HTMLParser as htmlparserlib
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 
+from pcs.input.wsgi import WsgiParameterError
 from pcs.source.screenscrape.session import SessionScreenscrapeSource
 from pcs.source.screenscrape.availability import AvailabilityScreenscrapeSource
+from pcs.source.screenscrape.locations import LocationsScreenscrapeSource
 from pcs.view.html.availability import AvailabilityHtmlView
 
 class AvailabilityHandler (webapp.RequestHandler):
@@ -17,10 +19,13 @@ class AvailabilityHandler (webapp.RequestHandler):
     def __init__(self,
                  session_source,
                  availability_source,
+                 location_source,
                  availability_view):
         super(AvailabilityHandler, self).__init__()
         
         self.session_source = session_source
+        self.availability_source = availability_source
+        self.location_source = location_source
         self.availability_view = availability_view
     
     def get_session_id(self):
@@ -40,20 +45,35 @@ class AvailabilityHandler (webapp.RequestHandler):
         
         return session
     
-    def get_available_vehicles(self, start_time, end_time):
-        # This is a stub
-        return []
+    def get_available_vehicles(self, sessionid, locationid, start_time, end_time):
+        return self.availability_source.get_available_vehicles_near(sessionid, locationid, start_time, end_time)
     
-    def get_location(self):
-        # This is a stub
-        'My Current Location'
+    def get_location_id(self):
+        locationid = self.request.get('location_id')
+        if locationid is not None:
+            return locationid
+        
+        latitude = self.request.get('latitude')
+        longitude = self.request.get('longitude')
+        if latitude is not None and longitude is not None:
+            return (latitude, longitude)
+        
+        raise WsgiParameterError('No valid location given')
+    
+    def get_location(self, sessionid, locationid):
+        if isinstance(locationid, (basestring, int)):
+            location = self.location_source.get_location_profile(sessionid, locationid)
+        else:
+            location = self.location_source.get_custom_location('My Current Location', locationid)
+        
+        return location
     
     def get_time_range(self):
         import datetime
         start_time_str = self.request.get('start_time')
         end_time_str = self.request.get('end_time')
         
-        now_time = datetime.datetime.now()
+        now_time = datetime.datetime.now() + datetime.timedelta(minutes=15)
         if start_time_str:
             start_time = datetime.datetime.fromtimestamp(int(start_time_str))
         else:
@@ -70,19 +90,18 @@ class AvailabilityHandler (webapp.RequestHandler):
     def get(self):
         session = self.get_session()
         start_time, end_time = self.get_time_range()
-        location = self.get_location()
-        vehicles = self.get_available_vehicles(start_time, end_time)
+        locationid = self.get_location_id()
+        
+        sessionid = session.id if session is not None else 0
+        location = self.get_location(sessionid, locationid)
+        
+        vehicles = self.get_available_vehicles(sessionid, locationid, start_time, end_time) if session else []
         
         response_body = self.availability_view.get_vehicle_availability(
             session, start_time, end_time, vehicles, location)
         
         self.response.out.write(response_body);
         self.response.set_status(200);
-        
-        self.response.out.write('<!-- %s vehicles\n' % len(vehicles))
-        for vehicle in vehicles:
-            self.response.out.write('%s %s\n' % (vehicle.pod.name, vehicle.model))
-        self.response.out.write('-->')
     
     def post(self):
         self.get()
@@ -92,6 +111,7 @@ class AvailabilityHtmlHandler (AvailabilityHandler):
         super(AvailabilityHtmlHandler, self).__init__(
             SessionScreenscrapeSource(),
             AvailabilityScreenscrapeSource(),
+            LocationsScreenscrapeSource(),
             AvailabilityHtmlView())
     
 

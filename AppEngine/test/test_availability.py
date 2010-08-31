@@ -2,8 +2,10 @@ import unittest
 import datetime
 import new
 
+from pcs.input.wsgi import WsgiParameterError
 from pcs.input.wsgi.availability import AvailabilityHandler
 from pcs.source import _AvailabilitySourceInterface
+from pcs.source import _LocationsSourceInterface
 from pcs.source import _SessionSourceInterface
 from pcs.view import _AvailabilityViewInterface
 from util.testing import patch
@@ -34,6 +36,10 @@ class AvailabilityHandlerTest (unittest.TestCase):
             def get_available_vehicles_near(self, sessionid, location, start_time, end_time):
                 pass
         
+        @Stub(_LocationsSourceInterface)
+        class StubLocationsSource (object):
+            pass
+        
         # A generator for a representation (view) of the availability information
         @Stub(_AvailabilityViewInterface)
         class StubAvailabilityView (object):
@@ -46,10 +52,12 @@ class AvailabilityHandlerTest (unittest.TestCase):
         # The system under test
         self.session_source = StubSessionSource()
         self.availability_source = StubAvailabilitySource()
+        self.location_source = StubLocationsSource()
         self.availability_view = StubAvailabilityView()
         
         self.handler = AvailabilityHandler(session_source=self.session_source, 
             availability_source=self.availability_source,
+            location_source=self.location_source,
             availability_view=self.availability_view)
         self.handler.request = StubRequest()
         self.handler.response = StubResponse()
@@ -81,6 +89,7 @@ class AvailabilityHandlerTest (unittest.TestCase):
         # ...the times and session cookies are as follows:
         self.handler.request['start_time'] = 100
         self.handler.request['end_time'] = 10000
+        self.handler.request['location_id'] = 12345
         self.handler.request.cookies = {
           'sid':'5',
           'suser':'4600'
@@ -90,6 +99,10 @@ class AvailabilityHandlerTest (unittest.TestCase):
         @patch(self.session_source)
         def get_existing_session(self, userid, sessionid):
             return None
+        
+        @patch(self.location_source)
+        def get_location_profile(self, sessionid, locationid):
+            pass
         
         # When...
         self.handler.get()
@@ -105,6 +118,7 @@ class AvailabilityHandlerTest (unittest.TestCase):
         # ...the time and session cookies are as follows:
         self.handler.request['start_time'] = 100
         self.handler.request['end_time'] = 10000
+        self.handler.request['location_id'] = 12345
         self.handler.request.cookies = {
           'sid':'5',
           'suser':'4600'
@@ -119,6 +133,10 @@ class AvailabilityHandlerTest (unittest.TestCase):
                 name = "Jim Jacobsen"
             return StubSession()
         
+        @patch(self.location_source)
+        def get_location_profile(self, sessionid, locationid):
+            pass
+        
         # When...
         self.handler.get()
         
@@ -126,8 +144,43 @@ class AvailabilityHandlerTest (unittest.TestCase):
         response = self.handler.response.out.getvalue()
         self.assertEqual(response, "Success")
     
+    def testLocationIdOfZeroShouldBeValid(self):
+        """Receiving a request with a location id of 0 should not raise an exception"""
+        
+        # Given...
+        self.handler.request['start_time'] = 100
+        self.handler.request['end_time'] = 10000
+        self.handler.request['location_id'] = 0
+        self.handler.request.cookies = {
+          'sid':'5',
+          'suser':'4600'
+        }
+        
+        # ...and the session source recognizes the cookies:
+        @patch(self.session_source)
+        def get_existing_session(self, userid, sessionid):
+            class StubSession (object):
+                id = 5
+                user = '4600'
+                name = "Jim Jacobsen"
+            return StubSession()
+        
+        @patch(self.location_source)
+        def get_location_profile(self, sessionid, locationid):
+            pass
+        
+        # When...
+        try:
+            self.handler.get()
+        
+        # Then...
+        except WsgiParameterError:
+            self.fail('No parameter exception should have been raised.')
+        
     def testShouldRespondWithVehicleDataFromTheAvailabilitySource(self):
         pass
+    
+        
 
 from pcs.source.screenscrape.availability import AvailabilityScreenscrapeSource
 class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
@@ -216,182 +269,38 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
             return StubConnection()
         
         # When...
-        vehicles = source.get_available_vehicles_near('','','','')
+        stime = etime = datetime.datetime.now()
+        vehicles = source.get_available_vehicles_near('','',stime,etime)
         
         # Then...
         self.assertEqual([v.model for v in vehicles], ['Tacoma Pickup','Prius Liftback','Honda Element','Prius Liftback'])
-
-from pcs.view.html.availability import AvailabilityHtmlView
-class AvailabilityHtmlViewTest (unittest.TestCase):
-    def testShouldReturnHtmlContentReflectingVehicleAvailability(self):
-        """The HTML view returned by get_vehicle_availability should reflect the data given."""
-        
-        # Given...
-        class StubSession (object):
-            pass
-        
-        class StubPod (object):
-            pass
-        
-        class StubVehicle (object):
-            pass
-        
-        session = StubSession()
-        
-        p1 = StubPod(); p1.id = 1; p1.name = "Pod 1"
-        p2 = StubPod(); p2.id = 2; p2.name = "Pod 2"
-        
-        v1 = StubVehicle()
-        v1.id = 3
-        v1.pod = p1
-        v1.availability = 1
-        v1.make = 'Toyota'
-        v1.model = 'Prius'
-        
-        v2 = StubVehicle()
-        v2.id = 4
-        v2.pod = p1
-        v2.availability = 0.5
-        v2.make = 'Toyota'
-        v2.model = 'Prius'
-        v2.available_at = datetime.datetime.fromtimestamp(4000)
-        
-        v3 = StubVehicle()
-        v3.id = 5
-        v3.pod = p1
-        v3.availability = 1
-        v3.make = 'Toyota'
-        v3.model = 'Prius'
-        
-        v4 = StubVehicle()
-        v4.id = 6
-        v4.pod = p2
-        v4.availability = 0
-        v4.make = 'Toyota'
-        v4.model = 'Prius'
-        
-        start_time = datetime.datetime.fromtimestamp(0)
-        end_time = datetime.datetime.fromtimestamp(10000)
-        
-        view = AvailabilityHtmlView()
-        
-        # When...
-        response_body = view.get_vehicle_availability(session, start_time, end_time, 
-            [v1,v2,v3,v4], 'My Current Location')
-        
-        # Then...
-        expected_body = \
-"""<!DOCTYPE html>
-
-<html>
-  <head>
-    <title>PhillyCarShare - Available Cars </title>
-  </head>
-  
-  <body>
     
-      
-      
-  
-  <style>
-    .available-vehicle {
-      border: 1px solid green;
-    }
-    .unavailable-vehicle {
-      border: 1px solid red;
-    }
-    .partially-available-vehicle {
-      border: 1px solid yellow;
-    }
-  </style>
-  
-  <h1>Available Cars</h1>
-  
-  <div class="availability-options">
-    <span>Showing cars near My Current Location</span>
-    <span>from midnight Thu Jan 01 1970</span>
-    <span>until 2:46 a.m. Thu Jan 01 1970</span>
-  </div>
-  
-  
-  
-    <div class="available-pod">
-      <div class="pod-name">Pod 1</div>
-      
+    def testTimeQueryShouldReflectGivenDatetimes(self):
+        source = AvailabilityScreenscrapeSource()
+        starttime = datetime.datetime(2003,1,2,1,15)
+        endtime = datetime.datetime(2003,1,2,1,30)
         
-          <div class="available-vehicle">
+        query = source.get_time_query(starttime, endtime)
         
-          
-          <span>Toyota Prius</span>
-          <div class="vehicle-stipulations">
-            
-            
-          </div>
-        </div>
-      
-        
-          <div class="partially-available-vehicle">
-        
-          
-          <span>Toyota Prius</span>
-          <div class="vehicle-stipulations">
-            
-              <span>Available at 1:06 a.m.</span>
-            
-            
-          </div>
-        </div>
-      
-        
-          <div class="available-vehicle">
-        
-          
-          <span>Toyota Prius</span>
-          <div class="vehicle-stipulations">
-            
-            
-          </div>
-        </div>
-      
-    </div>
-  
-    <div class="available-pod">
-      <div class="pod-name">Pod 2</div>
-      
-        
-          <div class="unavailabe-vehicle">
-        
-          
-          <span>Toyota Prius</span>
-          <div class="vehicle-stipulations">
-            
-            
-          </div>
-        </div>
-      
-    </div>
-  
-  
-
-      
+        self.assertEqual(query, "start_date=1/2/2003&start_time=4500&end_date=1/2/2003&end_time=5400")
     
-  </body>
-</html>
-
-"""
-        response_body = response_body.replace('<','&lt;')
-        response_body = response_body.replace('>','&gt;')
-        expected_body = expected_body.replace('<','&lt;')
-        expected_body = expected_body.replace('>','&gt;')
-        
-        self.assertEqual(response_body, expected_body)
-
 from pcs.input.wsgi.availability import AvailabilityHtmlHandler
 class AvailabilityHtmlHandlerTest (unittest.TestCase):
     def testShouldBeInitializedWithHtmlViewsAndScreenscrapeSources(self):
         handler = AvailabilityHtmlHandler()
         
+        from pcs.source.screenscrape.session import SessionScreenscrapeSource
+        from pcs.source.screenscrape.locations import LocationsScreenscrapeSource
+        from pcs.source.screenscrape.availability import AvailabilityScreenscrapeSource
+        from pcs.view.html.availability import AvailabilityHtmlView
+        
         self.assertEqual(handler.availability_view.__class__.__name__,
                          AvailabilityHtmlView.__name__)
+        self.assertEqual(handler.availability_source.__class__.__name__,
+                         AvailabilityScreenscrapeSource.__name__)
+        self.assertEqual(handler.location_source.__class__.__name__,
+                         LocationsScreenscrapeSource.__name__)
+        self.assertEqual(handler.session_source.__class__.__name__,
+                         SessionScreenscrapeSource.__name__)
 
 

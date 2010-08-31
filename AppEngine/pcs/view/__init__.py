@@ -8,6 +8,14 @@ class _SessionViewInterface (object):
     def get_session_overview(self, session):
         raise NotImplementedError()
 
+class _LocationsViewInterface (object):
+    def get_locations(self, session, locations):
+        raise NotImplementedError()
+    
 class _AvailabilityViewInterface (object):
     def get_vehicle_availability(self, session, start_time, end_time, vehicles, location):
+        raise NotImplementedError()
+
+class _ErrorViewInterface (object):
+    def get_error(self, error_code, error_msg):
         raise NotImplementedError()

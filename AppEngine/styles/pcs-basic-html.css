@@ -1,0 +1,29 @@
+ul {
+  border: 1px solid #888;
+  list-style-type: none;
+  margin: 0px;
+  padding: 0px;
+}
+
+ul > li {
+  font-weight: bold;
+  border-top: 1px solid #ccc;
+  height: 2.5em;
+  margin: 0px;
+  padding: 0px;
+}
+
+ul > li:first-child {
+  border: none
+}
+
+ul > li:hover {
+  background-color: #ddd;
+}
+
+h2 {
+  font-size: 1em;
+  font-weight: normal;
+  margin-top: 1em;
+  margin-bottom: 0px;
+}
