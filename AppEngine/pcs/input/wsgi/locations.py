@@ -43,11 +43,11 @@ class LocationsHandler (webapp.RequestHandler):
         
         return session
     
-    def generate_error(self, exception):
+    def generate_error(self, error):
         from pcs.view.html.error import ErrorHtmlView
         error_view = ErrorHtmlView()
         
-        return error_view.get_error(None, type(exception).__name__ + ': ' + str(exception))
+        return error_view.get_error(None, type(error).__name__ + ': ' + str(error))
     
     def get(self):
         try:

@@ -4,6 +4,10 @@ import StringIO
 from util.testing import Stub
 from util.testing import patch
 
+from pcs.source import SessionLoginError
+from pcs.source import SessionExpiredError
+
+from pcs.source.screenscrape.pcsconnection import PcsConnection
 from pcs.source.screenscrape.session import SessionScreenscrapeSource
 class SessionScreenscrapeSourceTest (unittest.TestCase):
     def testShouldThinkSessionDocumentIsValidIfTitleIsCorrect(self):
@@ -30,10 +34,14 @@ class SessionScreenscrapeSourceTest (unittest.TestCase):
         @patch(source)
         def login_to_pcs(self, conn, userid, password):
             return ("<html><head><title>Please Login</title></head><body></body></html>", {})
-            
-        session = source.get_new_session('uid', 'pass')
         
-        self.assert_(session is None)
+        try:
+            session = source.get_new_session('uid', 'pass')
+        
+        except SessionLoginError:
+            return
+        
+        self.fail('Should have raised SessionLoginError')
     
     def testShouldCreateNewSessionAccordingToContentInValidSessionDocument(self):
         """Expected session is returned from a successful login."""
@@ -69,10 +77,9 @@ class SessionScreenscrapeSourceTest (unittest.TestCase):
     def testShouldReturnExpectedBodyTextFromConnectionWhenLoggingIn(self):
         """Logging in will get the expected response from the connection"""
         source = SessionScreenscrapeSource()
+        @Stub(PcsConnection)
         class StubConnection (object):
-            def request(self, method, path, data='', headers={}):
-                pass
-            def getresponse(self):
+            def request(self, url, method, data, headers):
                 from StringIO import StringIO
                 response = StringIO('Body Text')
                 response.getheaders = lambda: {'h1':1,'h2':2}
@@ -87,10 +94,11 @@ class SessionScreenscrapeSourceTest (unittest.TestCase):
     def testShouldSendCookiesToAndReturnExpectedBodyTextFromConnectionWhenReconnectingToSession(self):
         """Resuming session will get expected response from connection"""
         source = SessionScreenscrapeSource()
+        @Stub(PcsConnection)
         class StubConnection (object):
-            def request(self, method, path, data='', headers={}):
+            def request(self, url, method, data, headers):
                 self.requestheaders = headers
-            def getresponse(self):
+                
                 from StringIO import StringIO
                 response = StringIO('Body Text')
                 response.getheaders = lambda: {'h1':1,'h2':2}
@@ -103,12 +111,29 @@ class SessionScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(body, 'Body Text')
         self.assertEqual(headers, {'h1':1,'h2':2})
     
+    def testShouldNotGetStuckOnTheCallToConnectionDotRequest(self):
+        """Resuming session will get expected response from connection"""
+        source = SessionScreenscrapeSource()
+        @Stub(PcsConnection)
+        class StubConnection (object):
+            def request(self, url, method, data, headers):
+                self.requestheaders = headers
+                
+                from StringIO import StringIO
+                response = StringIO('Body Text')
+                response.getheaders = lambda: {'h1':1,'h2':2}
+                return response
+        conn = StubConnection()
+        
+        body, headers = source.reconnect_to_pcs(conn, '1234567')
+    
     def testShouldCreateNewSessionWhenGivenValidUserIdAndPassword(self):
         # Given...
+        @Stub(PcsConnection)
         class StubConnection (object):
-            def request(self, method, path, data='', headers={}):
+            def request(self, url, method, data, headers):
                 self.requestheaders = headers
-            def getresponse(self):
+                
                 from StringIO import StringIO
                 response = StringIO('<html><head><title>My Message Manager</title></head><body><p>Jalani Bakari, you are signed in (Residential)!</body></html>')
                 response.getheaders = lambda: {'set-cookie':'sid=12345abcde'}
@@ -130,10 +155,11 @@ class SessionScreenscrapeSourceTest (unittest.TestCase):
     
     def testShouldRetrieveCurrentSessionWhenGivenValidSessionId(self):
         # Given...
+        @Stub(PcsConnection)
         class StubConnection (object):
-            def request(self, method, path, data='', headers={}):
+            def request(self, url, method, data, headers):
                 self.requestheaders = headers
-            def getresponse(self):
+                
                 from StringIO import StringIO
                 response = StringIO('<html><head><title>Reservation Manager</title></head><body><p>Jalani Bakari, you are signed in (Residential)!</body></html>')
                 response.getheaders = lambda: {}
@@ -152,6 +178,23 @@ class SessionScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(session.user, 'valid_user')
         self.assertEqual(session.name, 'Jalani Bakari')
         self.assertEqual(session.id, '12345abcde')
+    
+    def testShouldRaiseErrorWhenRetrievingExistingSessionFails(self):
+        # Given...
+        source = SessionScreenscrapeSource()
+        @patch(source)
+        def reconnect_to_pcs(self, conn, sessionid):
+            return ("<html><head><title>Please Login</title></head><body></body></html>", {})
+        
+        # When...
+        try:
+            session = source.get_existing_session('valid_user', 'expiredsession12345abcde')
+        
+        # Then...
+        except SessionExpiredError:
+            return
+        
+        self.fail('Should have raised SessionExpiredError')
 
 from pcs.input.wsgi.session import SessionHandler
 from pcs.source import _SessionSourceInterface

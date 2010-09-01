@@ -7,6 +7,7 @@ from pcs.input.wsgi.locations import LocationsHandler
 from pcs.source import _LocationsSourceInterface
 from pcs.source import _SessionSourceInterface
 from pcs.source.screenscrape import ScreenscrapeParseError
+from pcs.source.screenscrape.pcsconnection import PcsConnection
 from pcs.view import _LocationsViewInterface
 from util.testing import patch
 from util.testing import Stub
@@ -88,8 +89,8 @@ class LocationHandlerTest (unittest.TestCase):
         
         self.handler._saved_exception = None
         @patch(self.handler)
-        def generate_error(self, exception):
-            self._saved_exception = exception
+        def generate_error(self, error):
+            self._saved_exception = error
             return 'Failure'
         
         # When...
@@ -104,10 +105,9 @@ from pcs.source.screenscrape.locations import LocationsScreenscrapeSource
 class LocationsScreenscrapeSourceTest (unittest.TestCase):
     def testShouldConstructExpectedLocationProfilesFromPcsConnectionContent(self):
         # Given...
+        @Stub(PcsConnection)
         class StubConnection (object):
-            def request(self, method, path, data, headers):
-                pass
-            def getresponse(self):
+            def request(self, url, method, data, headers):
                 import StringIO
                 response = StringIO.StringIO(r'''<table><thead><tr id="dpref_driver_pk__preferences_pk__driver_locations_pk__header"><th>Default</th><th>Name</th><th>Description</th><th></th></tr></thead><tbody id="dpref_driver_pk__preferences_pk__driver_locations_pk__noprofiles" style="display: none; "><tr><td colspan="4">You have no saved locations.</td></tr></tbody><tbody id="dpref_driver_pk__preferences_pk__driver_locations_pk__profiles"><tr class=""><td><input type="radio" class="profile_default" value="18065565" checked="checked"></td><td class="profile_name">My House</td><td class="profile_descr"></td><td><a href="javascript:void(0);" class="profile_name">Edit</a>&nbsp;&nbsp;<a href="javascript:void(0);" class="delete_profile">Delete</a></td></tr><tr class="zebra"><td><input type="radio" class="profile_default" value="25782103"></td><td class="profile_name">My Job</td><td class="profile_descr">Walnut St &amp; S 33rd St, Philadelphia, PA 19104, USA</td><td><a href="javascript:void(0);" class="profile_name">Edit</a>&nbsp;&nbsp;<a href="javascript:void(0);" class="delete_profile">Delete</a></td></tr><tr class=""><td><input type="radio" class="profile_default" value="17966898"></td><td class="profile_name">Sprucemont</td><td class="profile_descr"></td><td><a href="javascript:void(0);" class="profile_name">Edit</a>&nbsp;&nbsp;<a href="javascript:void(0);" class="delete_profile">Delete</a></td></tr><tr class="zebra"><td><input type="radio" class="profile_default" value="25618502"></td><td class="profile_name">UPenn Library</td><td class="profile_descr">Walnut St &amp; S 36th St, Philadelphia, PA 19104, USA</td><td><a href="javascript:void(0);" class="profile_name">Edit</a>&nbsp;&nbsp;<a href="javascript:void(0);" class="delete_profile">Delete</a></td></tr></tbody><tbody id="dpref_driver_pk__preferences_pk__driver_locations_pk__favourites"><tr class=""><td><input type="radio" class="profile_default" value="0"></td><td colspan="2">Favorites</td><td></td></tr><tr class="zebra"><td><input type="hidden" value="2041034"></td><td colspan="2">&nbsp;&nbsp;47th &amp; Baltimore - Scion xB</td><td><a href="javascript:void(0);" class="delete_favourite">Delete</a></td></tr><tr class=""><td><input type="hidden" value="4756298"></td><td colspan="2">&nbsp;&nbsp;47th &amp; Baltimore - Sienna Minivan</td><td><a href="javascript:void(0);" class="delete_favourite">Delete</a></td></tr></tbody></table>''')
                 response.getheaders = lambda: {'h1':1}
@@ -128,10 +128,9 @@ class LocationsScreenscrapeSourceTest (unittest.TestCase):
     
     def testPreferencesResponseShouldBeAsExpectedFromConnection(self):
         # Given...
+        @Stub(PcsConnection)
         class StubConnection (object):
-            def request(self, method, path, data, headers):
-                pass
-            def getresponse(self):
+            def request(self, url, method, data, headers):
                 import StringIO
                 response = StringIO.StringIO('MyBody')
                 response.getheaders = lambda: {'h1':1}
@@ -148,31 +147,6 @@ class LocationsScreenscrapeSourceTest (unittest.TestCase):
         # Then...
         self.assertEqual(response_body, 'MyBody')
         self.assertEqual(response_headers, {'h1':1})
-    
-    def testShouldReturnFailureDocumentIfPrefsRequestGoesWrong(self):
-        # Given...
-        class MyCustomException (Exception):
-            pass
-        
-        class StubConnection (object):
-            def request(self, method, path, data, headers):
-                pass
-            def getresponse(self):
-                raise MyCustomException()
-        
-        conn = StubConnection()
-        source = LocationsScreenscrapeSource()
-        
-        # When...
-        try:
-            response_body, headers = \
-                source.get_preferences_response(conn=conn, sessionid='abc')
-        
-        # Then...
-        except MyCustomException:
-            self.fail('Exception should have been caught and handled')
-        
-        self.assertEqual(response_body, LocationsScreenscrapeSource.SIMPLE_FAILURE_DOCUMENT)
     
     def testShouldParseLocationsFromResponseBody(self):
         # Given...
@@ -202,10 +176,9 @@ class LocationsScreenscrapeSourceTest (unittest.TestCase):
     
     def testShouldReturnRequestedLocationProfile(self):
         # Given...
+        @Stub(PcsConnection)
         class StubConnection (object):
-            def request(self, method, path, data, headers):
-                pass
-            def getresponse(self):
+            def request(self, url, method, data, headers):
                 import StringIO
                 response = StringIO.StringIO(r'''<table><thead><tr id="dpref_driver_pk__preferences_pk__driver_locations_pk__header"><th>Default</th><th>Name</th><th>Description</th><th></th></tr></thead><tbody id="dpref_driver_pk__preferences_pk__driver_locations_pk__noprofiles" style="display: none; "><tr><td colspan="4">You have no saved locations.</td></tr></tbody><tbody id="dpref_driver_pk__preferences_pk__driver_locations_pk__profiles"><tr class=""><td><input type="radio" class="profile_default" value="18065565" checked="checked"></td><td class="profile_name">My House</td><td class="profile_descr"></td><td><a href="javascript:void(0);" class="profile_name">Edit</a>&nbsp;&nbsp;<a href="javascript:void(0);" class="delete_profile">Delete</a></td></tr><tr class="zebra"><td><input type="radio" class="profile_default" value="25782103"></td><td class="profile_name">My Job</td><td class="profile_descr">Walnut St &amp; S 33rd St, Philadelphia, PA 19104, USA</td><td><a href="javascript:void(0);" class="profile_name">Edit</a>&nbsp;&nbsp;<a href="javascript:void(0);" class="delete_profile">Delete</a></td></tr><tr class=""><td><input type="radio" class="profile_default" value="17966898"></td><td class="profile_name">Sprucemont</td><td class="profile_descr"></td><td><a href="javascript:void(0);" class="profile_name">Edit</a>&nbsp;&nbsp;<a href="javascript:void(0);" class="delete_profile">Delete</a></td></tr><tr class="zebra"><td><input type="radio" class="profile_default" value="25618502"></td><td class="profile_name">UPenn Library</td><td class="profile_descr">Walnut St &amp; S 36th St, Philadelphia, PA 19104, USA</td><td><a href="javascript:void(0);" class="profile_name">Edit</a>&nbsp;&nbsp;<a href="javascript:void(0);" class="delete_profile">Delete</a></td></tr></tbody><tbody id="dpref_driver_pk__preferences_pk__driver_locations_pk__favourites"><tr class=""><td><input type="radio" class="profile_default" value="0"></td><td colspan="2">Favorites</td><td></td></tr><tr class="zebra"><td><input type="hidden" value="2041034"></td><td colspan="2">&nbsp;&nbsp;47th &amp; Baltimore - Scion xB</td><td><a href="javascript:void(0);" class="delete_favourite">Delete</a></td></tr><tr class=""><td><input type="hidden" value="4756298"></td><td colspan="2">&nbsp;&nbsp;47th &amp; Baltimore - Sienna Minivan</td><td><a href="javascript:void(0);" class="delete_favourite">Delete</a></td></tr></tbody></table>''')
                 response.getheaders = lambda: {'h1':1}

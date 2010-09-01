@@ -27,3 +27,9 @@ class _LocationsSourceInterface (object):
 class _VehicleInfoSourceInterface (object):
     def get_vehicle_information(self, sessionid, vehicleid):
         raise NotImplementedError()
+
+class SessionLoginError (Exception):
+    pass
+
+class SessionExpiredError (Exception):
+    pass

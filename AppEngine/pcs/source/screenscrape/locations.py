@@ -1,4 +1,3 @@
-import httplib
 import re
 import urllib
 import Cookie as cookielib
@@ -13,6 +12,7 @@ from pcs.data.location import LocationProfile
 from pcs.data.location import LocationCoordinate
 from pcs.source import _LocationsSourceInterface
 from pcs.source.screenscrape import ScreenscrapeParseError
+from pcs.source.screenscrape.pcsconnection import PcsConnection
 from util.abstract import override
 from util.BeautifulSoup import BeautifulSoup
 
@@ -23,26 +23,18 @@ class LocationsScreenscrapeSource (_LocationsSourceInterface):
     """
     SIMPLE_FAILURE_DOCUMENT = "<html><head><title>Please Login</title></head><body></body></html>"
     
-    def __init__(self, host="reservations.phillycarshare.org",
-                 path="/my_info.php?mv_action=dpref&pk=6285506&mvssl"):
+    def __init__(self, url="http://reservations.phillycarshare.org/my_info.php?mv_action=dpref&pk=6285506&mvssl"):
         super(LocationsScreenscrapeSource, self).__init__()
-        self.__host = host
-        self.__prefs_path = path
+        self.__url = url
     
     def create_connection(self):
-        conn = httplib.HTTPConnection(self.__host)
-        conn._follow_redirects = True
+        conn = PcsConnection()
         return conn
     
     def get_preferences_response(self, conn, sessionid):
         headers = {
             'Cookie': 'sid=%s' % sessionid}
-        conn.request('GET', self.__prefs_path, {}, headers)
-        try:
-            response = conn.getresponse()
-        except:
-            return (self.SIMPLE_FAILURE_DOCUMENT, {})
-        
+        response = conn.request(self.__url, 'GET', {}, headers)
         return (response.read(), response.getheaders())
     
     def parse_locations_from_preferences_body(self, response_body):
@@ -179,9 +171,6 @@ class LocationsScreenscrapeSource (_LocationsSourceInterface):
                 vehicles.append(vehicle)
         
         return vehicles
-    
-    def create_host_connection(self):
-        return httplib.HTTPConnection(self.__host)
     
     @override
     def get_available_vehicles_near(self, sessionid, location, start_time, end_time):

@@ -5,6 +5,10 @@ import HTMLParser as htmlparserlib
 
 from pcs.data.session import Session
 from pcs.source import _SessionSourceInterface
+from pcs.source import SessionExpiredError
+from pcs.source import SessionLoginError
+from pcs.source.screenscrape import ScreenscrapeParseError
+from pcs.source.screenscrape.pcsconnection import PcsConnection
 from util.abstract import override
 
 class SessionScreenscrapeSource (_SessionSourceInterface):
@@ -31,18 +35,12 @@ class SessionScreenscrapeSource (_SessionSourceInterface):
         parameters = urllib.urlencode({
             'login[name]': userid,
             'login[password]': password})
-        conn.request("POST", self.__path,
-            parameters)
-        conn._follow_redirects = True
-        
-        try:
-            response = conn.getresponse()
-        except:
-            return (self.SIMPLE_FAILURE_DOCUMENT, [])
+        response = conn.request('https://' + self.__host + self.__path, "POST",
+            parameters, {})
         
         return (response.read(), response.getheaders())
     
-    def reconnect_to_pcs(self, conn, session_id):
+    def reconnect_to_pcs(self, conn, sessionid):
         """
         Attempts to load a session from the connection with the given session
         id.
@@ -51,15 +49,9 @@ class SessionScreenscrapeSource (_SessionSourceInterface):
           body should be identifiable as an invalid session.
         """
         headers = {
-            'Cookie': 'sid=%s' % session_id}
-        conn.request("POST", self.__path,
+            'Cookie': 'sid=%s' % sessionid}
+        response = conn.request('http://' + self.__host + self.__path, "POST", 
             {}, headers)
-        conn._follow_redirects = True
-        
-        try:
-            response = conn.getresponse()
-        except:
-            return (self.SIMPLE_FAILURE_DOCUMENT, [])
         
         return (response.read(), response.getheaders())
     
@@ -100,7 +92,7 @@ class SessionScreenscrapeSource (_SessionSourceInterface):
         elif parser.title == 'Reservation Manager': # Subsequent accesses
             return True
         else:
-            raise SessionParseError('Unknown session document title: %r' % parser.title)
+            raise ScreenscrapeParseError('Unknown session document title: %r' % parser.title)
     
     def create_session_from_login_response(self, suser, response_body, response_headers):
         cookie = cookielib.SimpleCookie()
@@ -119,7 +111,7 @@ class SessionScreenscrapeSource (_SessionSourceInterface):
         return Session(sid, suser, parser.fullname)
     
     def create_host_connection(self):
-        conn = httplib.HTTPSConnection(self.__host)
+        conn = PcsConnection()
         return conn
     
     @override
@@ -141,7 +133,7 @@ class SessionScreenscrapeSource (_SessionSourceInterface):
             return self.create_session_from_login_response(
                 userid, pcs_login_body, pcs_login_headers)
         else:
-            return None
+            raise SessionLoginError('Incorrect user id/password combinantion.')
     
     @override
     def get_existing_session(self, userid, sessionid):
@@ -156,7 +148,7 @@ class SessionScreenscrapeSource (_SessionSourceInterface):
             return self.create_session_from_reconnect_response(
                 userid, sessionid, pcs_reconnect_body, pcs_reconnect_headers)
         else:
-            return None
+            raise SessionExpiredError('Your session has expired.')
 
 class SessionParseError (Exception):
     pass
