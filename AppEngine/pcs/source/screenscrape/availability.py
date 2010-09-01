@@ -79,7 +79,6 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
         connector = '&' if '?' in self.__path else '?'
         conn.request("GET", self.__path + connector + query,
             {}, headers)
-        conn._follow_redirects = True
         
         try:
             response = conn.getresponse()

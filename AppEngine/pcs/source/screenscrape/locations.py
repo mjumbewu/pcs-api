@@ -107,7 +107,6 @@ class LocationsScreenscrapeSource (_LocationsSourceInterface):
             'Cookie': 'sid=%s' % sessionid}
         conn.request("POST", self.__path,
             {}, headers)
-        conn._follow_redirects = True
         
         try:
             response = conn.getresponse()
