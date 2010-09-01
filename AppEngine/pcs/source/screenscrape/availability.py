@@ -17,6 +17,7 @@ from pcs.source import _AvailabilitySourceInterface
 from pcs.source.screenscrape import ScreenscrapeParseError
 from util.abstract import override
 from util.BeautifulSoup import BeautifulSoup
+from util.TimeZone import Eastern
 
 class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
     """
@@ -26,7 +27,7 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
     SIMPLE_FAILURE_DOCUMENT = "<html><head><title>Please Login</title></head><body></body></html>"
     
     def __init__(self, host="reservations.phillycarshare.org",
-                 path="/results.php?reservation_id=0&flexible=on&show_everything=off&offset=0"):
+                 path="/results.php?reservation_id=0&flexible=on&show_everything=on&offset=0"):
         super(AvailabilityScreenscrapeSource, self).__init__()
         self.__host = host
         self.__path = path
@@ -120,6 +121,84 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
         pod = Pod(pod_name)
         return pod, pod_dist
     
+    def assign_vehicle_availability_stipulation(self, vehicle, stipulation):
+        from_pattern = r'Available from (?P<hour>[0-9]+):(?P<minute>[0-9]+) (?P<midi>[ap])m on (?P<month>[0-9]+)/(?P<day>[0-9]+)$'
+        until_pattern = r'Available until (?P<hour>[0-9]+):(?P<minute>[0-9]+) (?P<midi>[ap])m on (?P<month>[0-9]+)/(?P<day>[0-9]+)$'
+        between_pattern = r'Available from (?P<hour1>[0-9]+):(?P<minute1>[0-9]+) (?P<midi1>[ap])m on (?P<month1>[0-9]+)/(?P<day1>[0-9]+) to (?P<hour2>[0-9]+):(?P<minute2>[0-9]+) (?P<midi2>[ap])m on (?P<month2>[0-9]+)/(?P<day2>[0-9]+)$'
+        
+        from_match = re.match(from_pattern, stipulation)
+        if from_match is not None:
+            hour = int(from_match.group('hour'))
+            minute = int(from_match.group('minute'))
+            midi = from_match.group('midi')
+            if midi == 'p':
+                hour += 12
+            month = int(from_match.group('month'))
+            day = int(from_match.group('day'))
+            
+            now = datetime.datetime.now(Eastern)
+            
+            available_from = datetime.datetime(now.year, month, day, hour, minute, tzinfo=Eastern)
+            if available_from < now:
+                available_from = available_from.replace(year=now.year+1)
+            
+            vehicle.available_from = available_from
+            return
+        
+        until_match = re.match(until_pattern, stipulation)
+        if until_match is not None:
+            hour = int(until_match.group('hour'))
+            minute = int(until_match.group('minute'))
+            midi = until_match.group('midi')
+            if midi == 'p':
+                hour += 12
+            month = int(until_match.group('month'))
+            day = int(until_match.group('day'))
+            
+            now = datetime.datetime.now(Eastern)
+            
+            available_until = datetime.datetime(now.year, month, day, hour, minute, tzinfo=Eastern)
+            if available_until < now:
+                available_until = available_until.replace(year=now.year+1)
+            
+            vehicle.available_until = available_until
+            return
+        
+        between_match = re.match(between_pattern, stipulation)
+        if between_match is not None:
+            # from...
+            hour = int(between_match.group('hour1'))
+            minute = int(between_match.group('minute1'))
+            midi = between_match.group('midi1')
+            if midi == 'p':
+                hour += 12
+            month = int(between_match.group('month1'))
+            day = int(between_match.group('day1'))
+            
+            now = datetime.datetime.now(Eastern)
+            
+            available_from = datetime.datetime(now.year, month, day, hour, minute, tzinfo=Eastern)
+            if available_from < now:
+                available_from = available_from.replace(year=now.year+1)
+            
+            # until...
+            hour = int(between_match.group('hour2'))
+            minute = int(between_match.group('minute2'))
+            midi = between_match.group('midi2')
+            if midi == 'p':
+                hour += 12
+            month = int(between_match.group('month2'))
+            day = int(between_match.group('day2'))
+            
+            available_until = datetime.datetime(available_from.year, month, day, hour, minute, tzinfo=Eastern)
+            if available_until < available_from:
+                available_until = available_until.replace(year=available_from.year+1)
+            
+            vehicle.available_from = available_from
+            vehicle.available_until = available_until
+            return
+        
+    
     def get_vehicle_from_html_data(self, pod, vehicle_info_div):
         vehicle_header = vehicle_info_div.findAll('h4')[0]
         vehicle_name = vehicle_header.text
@@ -135,6 +214,7 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
             vehicle.availability = 0
         elif availability_p['class'] == 'maybe':
             vehicle.availability = 0.5
+            self.assign_vehicle_availability_stipulation(vehicle, availability_p.text)
         
         return vehicle
     

@@ -19,6 +19,11 @@
     .availability-options a {
       display: block;
     }
+    
+    .vehicle-stipulations {
+      font-weight: normal;
+      font-size: 0.7em;
+    }
   </style>
   
   <h1>Available Cars</h1>
@@ -37,7 +42,7 @@
       <ul class="pod-vehicles">
       {% for vehicle in pod.list %}
         {% ifequal vehicle.availability 0 %}
-          <li class="unavailabe-vehicle">
+          <li class="unavailable-vehicle">
         {% else %}{% ifequal vehicle.availability 1 %}
           <li class="available-vehicle">
         {% else %}
@@ -46,8 +51,14 @@
           
           <span>{{ vehicle.make }} {{ vehicle.model }}</span>
           <div class="vehicle-stipulations">
-            {% if vehicle.available_at %}
-              <span>Available at {{ vehicle.available_at|time }}</span>
+            {% ifequal vehicle.availability 0 %}
+              <span>Unavailable</span>
+            {% endifequal %}
+            {% ifequal vehicle.availability 1 %}
+              <span>Available</span>
+            {% endifequal %}
+            {% if vehicle.available_from %}
+              <span>Available at {{ vehicle.available_from|time }}</span>
             {% endif %}
             {% if vehicle.available_until %}
               <span>Available until {{ vehicle.available_until|time }}</span>

@@ -10,6 +10,7 @@ from pcs.source import _SessionSourceInterface
 from pcs.view import _AvailabilityViewInterface
 from util.testing import patch
 from util.testing import Stub
+from util.TimeZone import Eastern
 
 class AvailabilityHandlerTest (unittest.TestCase):
     
@@ -71,7 +72,7 @@ class AvailabilityHandlerTest (unittest.TestCase):
         
         # Then...
         import datetime
-        now_time = datetime.datetime.now()
+        now_time = datetime.datetime.now(Eastern)
         later_time = now_time + datetime.timedelta(hours=3)
         threshold = datetime.timedelta(seconds=10)
         # ...can't check equality, as now_time and start_time were calculated at
@@ -269,7 +270,7 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
             return StubConnection()
         
         # When...
-        stime = etime = datetime.datetime.now()
+        stime = etime = datetime.datetime.now(Eastern)
         vehicles = source.get_available_vehicles_near('','',stime,etime)
         
         # Then...
@@ -277,12 +278,69 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
     
     def testTimeQueryShouldReflectGivenDatetimes(self):
         source = AvailabilityScreenscrapeSource()
-        starttime = datetime.datetime(2003,1,2,1,15)
-        endtime = datetime.datetime(2003,1,2,1,30)
+        starttime = datetime.datetime(2003,1,2,1,15,tzinfo=Eastern)
+        endtime = datetime.datetime(2003,1,2,1,30,tzinfo=Eastern)
         
         query = source.get_time_query(starttime, endtime)
         
         self.assertEqual(query, "start_date=1/2/2003&start_time=4500&end_date=1/2/2003&end_time=5400")
+    
+    def testShouldCorrectlyParseAvailabilityFromStipulationAboutEarliestAvailability(self):
+        source = AvailabilityScreenscrapeSource()
+        class StubVehicle (object):
+            pass
+        vehicle = StubVehicle()
+        stipulation = 'Available from 3:30 pm on 09/01'
+        
+        source.assign_vehicle_availability_stipulation(vehicle, stipulation)
+        
+        now = datetime.datetime.now(Eastern)
+        year = now.year if now.month < 9 else now.year+1
+        month = 9
+        day = 1
+        hour = 15
+        minute = 30
+        self.assertEqual(vehicle.available_from, datetime.datetime(year, month, day, hour, minute, tzinfo=Eastern))
+    
+    def testShouldCorrectlyParseAvailabilityFromStipulationAboutLatestAvailability(self):
+        source = AvailabilityScreenscrapeSource()
+        class StubVehicle (object):
+            pass
+        vehicle = StubVehicle()
+        stipulation = 'Available until 3:30 pm on 09/01'
+        
+        source.assign_vehicle_availability_stipulation(vehicle, stipulation)
+        
+        now = datetime.datetime.now(Eastern)
+        year = now.year if now.month < 9 else now.year+1
+        month = 9
+        day = 1
+        hour = 15
+        minute = 30
+        self.assertEqual(vehicle.available_until, datetime.datetime(year, month, day, hour, minute, tzinfo=Eastern))
+    
+    def testShouldCorrectlyParseAvailabilityFromStipulationAboutSandwichedAvailability(self):
+        source = AvailabilityScreenscrapeSource()
+        class StubVehicle (object):
+            pass
+        vehicle = StubVehicle()
+        stipulation = 'Available from 3:30 pm on 09/01 to 4:45 am on 09/02'
+        
+        source.assign_vehicle_availability_stipulation(vehicle, stipulation)
+        
+        now = datetime.datetime.now(Eastern)
+        year = now.year if now.month < 9 else now.year+1
+        month = 9
+        day = 1
+        hour = 15
+        minute = 30
+        self.assertEqual(vehicle.available_from, datetime.datetime(year, month, day, hour, minute, tzinfo=Eastern))
+        
+        now = datetime.datetime.now(Eastern)
+        day = 2
+        hour = 4
+        minute = 45
+        self.assertEqual(vehicle.available_until, datetime.datetime(year, month, day, hour, minute, tzinfo=Eastern))
     
 from pcs.input.wsgi.availability import AvailabilityHtmlHandler
 class AvailabilityHtmlHandlerTest (unittest.TestCase):

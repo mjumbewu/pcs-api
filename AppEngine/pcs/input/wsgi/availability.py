@@ -11,6 +11,7 @@ from pcs.source.screenscrape.session import SessionScreenscrapeSource
 from pcs.source.screenscrape.availability import AvailabilityScreenscrapeSource
 from pcs.source.screenscrape.locations import LocationsScreenscrapeSource
 from pcs.view.html.availability import AvailabilityHtmlView
+from util.TimeZone import Eastern
 
 class AvailabilityHandler (webapp.RequestHandler):
     """
@@ -73,7 +74,7 @@ class AvailabilityHandler (webapp.RequestHandler):
         start_time_str = self.request.get('start_time')
         end_time_str = self.request.get('end_time')
         
-        now_time = datetime.datetime.now() + datetime.timedelta(minutes=15)
+        now_time = datetime.datetime.now(Eastern) + datetime.timedelta(minutes=15)
         if start_time_str:
             start_time = datetime.datetime.fromtimestamp(int(start_time_str))
         else:
