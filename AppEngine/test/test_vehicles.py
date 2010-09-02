@@ -3,18 +3,18 @@ import datetime
 import new
 
 from pcs.input.wsgi import WsgiParameterError
-from pcs.input.wsgi.availability import AvailabilityHandler
-from pcs.source import _AvailabilitySourceInterface
+from pcs.input.wsgi.vehicles import VehiclesHandler
+from pcs.source import _VehiclesSourceInterface
 from pcs.source import _LocationsSourceInterface
 from pcs.source import _SessionSourceInterface
 from pcs.source.screenscrape import ScreenscrapeParseError
-from pcs.view import _AvailabilityViewInterface
+from pcs.view import _VehiclesViewInterface
 from pcs.view import _ErrorViewInterface
 from util.testing import patch
 from util.testing import Stub
 from util.TimeZone import Eastern
 
-class AvailabilityHandlerTest (unittest.TestCase):
+class VehiclesHandlerTest (unittest.TestCase):
     
     def setUp(self):
         # A fake request class
@@ -34,8 +34,8 @@ class AvailabilityHandlerTest (unittest.TestCase):
             pass
         
         # A source for vehicle availability information
-        @Stub(_AvailabilitySourceInterface)
-        class StubAvailabilitySource (object):
+        @Stub(_VehiclesSourceInterface)
+        class StubVehiclesSource (object):
             def get_available_vehicles_near(self, sessionid, location, start_time, end_time):
                 pass
         
@@ -44,8 +44,8 @@ class AvailabilityHandlerTest (unittest.TestCase):
             pass
         
         # A generator for a representation (view) of the availability information
-        @Stub(_AvailabilityViewInterface)
-        class StubAvailabilityView (object):
+        @Stub(_VehiclesViewInterface)
+        class StubVehiclesView (object):
             def get_vehicle_availability(self, session, start_time, end_time, vehicles, location):
                 return "Success"
         
@@ -56,15 +56,15 @@ class AvailabilityHandlerTest (unittest.TestCase):
         
         # The system under test
         self.session_source = StubSessionSource()
-        self.availability_source = StubAvailabilitySource()
+        self.vehicle_source = StubVehiclesSource()
         self.location_source = StubLocationsSource()
-        self.availability_view = StubAvailabilityView()
+        self.vehicle_view = StubVehiclesView()
         self.error_view = StubErrorView()
         
-        self.handler = AvailabilityHandler(session_source=self.session_source, 
-            availability_source=self.availability_source,
+        self.handler = VehiclesHandler(session_source=self.session_source, 
+            vehicle_source=self.vehicle_source,
             location_source=self.location_source,
-            availability_view=self.availability_view,
+            vehicle_view=self.vehicle_view,
             error_view=self.error_view)
         self.handler.request = StubRequest()
         self.handler.response = StubResponse()
@@ -237,16 +237,16 @@ class AvailabilityHandlerTest (unittest.TestCase):
         except WsgiParameterError:
             self.fail('No parameter exception should have been raised.')
         
-    def testShouldRespondWithVehicleDataFromTheAvailabilitySource(self):
+    def testShouldRespondWithVehicleDataFromTheVehiclesSource(self):
         pass
     
         
 
-from pcs.source.screenscrape.availability import AvailabilityScreenscrapeSource
-class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
+from pcs.source.screenscrape.vehicles import VehiclesScreenscrapeSource
+class VehiclesScreenscrapeSourceTest (unittest.TestCase):
     def testShouldLoadAppropriateJsonObjectFromString(self):
         # Given...
-        source = AvailabilityScreenscrapeSource()
+        source = VehiclesScreenscrapeSource()
         
         # When...
         json_data = source.get_json_data(
@@ -259,7 +259,7 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
     def testShouldLoadAppropriateHtmlDocumentObjectFromPodsFieldOfJsonObject(self):
         """Should load appropriate HTML document object from the 'pods' field of the JSON object"""
         # Given...
-        source = AvailabilityScreenscrapeSource()
+        source = VehiclesScreenscrapeSource()
         
         # When...
         html_data = source.get_html_data(
@@ -279,7 +279,7 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
         doc = BeautifulSoup(doc_string)
         pod_info_divs = doc.findAll('div', {'class': 'pod_top'})
         pod_info_div = pod_info_divs[0]
-        source = AvailabilityScreenscrapeSource()
+        source = VehiclesScreenscrapeSource()
         
         # When...
         pod, dist = source.get_pod_and_distance_from_html_data(pod_info_div)
@@ -298,7 +298,7 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
         vehicle_info_divs = body.findAll('div', recursive=False)
         vehicle_info_div = vehicle_info_divs[0]
         
-        source = AvailabilityScreenscrapeSource()
+        source = VehiclesScreenscrapeSource()
         fake_pod = object()
         
         # When...
@@ -323,7 +323,7 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
                               '''"<div class=\\"pod_top\\"><div class=\\"pod_head\\"><h4 ><a class=\\"text\\" href=\\"my_fleet.php?mv_action=show&_r=16&pk=12174212\\"   onclick=\\"MV.controls.results.show_pod_details(12174212); return false;\\" >46th & Baltimore - 0.2 mile(s)<\\/a><\\/h4><\\/div><\\/div><div class=\\"pod_bot \\" id=\\"page_result_3\\"><div class=\\"list_left\\"><div class=\\"v_img\\"><a href=\\"http:\\/\\/www.phillycarshare.org\\/cars\\/element\\" target=\\"_blank\\"><img style=\\"border: 0;\\" src=\\"\\/images\\/client_images\\/honda_element_thumb.gif\\"\\/><\\/a><\\/div><div class=\\"v_name\\"><h4>Honda Element<\\/h4><\\/div><div class=\\"v_amenities\\"><ul><li><img src=\\"\\/skin\\/base_images\\/awd.gif\\" label=\\"All Wheel Drive\\" title=\\"All Wheel Drive\\"\\/><\\/li>\\n<li><img src=\\"\\/skin\\/base_images\\/folding_seat.gif\\" label=\\"Folding Rear Seats\\" title=\\"Folding Rear Seats\\"\\/><\\/li><\\/ul><\\/div><\\/div><div class=\\"list_mid\\"><div class=\\"time\\"><ul class=\\"segments\\"><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"free\\" \\/><li class=\\"free pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"free pad_end\\" \\/><li class=\\"good\\" \\/><li class=\\"good\\" \\/><li class=\\"good pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"good pad_end\\" \\/><li class=\\"good\\" \\/><li class=\\"good\\" \\/><li class=\\"good pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"good pad_end\\" \\/><li class=\\"free\\" \\/><li class=\\"free\\" \\/><li class=\\"free pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"free pad_end\\" \\/><li class=\\"free\\" \\/><li class=\\"free\\" \\/><li class=\\"free pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"free pad_end\\" \\/><li class=\\"free\\" \\/><li class=\\"free\\" \\/><li class=\\"free pad_end\\" \\/><\\/ul><\\/li><\\/ul><\\/div><div class=\\"brick\\" style=\\"width:32px; margin-left: 333px; -margin-left: 164px;\\"><\\/div><div class=\\"timestamp\\"><p class=\\"good\\">Available<\\/p><\\/div><\\/div><div class=\\"list_right\\"><div class=\\"reserve\\"><a href=\\"javascript:MV.controls.reserve.lightbox.create('1282540500', '1282547700', '130868710', '');\\">Select<span id=\\"estimate_stack_1195\\" class=\\"est\\"><\\/span><\\/a><\\/div><div id=\\"rates_stack_1195\\" class=\\"price\\"><\\/div><\\/div><\\/div><div class=\\"pod_bot \\" id=\\"page_result_4\\"><div class=\\"list_left\\"><div class=\\"v_img\\"><img style=\\"border: 0;\\" src=\\"\\/images\\/client_images\\/prius_lift_thumb.gif\\"\\/><\\/div><div class=\\"v_name\\"><h4>Prius Liftback<\\/h4><\\/div><div class=\\"v_amenities\\"><ul><li><img src=\\"\\/skin\\/base_images\\/hybrid.gif\\" label=\\"Hybrid\\" title=\\"Hybrid\\"\\/><\\/li>\\n<li><img src=\\"\\/skin\\/base_images\\/folding_seat.gif\\" label=\\"Folding Rear Seats\\" title=\\"Folding Rear Seats\\"\\/><\\/li><\\/ul><\\/div><\\/div><div class=\\"list_mid\\"><div class=\\"time\\"><ul class=\\"segments\\"><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"bad pad_end\\" \\/><li class=\\"bad\\" \\/><li class=\\"bad\\" \\/><li class=\\"free pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"free pad_end\\" \\/><li class=\\"good\\" \\/><li class=\\"good\\" \\/><li class=\\"good pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"good pad_end\\" \\/><li class=\\"good\\" \\/><li class=\\"good\\" \\/><li class=\\"good pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"good pad_end\\" \\/><li class=\\"free\\" \\/><li class=\\"free\\" \\/><li class=\\"free pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"free pad_end\\" \\/><li class=\\"free\\" \\/><li class=\\"free\\" \\/><li class=\\"free pad_end\\" \\/><\\/ul><\\/li><li ><ul ><li class=\\"free pad_end\\" \\/><li class=\\"free\\" \\/><li class=\\"free\\" \\/><li class=\\"free pad_end\\" \\/><\\/ul><\\/li><\\/ul><\\/div><div class=\\"brick\\" style=\\"width:32px; margin-left: 333px; -margin-left: 164px;\\"><\\/div><div class=\\"timestamp\\"><p class=\\"good\\">Available<\\/p><\\/div><\\/div><div class=\\"list_right\\"><div class=\\"reserve\\"><a href=\\"javascript:MV.controls.reserve.lightbox.create('1282540500', '1282547700', '73484842', '');\\">Select<span id=\\"estimate_stack_734\\" class=\\"est\\"><\\/span><\\/a><\\/div><div id=\\"rates_stack_734\\" class=\\"price\\"><\\/div><\\/div><\\/div>"''']) + 
                     ']}')
         
-        source = AvailabilityScreenscrapeSource()
+        source = VehiclesScreenscrapeSource()
         @patch(source)
         def create_host_connection(self):
             return StubConnection()
@@ -336,7 +336,7 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual([v.model for v in vehicles], ['Tacoma Pickup','Prius Liftback','Honda Element','Prius Liftback'])
     
     def testTimeQueryShouldReflectGivenDatetimes(self):
-        source = AvailabilityScreenscrapeSource()
+        source = VehiclesScreenscrapeSource()
         starttime = datetime.datetime(2003,1,2,1,15,tzinfo=Eastern)
         endtime = datetime.datetime(2003,1,2,1,30,tzinfo=Eastern)
         
@@ -344,8 +344,8 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
         
         self.assertEqual(query, "start_date=1/2/2003&start_time=4500&end_date=1/2/2003&end_time=5400")
     
-    def testShouldCorrectlyParseAvailabilityFromStipulationAboutEarliestAvailability(self):
-        source = AvailabilityScreenscrapeSource()
+    def testShouldCorrectlyParseVehiclesFromStipulationAboutEarliestVehicles(self):
+        source = VehiclesScreenscrapeSource()
         class StubVehicle (object):
             pass
         vehicle = StubVehicle()
@@ -361,8 +361,8 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
         minute = 30
         self.assertEqual(vehicle.available_from, datetime.datetime(year, month, day, hour, minute, tzinfo=Eastern))
     
-    def testShouldCorrectlyParseAvailabilityFromStipulationAboutLatestAvailability(self):
-        source = AvailabilityScreenscrapeSource()
+    def testShouldCorrectlyParseVehiclesFromStipulationAboutLatestVehicles(self):
+        source = VehiclesScreenscrapeSource()
         class StubVehicle (object):
             pass
         vehicle = StubVehicle()
@@ -378,8 +378,8 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
         minute = 30
         self.assertEqual(vehicle.available_until, datetime.datetime(year, month, day, hour, minute, tzinfo=Eastern))
     
-    def testShouldCorrectlyParseAvailabilityFromStipulationAboutSandwichedAvailability(self):
-        source = AvailabilityScreenscrapeSource()
+    def testShouldCorrectlyParseVehiclesFromStipulationAboutSandwichedVehicles(self):
+        source = VehiclesScreenscrapeSource()
         class StubVehicle (object):
             pass
         vehicle = StubVehicle()
@@ -401,20 +401,20 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
         minute = 45
         self.assertEqual(vehicle.available_until, datetime.datetime(year, month, day, hour, minute, tzinfo=Eastern))
     
-from pcs.input.wsgi.availability import AvailabilityHtmlHandler
-class AvailabilityHtmlHandlerTest (unittest.TestCase):
+from pcs.input.wsgi.vehicles import VehiclesHtmlHandler
+class VehiclesHtmlHandlerTest (unittest.TestCase):
     def testShouldBeInitializedWithHtmlViewsAndScreenscrapeSources(self):
-        handler = AvailabilityHtmlHandler()
+        handler = VehiclesHtmlHandler()
         
         from pcs.source.screenscrape.session import SessionScreenscrapeSource
         from pcs.source.screenscrape.locations import LocationsScreenscrapeSource
-        from pcs.source.screenscrape.availability import AvailabilityScreenscrapeSource
-        from pcs.view.html.availability import AvailabilityHtmlView
+        from pcs.source.screenscrape.vehicles import VehiclesScreenscrapeSource
+        from pcs.view.html.vehicles import VehiclesHtmlView
         
-        self.assertEqual(handler.availability_view.__class__.__name__,
-                         AvailabilityHtmlView.__name__)
-        self.assertEqual(handler.availability_source.__class__.__name__,
-                         AvailabilityScreenscrapeSource.__name__)
+        self.assertEqual(handler.vehicle_view.__class__.__name__,
+                         VehiclesHtmlView.__name__)
+        self.assertEqual(handler.vehicle_source.__class__.__name__,
+                         VehiclesScreenscrapeSource.__name__)
         self.assertEqual(handler.location_source.__class__.__name__,
                          LocationsScreenscrapeSource.__name__)
         self.assertEqual(handler.session_source.__class__.__name__,

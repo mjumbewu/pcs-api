@@ -13,13 +13,13 @@ except ImportError:
 
 from pcs.data.pod import Pod
 from pcs.data.vehicle import Vehicle
-from pcs.source import _AvailabilitySourceInterface
+from pcs.source import _VehiclesSourceInterface
 from pcs.source.screenscrape import ScreenscrapeParseError
 from util.abstract import override
 from util.BeautifulSoup import BeautifulSoup
 from util.TimeZone import Eastern
 
-class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
+class VehiclesScreenscrapeSource (_VehiclesSourceInterface):
     """
     Responsible for logging in and constructing a session from a screenscrape
     of a PhillyCarShare response.
@@ -28,7 +28,7 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
     
     def __init__(self, host="reservations.phillycarshare.org",
                  path="/results.php?reservation_id=0&flexible=on&show_everything=on&offset=0"):
-        super(AvailabilityScreenscrapeSource, self).__init__()
+        super(VehiclesScreenscrapeSource, self).__init__()
         self.__host = host
         self.__path = path
     

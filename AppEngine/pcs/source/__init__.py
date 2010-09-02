@@ -10,7 +10,7 @@ class _SessionSourceInterface (object):
     def get_existing_session(self, userid, sessionid):
         raise NotImplementedError()
 
-class _AvailabilitySourceInterface (object):
+class _VehiclesSourceInterface (object):
     def get_available_vehicles_near(self, sessionid, location, start_time, end_time):
         raise NotImplementedError()
 

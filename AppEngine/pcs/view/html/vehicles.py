@@ -3,10 +3,10 @@ import os
 
 from google.appengine.ext.webapp import template
 
-from pcs.view import _AvailabilityViewInterface
+from pcs.view import _VehiclesViewInterface
 from util.abstract import override
 
-class AvailabilityHtmlView (_AvailabilityViewInterface):
+class VehiclesHtmlView (_VehiclesViewInterface):
     @override
     def get_vehicle_availability(self, session, start_time, end_time, vehicles, location):
         """

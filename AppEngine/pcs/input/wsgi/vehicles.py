@@ -10,32 +10,32 @@ from pcs.input.wsgi import _SessionBasedHandler
 from pcs.input.wsgi import _TimeRangeBasedHandler
 from pcs.input.wsgi import WsgiParameterError
 from pcs.source.screenscrape.session import SessionScreenscrapeSource
-from pcs.source.screenscrape.availability import AvailabilityScreenscrapeSource
+from pcs.source.screenscrape.vehicles import VehiclesScreenscrapeSource
 from pcs.source.screenscrape.locations import LocationsScreenscrapeSource
-from pcs.view.html.availability import AvailabilityHtmlView
+from pcs.view.html.vehicles import VehiclesHtmlView
 from pcs.view.html.error import ErrorHtmlView
 
-class AvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
+class VehiclesHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
     """
-    Handles requests availability information
+    Handles requests vehicle information
     """
     def __init__(self,
                  session_source,
-                 availability_source,
+                 vehicle_source,
                  location_source,
-                 availability_view,
+                 vehicle_view,
                  error_view):
-        super(AvailabilityHandler, self).__init__(session_source, error_view)
+        super(VehiclesHandler, self).__init__(session_source, error_view)
         
-        self.availability_source = availability_source
+        self.vehicle_source = vehicle_source
         self.location_source = location_source
-        self.availability_view = availability_view
+        self.vehicle_view = vehicle_view
     
     def get_available_vehicles(self, start_time, end_time):
         sessionid = self.get_session_id()
         locationid = self.get_location_id()
         
-        return self.availability_source.get_available_vehicles_near(sessionid, locationid, start_time, end_time)
+        return self.vehicle_source.get_available_vehicles_near(sessionid, locationid, start_time, end_time)
     
     def get_location_id(self):
         locationid = self.request.get('location_id')
@@ -68,7 +68,7 @@ class AvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
 
             vehicles = self.get_available_vehicles(start_time, end_time)
             
-            response_body = self.availability_view.get_vehicle_availability(
+            response_body = self.vehicle_view.get_vehicle_availability(
                 session, start_time, end_time, vehicles, location)
         except Exception, e:
             response_body = self.generate_error(e)
@@ -79,19 +79,19 @@ class AvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
     def post(self):
         self.get()
 
-class AvailabilityHtmlHandler (AvailabilityHandler):
+class VehiclesHtmlHandler (VehiclesHandler):
     def __init__(self):
-        super(AvailabilityHtmlHandler, self).__init__(
+        super(VehiclesHtmlHandler, self).__init__(
             SessionScreenscrapeSource(),
-            AvailabilityScreenscrapeSource(),
+            VehiclesScreenscrapeSource(),
             LocationsScreenscrapeSource(),
-            AvailabilityHtmlView(),
+            VehiclesHtmlView(),
             ErrorHtmlView())
     
 
 
 application = webapp.WSGIApplication(
-        [('/availability.html', AvailabilityHtmlHandler)],
+        [('/vehicles.html', VehiclesHtmlHandler)],
         debug=True)
 
 def main():
