@@ -7,7 +7,9 @@ from pcs.input.wsgi.availability import AvailabilityHandler
 from pcs.source import _AvailabilitySourceInterface
 from pcs.source import _LocationsSourceInterface
 from pcs.source import _SessionSourceInterface
+from pcs.source.screenscrape import ScreenscrapeParseError
 from pcs.view import _AvailabilityViewInterface
+from pcs.view import _ErrorViewInterface
 from util.testing import patch
 from util.testing import Stub
 from util.TimeZone import Eastern
@@ -45,21 +47,25 @@ class AvailabilityHandlerTest (unittest.TestCase):
         @Stub(_AvailabilityViewInterface)
         class StubAvailabilityView (object):
             def get_vehicle_availability(self, session, start_time, end_time, vehicles, location):
-                if session:
-                    return "Success"
-                else:
-                    return "Failure"
+                return "Success"
+        
+        @Stub(_ErrorViewInterface)
+        class StubErrorView (object):
+            def get_error(self, error_code, error_msg):
+                return "Failure"
         
         # The system under test
         self.session_source = StubSessionSource()
         self.availability_source = StubAvailabilitySource()
         self.location_source = StubLocationsSource()
         self.availability_view = StubAvailabilityView()
+        self.error_view = StubErrorView()
         
         self.handler = AvailabilityHandler(session_source=self.session_source, 
             availability_source=self.availability_source,
             location_source=self.location_source,
-            availability_view=self.availability_view)
+            availability_view=self.availability_view,
+            error_view=self.error_view)
         self.handler.request = StubRequest()
         self.handler.response = StubResponse()
     
@@ -99,11 +105,13 @@ class AvailabilityHandlerTest (unittest.TestCase):
         # ...and the session source does not recognize the cookies:
         @patch(self.session_source)
         def get_existing_session(self, userid, sessionid):
-            return None
+            raise ScreenscrapeParseError()
         
         @patch(self.location_source)
         def get_location_profile(self, sessionid, locationid):
-            pass
+            class StubLocation (object):
+                id = locationid
+            return StubLocation()
         
         # When...
         self.handler.get()
@@ -111,7 +119,54 @@ class AvailabilityHandlerTest (unittest.TestCase):
         # Then...
         response = self.handler.response.out.getvalue()
         self.assertEqual(response, "Failure")
-
+    
+    def testShouldGetSessionAndUserIdsFromCookies(self):
+        # Given...
+        self.handler.request.cookies = {
+            'sid':'123abc',
+            'suser':'u12345'
+        }
+        
+        # When...
+        sessionid = self.handler.get_session_id()
+        userid = self.handler.get_user_id()
+        
+        # Then...
+        self.assertEqual(userid, 'u12345')
+        self.assertEqual(sessionid, '123abc')
+    
+    def testMissingSessionIdRiasesError(self):
+        # Given...
+        self.handler.request.cookies = {
+            'suser':'u12345'
+        }
+        
+        # When...
+        try:
+            sessionid = self.handler.get_session_id()
+        
+        # Then...
+        except WsgiParameterError:
+            return
+        
+        self.fail('Lack of session id should have caused a WsgiParameterError')
+    
+    def testMissingUserIdRiasesError(self):
+        # Given...
+        self.handler.request.cookies = {
+            'sid':'123abc'
+        }
+        
+        # When...
+        try:
+            userid = self.handler.get_user_id()
+        
+        # Then...
+        except WsgiParameterError:
+            return
+        
+        self.fail('Lack of session id should have caused a WsgiParameterError')
+    
     def testShouldRespondWithSuccessContentWhenSessionSourceRecognizesGivenSessionId(self):
         """With a valid session, the availability handler will give a success response."""
         
@@ -136,7 +191,9 @@ class AvailabilityHandlerTest (unittest.TestCase):
         
         @patch(self.location_source)
         def get_location_profile(self, sessionid, locationid):
-            pass
+            class StubLocation (object):
+                id = locationid
+            return StubLocation()
         
         # When...
         self.handler.get()
@@ -168,7 +225,9 @@ class AvailabilityHandlerTest (unittest.TestCase):
         
         @patch(self.location_source)
         def get_location_profile(self, sessionid, locationid):
-            pass
+            class StubLocation (object):
+                id = locationid
+            return StubLocation()
         
         # When...
         try:

@@ -8,6 +8,7 @@ from pcs.source import _LocationsSourceInterface
 from pcs.source import _SessionSourceInterface
 from pcs.source.screenscrape import ScreenscrapeParseError
 from pcs.source.screenscrape.pcsconnection import PcsConnection
+from pcs.view import _ErrorViewInterface
 from pcs.view import _LocationsViewInterface
 from util.testing import patch
 from util.testing import Stub
@@ -46,14 +47,20 @@ class LocationHandlerTest (unittest.TestCase):
                 else:
                     return "Failure"
         
+        @Stub(_ErrorViewInterface)
+        class StubErrorView (object):
+            pass
+        
         # The system under test
         self.session_source = StubSessionSource()
         self.locations_source = StubLocationsSource()
         self.locations_view = StubLocationsView()
+        self.error_view = StubErrorView()
         
         self.handler = LocationsHandler(session_source=self.session_source, 
             locations_source=self.locations_source,
-            locations_view=self.locations_view)
+            locations_view=self.locations_view,
+            error_view=self.error_view)
         self.handler.request = StubRequest()
         self.handler.response = StubResponse()
     

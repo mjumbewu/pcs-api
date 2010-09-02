@@ -199,6 +199,7 @@ class SessionScreenscrapeSourceTest (unittest.TestCase):
 from pcs.input.wsgi.session import SessionHandler
 from pcs.source import _SessionSourceInterface
 from pcs.view import _SessionViewInterface
+from pcs.source import SessionLoginError
 class SessionHandlerTest (unittest.TestCase):
     def setUp(self):
         class StubRequest (dict):
@@ -227,19 +228,20 @@ class SessionHandlerTest (unittest.TestCase):
                         name = 'My Name'
                     return StubSession()
                 else:
-                    return None
+                    raise SessionLoginError()
         StubSessionSource._body = ''
         
         @Stub(_SessionViewInterface)
         class StubSessionView (object):
             def get_session_overview(self, session):
-                if session:
-                    return 'Session'
-                else:
-                    return 'No Session'
+                return 'Session'
+        
+        class StubErrorView (object):
+            def get_error(self, error_code, error_msg):
+                return 'No Session'
         
         # System under test
-        self.handler = SessionHandler(StubSessionSource(), StubSessionView())
+        self.handler = SessionHandler(StubSessionSource(), StubSessionView(), StubErrorView())
         self.handler.request = StubRequest()
         self.handler.response = StubResponse()
     
