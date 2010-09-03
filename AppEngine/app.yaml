@@ -11,6 +11,7 @@ handlers:
 
 - url: /login.*
   script: pcs/input/wsgi/login.py
+  secure: always
 
 - url: /session.*
   script: pcs/input/wsgi/session.py
@@ -18,8 +19,8 @@ handlers:
 - url: /newreservation.*
   script: pcs/input/wsgi/newreservation.py
 
-- url: /availability.*
-  script: pcs/input/wsgi/availability.py
+- url: /vehicles.*
+  script: pcs/input/wsgi/vehicles.py
 
 - url: /locations.*
   script: pcs/input/wsgi/locations.py
