@@ -54,12 +54,12 @@ class _TimeRangeBasedHandler (webapp.RequestHandler):
         
         now_time = datetime.datetime.now(Eastern) + datetime.timedelta(minutes=1)
         if start_time_str:
-            start_time = datetime.datetime.fromtimestamp(int(start_time_str))
+            start_time = datetime.datetime.fromtimestamp(int(start_time_str), Eastern)
         else:
             start_time = now_time
         
         if end_time_str:
-            end_time = datetime.datetime.fromtimestamp(int(end_time_str))
+            end_time = datetime.datetime.fromtimestamp(int(end_time_str), Eastern)
         else:
             end_time = now_time + datetime.timedelta(hours=3)
         

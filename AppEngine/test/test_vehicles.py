@@ -3,6 +3,7 @@ import datetime
 import new
 
 from pcs.input.wsgi import WsgiParameterError
+from pcs.input.wsgi.vehicles import VehicleHandler
 from pcs.input.wsgi.vehicles import VehiclesHandler
 from pcs.source import _VehiclesSourceInterface
 from pcs.source import _LocationsSourceInterface
@@ -13,6 +14,141 @@ from pcs.view import _ErrorViewInterface
 from util.testing import patch
 from util.testing import Stub
 from util.TimeZone import Eastern
+
+class VehicleHandlerTest (unittest.TestCase):
+    def setUp(self):
+        # A fake request class
+        class StubRequest (dict):
+            pass
+        
+        # A fake response class
+        import StringIO
+        class StubResponse (object):
+            out = StringIO.StringIO()
+            def set_status(self, status):
+                self.status = status
+        
+        @Stub(_SessionSourceInterface)
+        class StubSessionSource (object):
+            pass
+        
+        @Stub(_VehiclesSourceInterface)
+        class StubVehiclesSource (object):
+            pass
+        
+        @Stub(_VehiclesViewInterface)
+        class StubVehiclesView (object):
+            pass
+        
+        @Stub(_ErrorViewInterface)
+        class StubErrorView (object):
+            pass
+        
+        self.session_source = StubSessionSource()
+        self.vehicle_source = StubVehiclesSource()
+        self.vehicle_view = StubVehiclesView()
+        self.error_view = StubErrorView()
+        
+        self.request = StubRequest()
+        self.response = StubResponse()
+    
+    def testShouldUseCurrentTimeAndThreeHourDurationWhenNoStartOrEndIsGiven(self):
+        # Given...
+        handler = VehicleHandler(self.session_source, self.vehicle_source, 
+                                 self.vehicle_view, self.error_view)
+        handler.initialize(self.request, self.response)
+        
+        # When...
+        start_time, end_time = handler.get_time_range()
+        
+        # Then...
+        import datetime
+        now_time = datetime.datetime.now(Eastern) + datetime.timedelta(minutes=1)
+        later_time = now_time + datetime.timedelta(hours=3)
+        threshold = datetime.timedelta(seconds=10)
+        # ...can't check equality, as now_time and start_time were calculated at
+        #    different times.  However, they should have been calculated within
+        #    a certain amount of seconds from each other.
+        self.assert_(-threshold < now_time - start_time < threshold, 
+            "Time between (%s) and (%s) should be less than %s" % (now_time, start_time, threshold))
+        self.assert_(-threshold < later_time - end_time < threshold,
+            "Time between (%s) and (%s) should be less than %s" % (later_time, end_time, threshold))
+    
+    def testShouldRaiseErrorIfTryingToGetVehicleBeforeItIsSet(self):
+        # Given...
+        handler = VehicleHandler(self.session_source, self.vehicle_source, 
+                                 self.vehicle_view, self.error_view)
+        
+        # When...
+        try:
+            handler.get_vehicle_id()
+        
+        # Then...
+        except WsgiParameterError:
+            return
+        
+        self.fail("get_vehicle before vehicle is set should raise WsgiParameterError")
+    
+    def testShouldReturnSavedVehicleIdFromGetter(self):
+        # Given...
+        handler = VehicleHandler(self.session_source, self.vehicle_source, 
+                                 self.vehicle_view, self.error_view)
+        handler.save_vehicle_id('vid1234')
+        
+        # When...
+        vid = handler.get_vehicle_id()
+        
+        # Then...
+        self.assertEqual(vid, 'vid1234')
+    
+    def testShouldPassCorrectVehicleIdToVehicleSourceForVehicle(self):
+        # Given...
+        self.request.cookies = { 'sid':'sid1234' }
+        
+        @patch(self.vehicle_source)
+        def get_vehicle(self, sessionid, vehicleid):
+            self.vehicleid = vehicleid
+            return 'My Vehicle'
+        
+        handler = VehicleHandler(self.session_source, self.vehicle_source, 
+                                 self.vehicle_view, self.error_view)
+        handler.initialize(self.request, self.response)
+        handler.save_vehicle_id('vid1234')
+        
+        # When...
+        vehicle = handler.get_vehicle()
+        
+        # Then...
+        self.assertEqual(self.vehicle_source.vehicleid, 'vid1234')
+        self.assertEqual(vehicle, 'My Vehicle')
+    
+    def testShouldPassCorrectVehicleIdAndTimeRangeToVehicleSourceForAvailability(self):
+        # Given...
+        self.request.cookies = { 'sid':'sid1234' }
+        
+        self.request['start_time'] = '100'
+        self.request['end_time'] = '1000'
+        
+        @patch(self.vehicle_source)
+        def get_vehicle_availability(self, sessionid, vehicleid, start_time, end_time):
+            self.vehicleid = vehicleid
+            self.start_time = start_time
+            self.end_time = end_time
+            return 'My Availability'
+        
+        handler = VehicleHandler(self.session_source, self.vehicle_source, 
+                                 self.vehicle_view, self.error_view)
+        handler.initialize(self.request, self.response)
+        handler.save_vehicle_id('vid1234')
+        
+        # When...
+        availability = handler.get_availability()
+        
+        # Then...
+        self.assertEqual(self.vehicle_source.vehicleid, 'vid1234')
+        self.assertEqual(self.vehicle_source.start_time, datetime.datetime.fromtimestamp(100, Eastern))
+        self.assertEqual(self.vehicle_source.end_time, datetime.datetime.fromtimestamp(1000, Eastern))
+        self.assertEqual(availability, 'My Availability')
 
 class VehiclesHandlerTest (unittest.TestCase):
     
@@ -78,16 +214,16 @@ class VehiclesHandlerTest (unittest.TestCase):
         
         # Then...
         import datetime
-        now_time = datetime.datetime.now(Eastern)
+        now_time = datetime.datetime.now(Eastern) + datetime.timedelta(minutes=1)
         later_time = now_time + datetime.timedelta(hours=3)
         threshold = datetime.timedelta(seconds=10)
         # ...can't check equality, as now_time and start_time were calculated at
         #    different times.  However, they should have been calculated within
         #    a certain amount of seconds from each other.
-        self.assert_(now_time - start_time < threshold, 
-            "%r - %r >= %r" % (now_time, start_time, threshold))
-        self.assert_(later_time - end_time < threshold,
-            "%r - %r >= %r" % (later_time, end_time, threshold))
+        self.assert_(-threshold < now_time - start_time < threshold, 
+            "Time between (%s) and (%s) should be less than %s" % (now_time, start_time, threshold))
+        self.assert_(-threshold < later_time - end_time < threshold,
+            "Time between (%s) and (%s) should be less than %s" % (later_time, end_time, threshold))
         
     def testShouldRespondWithFailureContentWhenSessionSourceCannotFindSessionWithGivenId(self):
         """With no valid session, the availability handler will give a failure document response."""

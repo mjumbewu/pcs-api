@@ -79,6 +79,51 @@ class VehiclesHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
     def post(self):
         self.get()
 
+class VehicleHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
+    def __init__(self, session_source, vehicle_source, 
+                 vehicle_view, error_view):
+        super(VehicleHandler, self).__init__(session_source, error_view)
+        
+        self.vehicle_source = vehicle_source
+        self.vehicle_view = vehicle_view
+    
+    def save_vehicle_id(self, vehicleid):
+        self.vehicleid = vehicleid
+    
+    def get_vehicle_id(self):
+        try:
+            return self.vehicleid
+        except AttributeError:
+            raise WsgiParameterError('Vehicle id must be specified')
+    
+    def get_vehicle(self):
+        sessionid = self.get_session_id()
+        vehicleid = self.get_vehicle_id()
+        vehicle = self.vehicle_source.get_vehicle(sessionid, vehicleid)
+        return vehicle
+    
+    def get_availability(self):
+        sessionid = self.get_session_id()
+        vehicleid = self.get_vehicle_id()
+        start_time, end_time = self.get_time_range()
+        availability = self.vehicle_source.get_vehicle_availability(sessionid, vehicleid, start_time, end_time)
+        return availability
+    
+    def get(self, vehicleid):
+        self.save_vehicle_id(vehicleid)
+        
+        session = self.get_session()
+        vehicle = self.get_vehicle()
+        start_time, end_time = self.get_time_range()
+        availability = self.get_availability()
+        price = self.get_price_estimate()
+        
+        response_body = self.vehicle_view.get_vehicle(session, vehicle,
+            start_time, end_time, availability, price)
+        
+        self.response.out.write(response_body);
+        self.response.set_status(200);
+
 class VehiclesHtmlHandler (VehiclesHandler):
     def __init__(self):
         super(VehiclesHtmlHandler, self).__init__(
@@ -88,10 +133,17 @@ class VehiclesHtmlHandler (VehiclesHandler):
             VehiclesHtmlView(),
             ErrorHtmlView())
     
-
+class VehicleHtmlHandler (VehicleHandler):
+    def __init__(self):
+        super(VehicleHtmlHandler, self).__init__(
+            SessionScreenscrapeSource(),
+            VehiclesScreenscrapeSource(),
+            VehiclesHtmlView(),
+            ErrorHtmlView())
 
 application = webapp.WSGIApplication(
-        [('/vehicles.html', VehiclesHtmlHandler)],
+        [('/vehicles.html', VehiclesHtmlHandler),
+         ('/vehicles/(.*).html', VehicleHtmlHandler)],
         debug=True)
 
 def main():
