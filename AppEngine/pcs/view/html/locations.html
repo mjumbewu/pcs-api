@@ -37,23 +37,51 @@
       font-size: 0.7em;
       font-weight: normal;
     }
+    
+    #my-current-location {
+      display: none;
+    }
   </style>
   
   <h1>Reserve a car near:</h1>
   
   <ul class="locations">
+    <li id="my-current-location" class="location">
+    </li>
   {% for location in locations %}
     <li class="location">
       <a class="edit-link" href="#{{ location.id }}">
         <span>Edit</span>
       </a>
-      <a class="reserve-near-link" href="/vehicles.html?location_id={{ location.id }}">
+      <a class="reserve-near-link" href="/availability.html?location_id={{ location.id }}">
         <span class="location-name">{{ location.name }}</span>
         <span class="location-desc">{{ location.desc }}</span>
       </a>
     </li>
   {% endfor %}
   </div>
+  
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+  <script>
+    function success(position) {
+      var curloc = $('#my-current-location')
+      curloc.append('<a class="reserve-near-link" href="/availability.html?latitude=' + position.coords.latitude + '&longitude=' + position.coords.longitude + '">' +
+          '<span class="location-name">Current Location</span>' + 
+          '<span class="location-desc">Your current GPS-supplied location</span>' +
+        '</a>')
+      curloc.css('display','block')
+    }
+    
+    function error(msg) {
+      //alert(msg)
+    }
+    
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(success, error);
+    } else {
+      error('not supported');
+    }
+  </script>
   
 {% endblock content %}
 

@@ -7,10 +7,13 @@ from pcs.view import _VehiclesViewInterface
 from util.abstract import override
 
 class VehiclesHtmlView (_VehiclesViewInterface):
+    def __init__(self, render_method=template.render):
+        self.render_method = render_method
+    
     @override
-    def get_vehicle_availability(self, session, start_time, end_time, vehicles, location):
+    def get_vehicle_availability(self, session, location, start_time, end_time, vehicles):
         """
-        Return a response with overview information about the given session.
+        Return a response with vehicle availability near a given location
         """
         values = {
             'session': session,
@@ -21,6 +24,22 @@ class VehiclesHtmlView (_VehiclesViewInterface):
         }
         
         path = os.path.join(os.path.dirname(__file__), 'available_cars.html')
-        response = template.render(path, values)
+        response = self.render_method(path, values)
         return response
     
+    @override
+    def get_vehicle_info(self, session, vehicle, start_time, end_time, price):
+        """
+        Return a response with the availability of the given vehicle
+        """
+        values = {
+            'session': session,
+            'vehicle': vehicle,
+            'start_time': start_time,
+            'end_time': end_time,
+            'price': price
+        }
+        
+        path = os.path.join(os.path.dirname(__file__), 'vehicle_info.html')
+        response = self.render_method(path, values)
+        return response

@@ -13,7 +13,10 @@ class _LocationsViewInterface (object):
         raise NotImplementedError()
     
 class _VehiclesViewInterface (object):
-    def get_vehicle_availability(self, session, start_time, end_time, vehicles, location):
+    def get_vehicle_availability(self, session, location, start_time, end_time, vehicles):
+        raise NotImplementedError()
+    
+    def get_vehicle_info(self, session, vehicle, start_time, end_time, price):
         raise NotImplementedError()
 
 class _ErrorViewInterface (object):

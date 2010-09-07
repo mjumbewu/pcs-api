@@ -15,6 +15,7 @@ from pcs.data.pod import Pod
 from pcs.data.vehicle import Vehicle
 from pcs.source import _VehiclesSourceInterface
 from pcs.source.screenscrape import ScreenscrapeParseError
+from pcs.source.screenscrape.pcsconnection import PcsConnection
 from util.abstract import override
 from util.BeautifulSoup import BeautifulSoup
 from util.TimeZone import Eastern
@@ -27,24 +28,26 @@ class VehiclesScreenscrapeSource (_VehiclesSourceInterface):
     SIMPLE_FAILURE_DOCUMENT = "<html><head><title>Please Login</title></head><body></body></html>"
     
     def __init__(self, host="reservations.phillycarshare.org",
-                 path="/results.php?reservation_id=0&flexible=on&show_everything=on&offset=0"):
+                 vehicles_path="/results.php?reservation_id=0&flexible=on&show_everything=on&offset=0",
+                 vehicle_path="/lightbox.php"):
         super(VehiclesScreenscrapeSource, self).__init__()
         self.__host = host
-        self.__path = path
+        self.__vehicles_path = vehicles_path
+        self.__vehicle_path = vehicle_path
     
-    def get_location_query(self, location):
-        if isinstance(location, (basestring, int)):
-            query = 'location=driver_locations_%s' % location
+    def get_location_query(self, locationid):
+        if isinstance(locationid, (basestring, int)):
+            query = 'location=driver_locations_%s' % locationid
             return query
         
-        if isinstance(location, (list, tuple)) and len(location) == 2:
-            latitude = location[0]
-            longitude = location[1]
+        if isinstance(locationid, (list, tuple)) and len(locationid) == 2:
+            latitude = locationid[0]
+            longitude = locationid[1]
             query = 'location_latitude=%s&location_longitude=%s' % \
                 (latitude, longitude)
             return query
         
-        raise Exception('unrecognizable location: %r' % location)
+        raise Exception('unrecognizable location: %r' % locationid)
     
     def get_time_query(self, start_time, end_time):
         syear = start_time.year
@@ -65,7 +68,7 @@ class VehiclesScreenscrapeSource (_VehiclesSourceInterface):
             (smonth, sday, syear, stime, emonth, eday, eyear, etime)
         return query
     
-    def availability_from_pcs(self, conn, sessionid, location, start_time, end_time):
+    def availability_from_pcs(self, conn, sessionid, locationid, start_time, end_time):
         """
         Attempts to load a session from the connection with the given session
         id.
@@ -75,17 +78,13 @@ class VehiclesScreenscrapeSource (_VehiclesSourceInterface):
         """
         headers = {
             'Cookie': 'sid=%s' % sessionid}
-        query = self.get_location_query(location)
+        query = self.get_location_query(locationid)
         query += '&' + self.get_time_query(start_time, end_time)
-        connector = '&' if '?' in self.__path else '?'
-        conn.request("GET", self.__path + connector + query,
-            {}, headers)
+        connector = '&' if '?' in self.__vehicles_path else '?'
         
-        try:
-            response = conn.getresponse()
-        except:
-            return (self.SIMPLE_FAILURE_DOCUMENT, [])
+        url = "http://%s%s%s%s" % (self.__host, self.__vehicles_path, connector, query)
         
+        response = conn.request(url, "GET", {}, headers)
         return (response.read(), response.getheaders())
     
     def get_json_data(self, response_body):
@@ -111,7 +110,7 @@ class VehiclesScreenscrapeSource (_VehiclesSourceInterface):
         return html_data
     
     def get_pod_and_distance_from_html_data(self, pod_info_div):
-        pod_link = pod_info_div.findAll('a')[0]
+        pod_link = pod_info_div.find('a')
         
         matches = re.match(r'(?P<name>.*) - (?P<dist>[0-9]+\.?[0-9]*) mile\(s\)',
                            pod_link.text)
@@ -200,14 +199,25 @@ class VehiclesScreenscrapeSource (_VehiclesSourceInterface):
         
     
     def get_vehicle_from_html_data(self, pod, vehicle_info_div):
-        vehicle_header = vehicle_info_div.findAll('h4')[0]
+        vehicle_header = vehicle_info_div.find('h4')
         vehicle_name = vehicle_header.text
         
-        availability_div = vehicle_info_div.findAll('div', {'class':'timestamp'})[0]
-        availability_p = availability_div.findAll('p')[0]
+        availability_div = vehicle_info_div.find('div', {'class':'timestamp'})
+        availability_p = availability_div.find('p')
         
-        vehicle = Vehicle(vehicle_name, pod)
+        reserve_div = vehicle_info_div.find('div', {'class':'reserve'})
+        reserve_a = reserve_div.find('a')
+        lightbox_script = reserve_a['href']
         
+        match = re.match(r"javascript:MV.controls.reserve.lightbox.create\('(?P<start_time>[0-9]*)', '(?P<end_time>[0-9]*)', '(?P<vehicle_id>[0-9]*)', ''\);", lightbox_script)
+        vehicleid = match.group('vehicle_id')
+        
+        vehicle = Vehicle()
+        vehicle.model = vehicle_name
+        vehicle.pod = pod
+        vehicle.id = vehicleid
+        
+        # Since the availability information is in the div too, store it.
         if availability_p['class'] == 'good':
             vehicle.availability = 1
         elif availability_p['class'] == 'bad':
@@ -223,8 +233,7 @@ class VehiclesScreenscrapeSource (_VehiclesSourceInterface):
         current_pod = None
         current_dist = None
         
-        bodies = pcs_results_doc.findAll('body')
-        body = bodies[0]
+        body = pcs_results_doc.find('body')
         info_divs = body.findAll('div', recursive=False)
         for info_div in info_divs:
             if 'pod_top' in info_div['class']:
@@ -238,14 +247,14 @@ class VehiclesScreenscrapeSource (_VehiclesSourceInterface):
         return vehicles
     
     def create_host_connection(self):
-        return httplib.HTTPConnection(self.__host)
+        return PcsConnection()
     
     @override
-    def get_available_vehicles_near(self, sessionid, location, start_time, end_time):
+    def get_available_vehicles_near(self, sessionid, locationid, start_time, end_time):
         conn = self.create_host_connection()
         
         pcs_available_body, pcs_available_headers = \
-            self.availability_from_pcs(conn, sessionid, location, start_time, end_time)
+            self.availability_from_pcs(conn, sessionid, locationid, start_time, end_time)
         self._body = pcs_available_body
         self._headers = pcs_available_headers
         
@@ -254,3 +263,63 @@ class VehiclesScreenscrapeSource (_VehiclesSourceInterface):
         
         vehicles = self.create_vehicles_from_pcs_availability_doc(html_pods_data)
         return vehicles
+    
+    def vehicle_info_from_pcs(self, conn, sessionid, vehicleid, start_time, end_time):
+        host = self.__host
+        path = self.__vehicle_path
+        # The PhillyCarShare servers do not take into account time zone 
+        # information in their timestamp calculations, so we have to reverse
+        # our timezone info.  However, we have to keep it in the first place
+        # because Google's servers aren't necessarily on Eastern time (but 
+        # PhillyCarShare always will be).
+        start_stamp = time.mktime((start_time - Eastern.utcoffset(start_time)).timetuple())
+        end_stamp = time.mktime((end_time - Eastern.utcoffset(end_time)).timetuple())
+        
+        url = 'http://%s%s' % (host, path)
+        method = 'POST'
+        data = urllib.urlencode({'mv_action':'add',
+                'default[stack_pk]':vehicleid,
+                'default[start_stamp]':str(int(start_stamp)),
+                'default[end_stamp]':str(int(end_stamp))})
+        headers = { 'Cookie':'sid=%s' % sessionid }
+        response = \
+            conn.request(url, method, data, headers)
+        
+        return response.read(), response.getheaders()
+    
+    def get_html_vehicle_data(self, html_body):
+        html_data = BeautifulSoup('<html><body>%s</body></html>' % html_body)
+        return html_data
+    
+    def create_vehicle_from_pcs_information_doc(self, html_data):
+        vehicleid_tag = html_data.find('input', {'type':'hidden', 'name':'add[stack_pk]'})
+        if vehicleid_tag is None:
+            raise ScreenscrapeParseError('Vehicle ID not found in vehicle information.')
+        
+        vehicleid = vehicleid_tag['value']
+        
+        model_tag = html_data.find('span', {'id':'add_stack_pk_vt'})
+        if model_tag is None:
+            raise ScreenscrapeParseError('Vehicle model not found in vehicle information.')
+        
+        vehicle_model = model_tag.text
+        
+        vehicle = Vehicle()
+        vehicle.model = vehicle_model
+        vehicle.id = vehicleid
+        return vehicle
+    
+    @override
+    def get_vehicle(self, sessionid, vehicleid, start_time, end_time):
+        conn = self.create_host_connection()
+        
+        pcs_vehicle_body, pcs_vehicle_headers = \
+            self.vehicle_info_from_pcs(conn, sessionid, vehicleid, start_time, end_time)
+        html_vehicle_data = self.get_html_vehicle_data(pcs_vehicle_body)
+        
+        vehicle = self.create_vehicle_from_pcs_information_doc(html_vehicle_data)
+        return vehicle
+    
+    @override
+    def get_vehicle_price_estimate(self, sessionid, vehicleid, start_time, end_time):
+        return ''

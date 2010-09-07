@@ -49,21 +49,23 @@
           <li class="partially-available-vehicle">
         {% endifequal %}{% endifequal %}
           
-          <span>{{ vehicle.make }} {{ vehicle.model }}</span>
-          <div class="vehicle-stipulations">
-            {% ifequal vehicle.availability 0 %}
-              <span>Unavailable</span>
-            {% endifequal %}
-            {% ifequal vehicle.availability 1 %}
-              <span>Available</span>
-            {% endifequal %}
-            {% if vehicle.available_from %}
-              <span>Available at {{ vehicle.available_from|time }}</span>
-            {% endif %}
-            {% if vehicle.available_until %}
-              <span>Available until {{ vehicle.available_until|time }}</span>
-            {% endif %}
-          </div>
+          <a href="/availability/{{ vehicle.id }}.html?start_time={{ start_time|date:"U" }}&end_time={{ end_time|date:"U" }}">
+            <span>{{ vehicle.make }} {{ vehicle.model }}</span>
+            <div class="vehicle-stipulations">
+              {% ifequal vehicle.availability 0 %}
+                <span>Unavailable</span>
+              {% endifequal %}
+              {% ifequal vehicle.availability 1 %}
+                <span>Available</span>
+              {% endifequal %}
+              {% if vehicle.available_from %}
+                <span>Available at {{ vehicle.available_from|time }}</span>
+              {% endif %}
+              {% if vehicle.available_until %}
+                <span>Available until {{ vehicle.available_until|time }}</span>
+              {% endif %}
+            </div>
+          </a>
         </li>
       {% endfor %}
       </ul> <!-- pod-vehicles -->

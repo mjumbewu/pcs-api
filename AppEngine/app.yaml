@@ -15,15 +15,19 @@ handlers:
 
 - url: /session.*
   script: pcs/input/wsgi/session.py
+  secure: optional
 
 - url: /newreservation.*
   script: pcs/input/wsgi/newreservation.py
+  secure: never
 
-- url: /vehicles.*
+- url: /availability.*
   script: pcs/input/wsgi/vehicles.py
+  secure: never
 
 - url: /locations.*
   script: pcs/input/wsgi/locations.py
+  secure: never
 
 - url: /styles
   static_dir: styles

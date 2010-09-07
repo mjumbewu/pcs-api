@@ -1,0 +1,19 @@
+{% extends "session_base.html" %}
+
+{% block title %} Vehicle Availability {% endblock %}
+
+{% block content %}
+  
+  <style>
+  </style>
+  
+  <h1>Vehicle Availability</h1>
+  
+  <div>
+    <span>A {{ vehicle.model }}</span>
+    <span>from {{ start_time|time }} {{ start_time|date:"D M d Y" }}</span>
+    <span>until {{ end_time|time }} {{ end_time|date:"D M d Y" }}</span>
+  </div>
+  
+{% endblock content %}
+

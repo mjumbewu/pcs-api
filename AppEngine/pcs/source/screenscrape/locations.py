@@ -23,7 +23,7 @@ class LocationsScreenscrapeSource (_LocationsSourceInterface):
     """
     SIMPLE_FAILURE_DOCUMENT = "<html><head><title>Please Login</title></head><body></body></html>"
     
-    def __init__(self, url="http://reservations.phillycarshare.org/my_info.php?mv_action=dpref&pk=6285506&mvssl"):
+    def __init__(self, url="http://reservations.phillycarshare.org/my_info.php?mv_action=dpref&mvssl"):
         super(LocationsScreenscrapeSource, self).__init__()
         self.__url = url
     
@@ -41,13 +41,11 @@ class LocationsScreenscrapeSource (_LocationsSourceInterface):
         location_profiles = []
         
         response_doc = BeautifulSoup(response_body)
-        tbody_tags = response_doc.findAll('tbody', 
+        tbody_tag = response_doc.find('tbody', 
             {'id':'dpref_driver_pk__preferences_pk__driver_locations_pk__profiles'})
         
-        if len(tbody_tags) == 0:
+        if tbody_tag is None:
             raise ScreenscrapeParseError('No tbody found: %r' % response_body)
-        
-        tbody_tag = tbody_tags[0]
         
         tr_tags = tbody_tag.findAll('tr')
         for tr_tag in tr_tags:

@@ -31,28 +31,23 @@ class VehiclesHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
         self.location_source = location_source
         self.vehicle_view = vehicle_view
     
-    def get_available_vehicles(self, start_time, end_time):
-        sessionid = self.get_session_id()
-        locationid = self.get_location_id()
-        
-        return self.vehicle_source.get_available_vehicles_near(sessionid, locationid, start_time, end_time)
+    def get_available_vehicles(self, sessionid, locationid, start_time, end_time):
+        vehicles = self.vehicle_source.get_available_vehicles_near(sessionid, locationid, start_time, end_time)
+        return vehicles
     
     def get_location_id(self):
         locationid = self.request.get('location_id')
-        if locationid is not None:
+        if locationid:
             return locationid
         
         latitude = self.request.get('latitude')
         longitude = self.request.get('longitude')
-        if latitude is not None and longitude is not None:
-            return (latitude, longitude)
+        if latitude and longitude:
+            return (float(latitude), float(longitude))
         
         raise WsgiParameterError('No valid location given')
     
-    def get_location(self):
-        sessionid = self.get_session_id()
-        locationid = self.get_location_id()
-        
+    def get_location(self, sessionid, locationid):
         if isinstance(locationid, (basestring, int)):
             location = self.location_source.get_location_profile(sessionid, locationid)
         else:
@@ -60,16 +55,23 @@ class VehiclesHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
         
         return location
     
+    
+    
     def get(self):
         try:
-            session = self.get_session()
-            location = self.get_location()
+            userid = self.get_user_id()
+            sessionid = self.get_session_id()
+            locationid = self.get_location_id()
+            
+            session = self.get_session(userid, sessionid)
+            location = self.get_location(sessionid, locationid)
+            
             start_time, end_time = self.get_time_range()
 
-            vehicles = self.get_available_vehicles(start_time, end_time)
+            vehicles = self.get_available_vehicles(sessionid, locationid, start_time, end_time)
             
             response_body = self.vehicle_view.get_vehicle_availability(
-                session, start_time, end_time, vehicles, location)
+                session, location, start_time, end_time, vehicles)
         except Exception, e:
             response_body = self.generate_error(e)
             
@@ -87,39 +89,32 @@ class VehicleHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
         self.vehicle_source = vehicle_source
         self.vehicle_view = vehicle_view
     
-    def save_vehicle_id(self, vehicleid):
-        self.vehicleid = vehicleid
-    
-    def get_vehicle_id(self):
-        try:
-            return self.vehicleid
-        except AttributeError:
-            raise WsgiParameterError('Vehicle id must be specified')
-    
-    def get_vehicle(self):
-        sessionid = self.get_session_id()
-        vehicleid = self.get_vehicle_id()
-        vehicle = self.vehicle_source.get_vehicle(sessionid, vehicleid)
+#    def get_vehicle_id(self):
+#        vehicle_id = self.request.get('vehicle_id')
+#        if vehicle_id is None:
+#            raise WsgiParameterError('No vehicle id found')
+#        return vehicle_id
+#    
+    def get_vehicle(self, sessionid, vehicleid, start_time, end_time):
+        vehicle = self.vehicle_source.get_vehicle(sessionid, vehicleid, start_time, end_time)
         return vehicle
     
-    def get_availability(self):
-        sessionid = self.get_session_id()
-        vehicleid = self.get_vehicle_id()
-        start_time, end_time = self.get_time_range()
-        availability = self.vehicle_source.get_vehicle_availability(sessionid, vehicleid, start_time, end_time)
-        return availability
+    def get_price_estimate(self, sessionid, vehicleid, start_time, end_time):
+        price = self.vehicle_source.get_vehicle_price_estimate(sessionid, vehicleid, start_time, end_time)
+        return price
     
     def get(self, vehicleid):
-        self.save_vehicle_id(vehicleid)
-        
-        session = self.get_session()
-        vehicle = self.get_vehicle()
+        userid = self.get_user_id()
+        sessionid = self.get_session_id()
+        session = self.get_session(userid, sessionid)
         start_time, end_time = self.get_time_range()
-        availability = self.get_availability()
-        price = self.get_price_estimate()
+#        vehicleid = self.get_vehicle_id()
         
-        response_body = self.vehicle_view.get_vehicle(session, vehicle,
-            start_time, end_time, availability, price)
+        vehicle = self.get_vehicle(sessionid, vehicleid, start_time, end_time)
+        price = self.get_price_estimate(sessionid, vehicleid, start_time, end_time)
+        
+        response_body = self.vehicle_view.get_vehicle_info(session, vehicle,
+            start_time, end_time, price)
         
         self.response.out.write(response_body);
         self.response.set_status(200);
@@ -142,8 +137,8 @@ class VehicleHtmlHandler (VehicleHandler):
             ErrorHtmlView())
 
 application = webapp.WSGIApplication(
-        [('/vehicles.html', VehiclesHtmlHandler),
-         ('/vehicles/(.*).html', VehicleHtmlHandler)],
+        [('/availability.html', VehiclesHtmlHandler),
+         ('/availability/(.*).html', VehicleHtmlHandler)],
         debug=True)
 
 def main():

@@ -206,9 +206,9 @@ class SessionHandlerTest (unittest.TestCase):
             cookies = {}
         
         class StubHeaders (object):
-            headers = []
+            header_list = []
             def add_header(self, key, val):
-                self.headers.append((key,val))
+                self.header_list.append((key,val))
         
         class StubResponse (object):
             out = StringIO.StringIO()
@@ -218,63 +218,223 @@ class SessionHandlerTest (unittest.TestCase):
         
         @Stub(_SessionSourceInterface)
         class StubSessionSource (object):
-            def get_existing_session(self, userid, sessionid):
-                return None
-            def get_new_session(self, userid, password):
-                if userid == 'uname' and password == 'pword':
-                    class StubSession (object):
-                        id = '5b'
-                        user = 'uname'
-                        name = 'My Name'
-                    return StubSession()
-                else:
-                    raise SessionLoginError()
-        StubSessionSource._body = ''
+            pass
         
         @Stub(_SessionViewInterface)
         class StubSessionView (object):
             def get_session_overview(self, session):
+                self.session = session
                 return 'Session'
         
         class StubErrorView (object):
             def get_error(self, error_code, error_msg):
                 return 'No Session'
         
+        self.session_view = StubSessionView()
+        self.session_source = StubSessionSource()
+        self.error_view = StubErrorView()
+        
         # System under test
-        self.handler = SessionHandler(StubSessionSource(), StubSessionView(), StubErrorView())
+        self.handler = SessionHandler(self.session_source, self.session_view, self.error_view)
         self.handler.request = StubRequest()
         self.handler.response = StubResponse()
     
-    def testShouldRespondWithSuccessContentWhenUserIdAndPasswordAreRecognized(self):
+    def testShouldReturnGivenUsernameAndPasswordAsCredentials(self):
         # Given...
         self.handler.request['username'] = 'uname'
         self.handler.request['password'] = 'pword'
         
         # When...
-        self.handler.get()
+        uname, pword = self.handler.get_credentials()
         
         # Then...
-        response_body = self.handler.response.out.getvalue()
-        self.assertEqual(response_body, 'Session')
+        self.assertEqual(uname, 'uname')
+        self.assertEqual(pword, 'pword')
     
-    def testShouldRespondWithFailureContentWhenUserIdAndPasswordAreNotRecognized(self):
+    def testShouldCreateNewSessionFromValidUsernameAndPassword(self):
+        @patch(self.session_source)
+        def get_new_session(self, userid, password):
+            if userid == 'uname' and password == 'pword':
+                return 'my session'
+            else:
+                raise SessionLoginError()
+        
+        uname = 'uname'
+        pword = 'pword'
+        
+        session = self.handler.get_new_session(uname, pword)
+        
+        self.assertEqual(session, 'my session')
+    
+    def testShouldRaiseErrorWhenGivenInvalidUsernamePasswordCombination(self):
+        @patch(self.session_source)
+        def get_new_session(self, userid, password):
+            if userid == 'uname' and password == 'pword':
+                return 'my session'
+            else:
+                raise SessionLoginError()
+        
+        uname = 'uname'
+        pword = 'wrong_pword'
+        
+        try:
+            session = self.handler.get_new_session(uname, pword)
+        
+        except SessionLoginError:
+            return
+        
+        self.fail('Should have raised error for user %r and pass %r' % (uname, pword))
+    
+    def testShouldRespondWithSuccessContentWhenSessionIdIsRecognized(self):
         # Given...
-        self.handler.request['username'] = 'uname'
-        self.handler.request['password'] = 'pword1'
+        @patch(self.handler)
+        def get_user_id(self):
+            self.userid_called = True
+            return 'user1234'
+        
+        @patch(self.handler)
+        def get_session_id(self):
+            self.sessionid_called = True
+            return 'ses1234'
+        
+        @patch(self.handler)
+        def get_session(self, userid, sessionid):
+            self.userid = userid
+            self.sessionid = sessionid
+            return 'my session'
+        
+        @patch(self.session_view)
+        def get_session_overview(self, session):
+            self.session = session
+            return 'session overview body'
         
         # When...
         self.handler.get()
         
         # Then...
         response_body = self.handler.response.out.getvalue()
-        self.assertEqual(response_body, 'No Session')
+        self.assert_(self.handler.userid_called)
+        self.assert_(self.handler.sessionid_called)
+        self.assertEqual(self.handler.userid, 'user1234')
+        self.assertEqual(self.handler.sessionid, 'ses1234')
+        self.assertEqual(self.session_view.session, 'my session')
+        self.assertEqual(response_body, 'session overview body')
+    
+    def testShouldRespondWithFailureContentWhenSessionIdIsNotRecognized(self):
+        # Given...
+        @patch(self.handler)
+        def get_user_id(self):
+            self.userid_called = True
+            return 'user1234'
+        
+        @patch(self.handler)
+        def get_session_id(self):
+            self.sessionid_called = True
+            return 'ses1234'
+        
+        @patch(self.handler)
+        def get_session(self, userid, sessionid):
+            self.userid = userid
+            self.sessionid = sessionid
+            raise SessionExpiredError()
+        
+        @patch(self.error_view)
+        def get_error(self, error_code, error_msg):
+            return error_msg
+        
+        # When...
+        self.handler.get()
+        
+        # Then...
+        response_body = self.handler.response.out.getvalue()
+        self.assert_(self.handler.userid_called)
+        self.assert_(self.handler.sessionid_called)
+        self.assertEqual(self.handler.userid, 'user1234')
+        self.assertEqual(self.handler.sessionid, 'ses1234')
+        self.assert_(response_body.startswith('SessionExpiredError'), 'Response does not start with SessionExpiredError: %r' % response_body)
+    
+    def testShouldSaveSessionToSetCookieHeader(self):
+        class StubSession (object):
+            id = 'ses1234'
+            user = 'user1234'
+            name = 'My User Name'
+        session = StubSession()
+        
+        self.handler.save_session(session)
+        
+        self.assertEqual(self.handler.response.headers.header_list, 
+            [ ('Set-Cookie','sid=ses1234; path=/'), 
+              ('Set-Cookie','suser=user1234; path=/'),
+              ('Set-Cookie','sname=My User Name; path=/') ])
+    
+    def testShouldRespondWithSuccessContentWhenUserIdAndPasswordAreRecognized(self):
+        # Given...
+        @patch(self.handler)
+        def get_credentials(self):
+            self.credentials_called = True
+            return 'user1234', 'pass1234'
+        
+        @patch(self.handler)
+        def get_new_session(self, userid, password):
+            self.userid = userid
+            self.password = password
+            return 'my session'
+        
+        @patch(self.session_view)
+        def get_session_overview(self, session):
+            self.session = session
+            return 'session overview body'
+        
+        @patch(self.handler)
+        def save_session(self, session):
+            self.session = session
+        
+        # When...
+        self.handler.post()
+        
+        # Then...
+        response_body = self.handler.response.out.getvalue()
+        self.assert_(self.handler.credentials_called)
+        self.assertEqual(self.handler.userid, 'user1234')
+        self.assertEqual(self.handler.password, 'pass1234')
+        self.assertEqual(self.session_view.session, 'my session')
+        self.assertEqual(self.handler.session, 'my session')
+        self.assertEqual(response_body, 'session overview body')
+    
+    def testShouldRespondWithFailureContentWhenUserIdAndPasswordAreNotRecognized(self):
+        # Given...
+        @patch(self.handler)
+        def get_credentials(self):
+            self.credentials_called = True
+            return 'user1234', 'pass1234'
+        
+        @patch(self.handler)
+        def get_new_session(self, userid, password):
+            self.userid = userid
+            self.password = password
+            raise SessionLoginError()
+        
+        @patch(self.error_view)
+        def get_error(self, error_code, error_msg):
+            return error_msg
+        
+        # When...
+        self.handler.post()
+        
+        # Then...
+        response_body = self.handler.response.out.getvalue()
+        self.assert_(self.handler.credentials_called)
+        self.assertEqual(self.handler.userid, 'user1234')
+        self.assertEqual(self.handler.password, 'pass1234')
+        self.assert_(response_body.startswith('SessionLoginError'), 'Response does not start with SessionLoginError: %r' % response_body)
 
 from pcs.input.wsgi.session import SessionHtmlHandler
 from pcs.view.html.session import SessionHtmlView
+from pcs.view.html.error import ErrorHtmlView
 class SessionHtmlHandlerTest (unittest.TestCase):
     def testShouldBeInitializedWithASessionHtmlView(self):
         handler = SessionHtmlHandler()
         
         self.assertEqual(handler.session_view.__class__.__name__, SessionHtmlView.__name__)
         self.assertEqual(handler.session_source.__class__.__name__, SessionScreenscrapeSource.__name__)
-        
+        self.assertEqual(handler.error_view.__class__.__name__, ErrorHtmlView.__name__)

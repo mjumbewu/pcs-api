@@ -6,6 +6,7 @@ from pcs.data.session import Session
 from pcs.input.wsgi.locations import LocationsHandler
 from pcs.source import _LocationsSourceInterface
 from pcs.source import _SessionSourceInterface
+from pcs.source import SessionExpiredError
 from pcs.source.screenscrape import ScreenscrapeParseError
 from pcs.source.screenscrape.pcsconnection import PcsConnection
 from pcs.view import _ErrorViewInterface
@@ -66,46 +67,83 @@ class LocationHandlerTest (unittest.TestCase):
     
     def testShouldRespondSuccessfullyWhenGivenAValidSession(self):
         # Given...
-        self.handler.request.cookies = {
-            'sid': '123abc',
-            'suser': 'userid123'
-        }
+        @patch(self.handler)
+        def get_user_id(self):
+            self.userid_called = True
+            return 'user1234'
         
-        @patch(self.session_source)
-        def get_existing_session(self, userid, sessionid):
-            session = Session('123abc', 'me', 'My Account')
-            return session
+        @patch(self.handler)
+        def get_session_id(self):
+            self.sessionid_called = True
+            return 'ses1234'
+        
+        @patch(self.handler)
+        def get_session(self, userid, sessionid):
+            self.userid = userid
+            self.sessionid = sessionid
+            return 'my session'
+        
+        @patch(self.locations_source)
+        def get_location_profiles(self, sessionid):
+            self.sessionid = sessionid
+            return 'my locations'
+        
+        @patch(self.locations_view)
+        def get_locations(self, session, locations):
+            self.session = session
+            self.locations = locations
+            return 'location profiles body'
+        
+        @patch(self.error_view)
+        def get_error(self, error_code, error_msg):
+            pass
         
         # When...
         self.handler.get()
         
         # Then...
         response_body = self.handler.response.out.getvalue()
-        self.assertEqual(response_body, 'Success')
+        self.assert_(self.handler.userid_called)
+        self.assert_(self.handler.sessionid_called)
+        self.assertEqual(self.handler.userid, 'user1234')
+        self.assertEqual(self.handler.sessionid, 'ses1234')
+        self.assertEqual(self.locations_source.sessionid, 'ses1234')
+        self.assertEqual(self.locations_view.locations, 'my locations')
+        self.assertEqual(self.locations_view.session, 'my session')
+        self.assertEqual(response_body, 'location profiles body')
     
     def testShouldGenerateAFailureWhenGivenAnInvalidSession(self):
         # Given...
-        self.handler.request.cookies = {
-            'sid': '123abc',
-            'suser': 'userid123'
-        }
-        
-        @patch(self.session_source)
-        def get_existing_session(self, userid, sessionid):
-            return None
-        
-        self.handler._saved_exception = None
         @patch(self.handler)
-        def generate_error(self, error):
-            self._saved_exception = error
-            return 'Failure'
+        def get_user_id(self):
+            self.userid_called = True
+            return 'user1234'
+        
+        @patch(self.handler)
+        def get_session_id(self):
+            self.sessionid_called = True
+            return 'ses1234'
+        
+        @patch(self.handler)
+        def get_session(self, userid, sessionid):
+            self.userid = userid
+            self.sessionid = sessionid
+            raise SessionExpiredError()
+        
+        @patch(self.error_view)
+        def get_error(self, error_code, error_msg):
+            return error_msg
         
         # When...
         self.handler.get()
         
         # Then...
-        self.assert_(self.handler._saved_exception is not None)
-        self.assertEqual(type(self.handler._saved_exception).__name__, 'AttributeError')
+        response_body = self.handler.response.out.getvalue()
+        self.assert_(self.handler.userid_called)
+        self.assert_(self.handler.sessionid_called)
+        self.assertEqual(self.handler.userid, 'user1234')
+        self.assertEqual(self.handler.sessionid, 'ses1234')
+        self.assert_(response_body.startswith('SessionExpiredError'), 'Should start with SessionExpiredError: %r' % response_body)
     
 
 from pcs.source.screenscrape.locations import LocationsScreenscrapeSource

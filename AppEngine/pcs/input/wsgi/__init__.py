@@ -16,28 +16,23 @@ class _SessionBasedHandler (webapp.RequestHandler):
     
     def get_user_id(self):
         user_id = self.request.cookies.get('suser', None)
-        
-        if user_id is None: raise WsgiParameterError('Could not find user id.')
-        
+        if user_id is None:
+            raise WsgiParameterError('Could not find user id.')
         return user_id
     
     def get_session_id(self):
         session_id = self.request.cookies.get('sid', None)
-        
-        if session_id is None: raise WsgiParameterError('Could not find session id.')
-        
+        if session_id is None:
+            raise WsgiParameterError('Could not find session id.')
         return session_id
     
-    def get_session(self):
+    def get_session(self, userid, sessionid):
         """
         Attempt to get a session using username and password credentials. If no
         password is available, attempt to find an existing session id to use.
         @return: A valid session or None
         """
-        session_id = self.get_session_id()
-        user_id = self.get_user_id()
-        session = self.session_source.get_existing_session(user_id, session_id)
-        
+        session = self.session_source.get_existing_session(userid, sessionid)
         return session
 
     def generate_error(self, error):

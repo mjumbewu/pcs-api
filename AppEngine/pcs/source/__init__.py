@@ -11,13 +11,13 @@ class _SessionSourceInterface (object):
         raise NotImplementedError()
 
 class _VehiclesSourceInterface (object):
-    def get_available_vehicles_near(self, sessionid, location, start_time, end_time):
+    def get_available_vehicles_near(self, sessionid, locationid, start_time, end_time):
         raise NotImplementedError()
     
-    def get_vehicle(self, sessionid, vehicleid):
+    def get_vehicle(self, sessionid, vehicleid, start_time, end_time):
         raise NotImplementedError()
     
-    def get_vehicle_availability(self, sessionid, vehicleid, start_time, end_time):
+    def get_vehicle_price_estimate(self, sessionid, vehicleid, start_time, end_time):
         raise NotImplementedError()
 
 class _LocationsSourceInterface (object):

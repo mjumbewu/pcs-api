@@ -27,17 +27,17 @@ class LocationsHandler (_SessionBasedHandler):
     
     def get(self):
         try:
-            session = self.get_session()
-            locations = self.locations_source.get_location_profiles(session.id)
+            userid = self.get_user_id()
+            sessionid = self.get_session_id()
+            
+            session = self.get_session(userid, sessionid)
+            locations = self.locations_source.get_location_profiles(sessionid)
             response_body = self.locations_view.get_locations(session, locations)
         except Exception, e:
             response_body = self.generate_error(e)
         
         self.response.out.write(response_body);
         self.response.set_status(200);
-    
-    def post(self):
-        self.get()
 
 class LocationsHtmlHandler (LocationsHandler):
     def __init__(self):

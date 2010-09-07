@@ -29,22 +29,18 @@ class SessionHandler (_SessionBasedHandler):
         username = self.request.get('username')
         password = self.request.get('password')
         
+        if username is None or password is None:
+            raise WsgiParameterError('Both userid and password must be supplied')
+        
         return username, password
     
-    @override
-    def get_session(self):
+    def get_new_session(self, userid, password):
         """
         Attempt to get a session using username and password credentials. If no
         password is available, attempt to find an existing session id to use.
         @return: A valid session or None
         """
-        username, password = self.get_credentials()
-        
-        if username and password:
-            session = self.session_source.get_new_session(username, password)
-        else:
-            session = super(SessionHandler, self).get_session()
-        
+        session = self.session_source.get_new_session(userid, password)
         return session
     
     def save_session(self, session):
@@ -57,25 +53,32 @@ class SessionHandler (_SessionBasedHandler):
         self.response.headers.add_header('Set-Cookie',str('sname='+session.name+'; path=/'))
         
     def get(self):
-        self.post()
-    
-    def post(self):
         try:
-            session = self.get_session()
+            userid = self.get_user_id()
+            sessionid = self.get_session_id()
+            session = self.get_session(userid, sessionid)
             
             response_body = self.session_view.get_session_overview(session)
-            if session: self.save_session(session)
         
         except Exception, e:
             response_body = self.generate_error(e)
         
         self.response.out.write(response_body);
         self.response.set_status(200);
+    
+    def post(self):
+        try:
+            userid, password = self.get_credentials()
+            session = self.get_new_session(userid, password)
+            
+            response_body = self.session_view.get_session_overview(session)
+            self.save_session(session)
         
-        # Put the original body in a comment.
-#        pcs_login_body = self.session_source._body
-#        pcs_login_body.replace('-->', 'end_comment')
-#        self.response.out.write('<!-- %s -->' % pcs_login_body)
+        except Exception, e:
+            response_body = self.generate_error(e)
+        
+        self.response.out.write(response_body);
+        self.response.set_status(200);
 
 class SessionHtmlHandler (SessionHandler):
     def __init__(self):
