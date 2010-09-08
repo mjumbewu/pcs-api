@@ -39,6 +39,11 @@
     .location-desc {
       font-size: 0.7em;
       font-weight: normal;
+      display: none;
+    }
+    
+    .location label {
+      display: inline-block;
     }
     
     #my-current-location {
@@ -52,13 +57,13 @@
     From:
     <input name="start_date" type="date" value="{{ start_time|date:"Y-m-d" }}" size="10" />
     at
-    <input name="start_time" type="time" value="{{ start_time|time:"H:i" }}" size="5" />
+    <input name="start_time" type="time" value="{{ start_time|time:"H:i" }}" size="5" step="900" />
     <br />
     
     Until:
     <input name="end_date" type="date" value="{{ end_time|date:"Y-m-d" }}" size="10" />
     at
-    <input name="end_time" type="time" value="{{ end_time|time:"H:i" }}" size="5" />
+    <input name="end_time" type="time" value="{{ end_time|time:"H:i" }}" size="5" step="900" />
     
     <h2>Near...</h2>
     <ul class="locations">
@@ -66,12 +71,8 @@
       </li>
     {% for location in locations %}
       <li class="location">
-        <!--a class="edit-link" href="#{{ location.id }}">
-          <span>Edit</span>
-        </a-->
         <input type="radio" name="location_id" id="location_id_{{ location.id }}" value="{{ location.id }}" />
         <label for="location_id_{{ location.id }}">
-        <!--a class="reserve-near-link" href="/availability.html?location_id={{ location.id }}"-->
           <span class="location-name">{{ location.name }}</span>
           <span class="location-desc">{{ location.desc }}</span>
         </label>
@@ -79,7 +80,7 @@
     {% endfor %}
     </ul>
     
-    <input type="submit"/>
+    <input type="submit" value="Find Vehicles" />
     
   </form>
     
@@ -87,13 +88,9 @@
   <script>
     function success(position) {
       var curloc = $('#my-current-location')
-//      curloc.html('<a class="reserve-near-link" href="/availability.html?latitude=' + position.coords.latitude + '&longitude=' + position.coords.longitude + '">' +
-//          '<span class="location-name">Current Location</span>' + 
-//          '<span class="location-desc"></span>' +
-//        '</a>')
       curloc.html('<input type="hidden" name="latitude" value="' + position.coords.latitude + '" />' +
         '<input type="hidden" name="longitude" value="' + position.coords.longitude + '" />' +
-        '<input type="radio" name="location_id" id="location_id_current" value="" />' +
+        '<input type="radio" name="location_id" id="location_id_current" value="" checked /> ' +
         '<label for="location_id_current">' +
           '<span class="location-name">Current Location</span>' + 
           '<span class="location-desc"></span>' +

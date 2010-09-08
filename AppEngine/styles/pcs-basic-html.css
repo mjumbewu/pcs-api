@@ -1,24 +1,51 @@
-ul {
-  border: 1px solid #888;
-  list-style-type: none;
+body {
+  font-family: "sans-serif";
+  text-align: center;
+  padding: 0px;
   margin: 0px;
+  background-color: #eee;
+}
+
+ul {
+  border-radius: 0.4em;
+  background-color: #fff;
+  list-style-type: none;
+  margin: 0.5em;
   padding: 0px;
 }
 
 ul > li {
   font-weight: bold;
-  border-top: 1px solid #ccc;
-  height: 2.5em;
+  text-align: left;
+  border-left: 1px solid #888;
+  border-bottom: 1px solid #888;
+  border-right: 1px solid #888;
+/*  min-height: 2em;*/
   margin: 0px;
-  padding: 0px;
+  padding: 0.5em;
 }
 
 ul > li:first-child {
-  border: none
+  border: 1px solid #888;
+  border-top-left-radius: 0.4em;
+  border-top-right-radius: 0.4em;
+}
+
+ul > li:last-child {
+  border-bottom-left-radius: 0.4em;
+  border-bottom-right-radius: 0.4em;
 }
 
 ul > li:hover {
   background-color: #ddd;
+}
+
+h1 {
+  font-size: 1.2em;
+  margin: 0px;
+  padding: 0.5em;
+  border-bottom: 1px solid #446640;
+  background-color: #8DCD7E;
 }
 
 h2 {
@@ -26,4 +53,35 @@ h2 {
   font-weight: normal;
   margin-top: 1em;
   margin-bottom: 0px;
+  margin-left: 1em;
+  text-align: left;
 }
+
+form {
+}
+
+.text_input_field {
+  text-align: left;
+  border-bottom: 1px solid grey;
+  padding: 0.25em;
+}
+
+.text_input_field label {
+  color: grey;
+}
+
+.text_input_field input {
+  border: none;
+  font-size: inherit;
+  background-color: #eee;
+}
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+li > a {
+  display: block;
+}
+

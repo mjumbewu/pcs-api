@@ -2,6 +2,7 @@ import httplib
 import urllib
 import Cookie as cookielib
 import HTMLParser as htmlparserlib
+import re
 
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
@@ -14,6 +15,7 @@ from pcs.source.screenscrape.vehicles import VehiclesScreenscrapeSource
 from pcs.source.screenscrape.locations import LocationsScreenscrapeSource
 from pcs.view.html.vehicles import VehiclesHtmlView
 from pcs.view.html.error import ErrorHtmlView
+from util.TimeZone import Eastern
 
 class VehiclesHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
     """
@@ -127,6 +129,38 @@ class VehiclesHtmlHandler (VehiclesHandler):
             LocationsScreenscrapeSource(),
             VehiclesHtmlView(),
             ErrorHtmlView())
+            
+    def get_time_range(self):
+        import datetime
+        start_date_str = self.request.get('start_date')
+        end_date_str = self.request.get('end_date')
+        start_time_str = self.request.get('start_time')
+        end_time_str = self.request.get('end_time')
+        
+        now_time = datetime.datetime.now(Eastern) + datetime.timedelta(minutes=1)
+        if start_date_str and start_time_str:
+            date_match = re.match('(?P<year>[0-9]+)-(?P<month>[0-9]+)-(?P<day>[0-9]+)', start_date_str)
+            time_match = re.match('(?P<hour>[0-9]+):(?P<minute>[0-9]+)', start_time_str)
+            start_time = datetime.datetime(int(date_match.group('year')),
+                int(date_match.group('month')),
+                int(date_match.group('day')),
+                int(time_match.group('hour')),
+                int(time_match.group('minute')))
+        else:
+            start_time = now_time
+        
+        if end_date_str and end_time_str:
+            date_match = re.match('(?P<year>[0-9]+)-(?P<month>[0-9]+)-(?P<day>[0-9]+)', end_date_str)
+            time_match = re.match('(?P<hour>[0-9]+):(?P<minute>[0-9]+)', end_time_str)
+            end_time = datetime.datetime(int(date_match.group('year')),
+                int(date_match.group('month')),
+                int(date_match.group('day')),
+                int(time_match.group('hour')),
+                int(time_match.group('minute')))
+        else:
+            end_time = now_time + datetime.timedelta(hours=3)
+        
+        return start_time, end_time
     
 class VehicleHtmlHandler (VehicleHandler):
     def __init__(self):
