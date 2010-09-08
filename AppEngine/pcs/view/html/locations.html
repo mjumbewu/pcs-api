@@ -15,13 +15,16 @@
     }
     
     .reserve-near-link {
-      text-decoration: none;
-      color: inherit;
+/*      text-decoration: none;
+      color: inherit;*/
       display: block;
+      width: 100%;
+/*      text-align: left;
+      padding: 0.5em;*/
     }
     
-    .reserve-near-link {
-      width: 100%;
+    .reserve-near-link > span {
+      display: block;
     }
     
     .edit-link {
@@ -43,43 +46,81 @@
     }
   </style>
   
-  <h1>Reserve a car near:</h1>
+  <h1>New Reservation</h1>
   
-  <ul class="locations">
-    <li id="my-current-location" class="location">
-    </li>
-  {% for location in locations %}
-    <li class="location">
-      <a class="edit-link" href="#{{ location.id }}">
-        <span>Edit</span>
-      </a>
-      <a class="reserve-near-link" href="/availability.html?location_id={{ location.id }}">
-        <span class="location-name">{{ location.name }}</span>
-        <span class="location-desc">{{ location.desc }}</span>
-      </a>
-    </li>
-  {% endfor %}
-  </div>
-  
+  <form action="/availability.html" method="GET">
+    From:
+    <input name="start_date" type="date" value="{{ start_time|date:"Y-m-d" }}" size="10" />
+    at
+    <input name="start_time" type="time" value="{{ start_time|time:"H:i" }}" size="5" />
+    <br />
+    
+    Until:
+    <input name="end_date" type="date" value="{{ end_time|date:"Y-m-d" }}" size="10" />
+    at
+    <input name="end_time" type="time" value="{{ end_time|time:"H:i" }}" size="5" />
+    
+    <h2>Near...</h2>
+    <ul class="locations">
+      <li id="my-current-location" class="location">
+      </li>
+    {% for location in locations %}
+      <li class="location">
+        <!--a class="edit-link" href="#{{ location.id }}">
+          <span>Edit</span>
+        </a-->
+        <input type="radio" name="location_id" id="location_id_{{ location.id }}" value="{{ location.id }}" />
+        <label for="location_id_{{ location.id }}">
+        <!--a class="reserve-near-link" href="/availability.html?location_id={{ location.id }}"-->
+          <span class="location-name">{{ location.name }}</span>
+          <span class="location-desc">{{ location.desc }}</span>
+        </label>
+      </li>
+    {% endfor %}
+    </ul>
+    
+    <input type="submit"/>
+    
+  </form>
+    
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
   <script>
     function success(position) {
       var curloc = $('#my-current-location')
-      curloc.append('<a class="reserve-near-link" href="/availability.html?latitude=' + position.coords.latitude + '&longitude=' + position.coords.longitude + '">' +
+//      curloc.html('<a class="reserve-near-link" href="/availability.html?latitude=' + position.coords.latitude + '&longitude=' + position.coords.longitude + '">' +
+//          '<span class="location-name">Current Location</span>' + 
+//          '<span class="location-desc"></span>' +
+//        '</a>')
+      curloc.html('<input type="hidden" name="latitude" value="' + position.coords.latitude + '" />' +
+        '<input type="hidden" name="longitude" value="' + position.coords.longitude + '" />' +
+        '<input type="radio" name="location_id" id="location_id_current" value="" />' +
+        '<label for="location_id_current">' +
           '<span class="location-name">Current Location</span>' + 
-          '<span class="location-desc">Your current GPS-supplied location</span>' +
-        '</a>')
+          '<span class="location-desc"></span>' +
+        '</label>')
       curloc.css('display','block')
     }
     
+    function findlocation() {
+      var curloc = $('#my-current-location')
+      curloc.html(
+          '<span class="location-name">Finding Location...</span>')
+      curloc.css('display','block')
+      
+      navigator.geolocation.getCurrentPosition(success, error);
+    }
+    
     function error(msg) {
-      //alert(msg)
+      var curloc = $('#my-current-location')
+      curloc.html(
+          '<span class="location-name">' + msg + '</span>')
+      curloc.css('display','block')
     }
     
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(success, error);
+      findlocation();
     } else {
-      error('not supported');
+      error('Finding current location not supported');
     }
   </script>
   
