@@ -1,0 +1,28 @@
+This is an attempt at an API over HTTP for the PhillyCarShare reservation 
+system.  It is built to run on Google App Engine, though there is very little
+App Engine-specific code.  It should be easily adaptable to a Django install
+(the view templates are in the Django template style).
+
+The AppEngine/pcs directory is where most of the work happens.  It is arranged 
+into four sub-directories:
+
+ * data: The general data model for the API.  These are simple classes that 
+   don'treally do anything aside from hold data.
+   
+ * input: This contains modules for input handlers.  The only input handlers
+   being implemented right now (and probably ever to be implemented) are WSGI
+   handlers.
+   
+ * source: This contains modules for communicating with the reservation system
+   on PCS's servers.  The only sources implemented now are screenscraped, as
+   PCS doesn't have a public API that I know of (hence this project).
+   
+ * view: This contains modules for representing the API data model.  One 
+   possible view is HTML data, but there are definitely others in the pipeline
+   (e.g., JSON).
+
+Most of the code is well tested, and the tests are an important part of the 
+package, especially since the only source for now is screenscraping.  The tests
+reside in the AppEngine/test directory.
+
+All files in this project are Copyright (C) 2010 Mjumbe Poe
