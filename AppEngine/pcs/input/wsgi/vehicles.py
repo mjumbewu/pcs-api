@@ -131,6 +131,11 @@ class VehiclesHtmlHandler (VehiclesHandler):
             ErrorHtmlView())
             
     def get_time_range(self):
+        """
+        A custom redefinition of get_time_range, as we expect the results from
+        HTML date and time form fields for the start and end times.  The normal
+        method operates on UTC timestamps.
+        """
         import datetime
         start_date_str = self.request.get('start_date')
         end_date_str = self.request.get('end_date')
@@ -145,7 +150,7 @@ class VehiclesHtmlHandler (VehiclesHandler):
                 int(date_match.group('month')),
                 int(date_match.group('day')),
                 int(time_match.group('hour')),
-                int(time_match.group('minute')))
+                int(time_match.group('minute')), tzinfo=Eastern)
         else:
             start_time = now_time
         
@@ -156,7 +161,7 @@ class VehiclesHtmlHandler (VehiclesHandler):
                 int(date_match.group('month')),
                 int(date_match.group('day')),
                 int(time_match.group('hour')),
-                int(time_match.group('minute')))
+                int(time_match.group('minute')), tzinfo=Eastern)
         else:
             end_time = now_time + datetime.timedelta(hours=3)
         
