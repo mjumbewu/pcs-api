@@ -9,3 +9,17 @@ class Vehicle (object):
 #        self.img_url = img_url
 #        self.amenities = amenities
 
+class PriceEstimate (object):
+    pass
+    # available_balance
+    # available_credit
+    # applied_credit
+    # distance
+    # hourly_rate
+    # daily_rate
+    # time_amount
+    # distance_amount
+    # tax_amount
+    # fee_amount
+    # total_amount
+    # amount_due

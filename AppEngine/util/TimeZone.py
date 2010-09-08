@@ -168,3 +168,16 @@ Eastern  = USTimeZone(-5, "Eastern",  "EST", "EDT")
 Central  = USTimeZone(-6, "Central",  "CST", "CDT")
 Mountain = USTimeZone(-7, "Mountain", "MST", "MDT")
 Pacific  = USTimeZone(-8, "Pacific",  "PST", "PDT")
+
+def to_timestamp(dt):
+    dt_utc = dt.astimezone(utc)
+    tt = dt_utc.timetuple()
+    stamp = _time.mktime(tt)
+    return int(stamp)
+
+def to_xchange_time(dt):
+    """
+    Returns a time suitable for passing around to different systems.  This may
+    be a time stamp or an ISO 8601 time string.
+    """
+    return to_timestamp(dt)

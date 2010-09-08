@@ -12,6 +12,7 @@ except ImportError:
     from django.utils import simplejson as json
 
 from pcs.data.pod import Pod
+from pcs.data.vehicle import PriceEstimate
 from pcs.data.vehicle import Vehicle
 from pcs.source import _VehiclesSourceInterface
 from pcs.source.screenscrape import ScreenscrapeParseError
@@ -19,6 +20,7 @@ from pcs.source.screenscrape.pcsconnection import PcsConnection
 from util.abstract import override
 from util.BeautifulSoup import BeautifulSoup
 from util.TimeZone import Eastern
+from util.TimeZone import to_timestamp
 
 class VehiclesScreenscrapeSource (_VehiclesSourceInterface):
     """
@@ -29,11 +31,13 @@ class VehiclesScreenscrapeSource (_VehiclesSourceInterface):
     
     def __init__(self, host="reservations.phillycarshare.org",
                  vehicles_path="/results.php?reservation_id=0&flexible=on&show_everything=on&offset=0",
-                 vehicle_path="/lightbox.php"):
+                 vehicle_path="/lightbox.php",
+                 price_path="/ajax_estimate.php?slider=true"):
         super(VehiclesScreenscrapeSource, self).__init__()
         self.__host = host
         self.__vehicles_path = vehicles_path
         self.__vehicle_path = vehicle_path
+        self.__price_path = price_path
     
     def get_location_query(self, locationid):
         if isinstance(locationid, (basestring, int)):
@@ -272,8 +276,8 @@ class VehiclesScreenscrapeSource (_VehiclesSourceInterface):
         # our timezone info.  However, we have to keep it in the first place
         # because Google's servers aren't necessarily on Eastern time (but 
         # PhillyCarShare always will be).
-        start_stamp = time.mktime((start_time - Eastern.utcoffset(start_time)).timetuple())
-        end_stamp = time.mktime((end_time - Eastern.utcoffset(end_time)).timetuple())
+        start_stamp = to_timestamp(start_time)
+        end_stamp = to_timestamp(end_time)
         
         url = 'http://%s%s' % (host, path)
         method = 'POST'
@@ -320,6 +324,49 @@ class VehiclesScreenscrapeSource (_VehiclesSourceInterface):
         vehicle = self.create_vehicle_from_pcs_information_doc(html_vehicle_data)
         return vehicle
     
+    def vehicle_price_estimate_from_pcs(self, conn, sessionid, vehicleid, start_time, end_time):
+        host = self.__host
+        path = self.__price_path
+        connector = '&' if '?' in path else '?'
+
+        start_stamp = to_timestamp(start_time)
+        end_stamp = to_timestamp(end_time)
+        
+        query = 'mv_action=add&stack_pk=%s&start_stamp=%s&end_stamp=%s' % \
+            (vehicleid, start_stamp, end_stamp)
+        
+        url = "http://%s%s%s%s" % (host, path, connector, query)
+        method = 'GET'
+        data = {}
+        headers = {'Cookie': 'sid=%s' % sessionid}
+        response = \
+            conn.request(url, method, data, headers)
+        
+        return response.read(), response.getheaders()
+    
+    def create_price_from_pcs_price_estimate_doc(self, json_price_obj):
+        price = PriceEstimate()
+        price.available_balance = json_price_obj['available_balance'][0]
+        price.available_credit = json_price_obj['available_credit'][0]
+        price.applied_credit = json_price_obj['applied_credit'][0]
+        price.distance = json_price_obj['distance'][0]
+        price.hourly_rate = json_price_obj['hourly_rate'][0]
+        price.daily_rate = json_price_obj['daily_rate'][0]
+        price.time_amount = json_price_obj['time_amount'][0]
+        price.distance_amount = json_price_obj['distance_amount'][0]
+        price.tax_amount = json_price_obj['tax_amount'][0]
+        price.fee_amount = json_price_obj['fee_amount'][0]
+        price.total_amount = json_price_obj['total_amount'][0]
+        price.amount_due = json_price_obj['amount_due'][0]
+        
+        return price
     @override
     def get_vehicle_price_estimate(self, sessionid, vehicleid, start_time, end_time):
-        return ''
+        conn = self.create_host_connection()
+        
+        pcs_price_body, pcs_price_headers = \
+            self.vehicle_price_estimate_from_pcs(conn, sessionid, vehicleid, start_time, end_time)
+        json_price_data = self.get_json_data(pcs_price_body)
+        
+        price = self.create_price_from_pcs_price_estimate_doc(json_price_data)
+        return price

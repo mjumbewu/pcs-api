@@ -5,6 +5,33 @@
 {% block content %}
   
   <style>
+    table {
+      margin-top: 1em;
+      margin-bottom: 1em;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    td {
+      text-align: left
+    }
+    
+    td:first-child {
+      font-weight: bold;
+    }
+    
+    td:last-child {
+      text-align: right;
+    }
+    
+    tr:last-child td:last-child {
+      border-top: 1px solid black;
+    }
+    
+    span {
+      display: block;
+    }
+    
   </style>
   
   <h1>Vehicle Availability</h1>
@@ -13,6 +40,18 @@
     <span>A {{ vehicle.model }}</span>
     <span>from {{ start_time|time }} {{ start_time|date:"D M d Y" }}</span>
     <span>until {{ end_time|time }} {{ end_time|date:"D M d Y" }}</span>
+    <table>
+      <tr>
+        <td>Estimated cost:</td><td>${{ price.total_amount|floatformat:2 }}</td>
+      </tr>
+      <tr>
+        <td>Available balance:</td><td>${{ price.available_balance|floatformat:2 }}</td>
+      </tr>
+      <tr>
+        <td>Amount due:</td><td>${{ price.amount_due|floatformat:2 }}</td>
+      </tr>
+    </table>
+    
   </div>
   
 {% endblock content %}

@@ -5,6 +5,7 @@ from google.appengine.ext.webapp import template
 
 from pcs.view import _VehiclesViewInterface
 from util.abstract import override
+from util.TimeZone import to_xchange_time
 
 class VehiclesHtmlView (_VehiclesViewInterface):
     def __init__(self, render_method=template.render):
@@ -20,7 +21,9 @@ class VehiclesHtmlView (_VehiclesViewInterface):
             'vehicles': vehicles,
             'location': location,
             'start_time': start_time,
-            'end_time': end_time
+            'end_time': end_time,
+            'start_stamp': to_xchange_time(start_time),
+            'end_stamp': to_xchange_time(end_time)
         }
         
         path = os.path.join(os.path.dirname(__file__), 'available_cars.html')

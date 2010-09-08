@@ -658,7 +658,7 @@ from pcs.source.screenscrape.vehicles import VehiclesScreenscrapeSource
 class VehiclesScreenscrapeSourceTest (unittest.TestCase):
     
     def setUp(self):
-        self.source = VehiclesScreenscrapeSource('res.pcs.org', '/vehicles.php?action=new', '/vehicle.php')
+        self.source = VehiclesScreenscrapeSource('res.pcs.org', '/vehicles.php?action=new', '/vehicle.php', '/price.php')
     
     def testCreateHostConnectionShouldReturnAPcsConnection(self):
         # When...
@@ -954,6 +954,99 @@ class VehiclesScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(vehicle.id, '91800598')
         self.assertEqual(vehicle.model, 'Tacoma Pickup')
     
+    def testShouldReturnVehiclePriceEstimateBodyFromThePcsConnection(self):
+        class StubResponse (object):
+            def read(self):
+                return 'my body'
+            def getheaders(self):
+                return 'my head'
+        
+        @Stub(PcsConnection)
+        class StubConnection (object):
+            def request(self, url, method, data, headers):
+                self.url = url
+                self.method = method
+                self.data = data
+                self.headers = headers
+                return StubResponse()
+        
+        conn = StubConnection()
+        sessionid = 'ses1234'
+        vehicleid = 'veh1234'
+        start_time = datetime.datetime.fromtimestamp(100, Eastern)
+        end_time = datetime.datetime.fromtimestamp(1000, Eastern)
+        
+        body, head = self.source.vehicle_price_estimate_from_pcs(conn, sessionid, vehicleid, start_time, end_time)
+        
+        self.assertEqual(conn.url, 'http://res.pcs.org/price.php?mv_action=add&stack_pk=veh1234&start_stamp=100&end_stamp=1000')
+        self.assertEqual(conn.method, 'GET')
+        self.assertEqual(conn.data, {})
+        self.assertEqual(conn.headers, {'Cookie':'sid=ses1234'})
+        self.assertEqual(body, 'my body')
+    
+    def testShouldCreatePriceEstimateFromJsonObject(self):
+        test_body = r'''{"is_valid":true,"available_balance":[3.2,"$3.20"],"available_credit":[1.6,"$1.60"],"applied_credit":[1.7,"$1.70"],"show_credit_box":"no","show_available_credit":"no","start_date":"09\/08\/10","start_time":52200,"end_date":"09\/09\/10","end_time":58500,"reservation_pk":["6285517_25885382_1283970600_1284063300","$6285517.00"],"time_amount":[58.54,"$58.54"],"distance_amount":[24,"$24.00"],"fee_amount":[0,"$0.00"],"total_amount":[94.79,"$94.79"],"distance":[96,"96 mile(s)"],"hourly_rate":["5.450","$5.45"],"daily_rate":["49.000","$49.00"],"tax_amount":[12.25,"$12.25"],"tax_items":[{"pk":1,"amount":[6.6,"$6.60"]},{"pk":3,"amount":[1.65,"$1.65"]},{"pk":2,"amount":[4,"$4.00"]}],"optional_adjustment_pks":[],"descr":["descr","&nbsp;"],"rate_notice":"","estimate":[94.79,"$94.79"],"show_available_credit_box":"no","amount_due":[94.79,"<span class=\"owing\">$94.79<\/span>"],"driver_pk":"6285517","pk":"0","stack_pk":"25885382","optional_adjustment_html":"<font class='text'><\/font>"}'''
+        
+        try:
+            import json
+        except ImportError:
+            from django.utils import simplejson as json
+        
+        json_data = json.loads(test_body)
+        
+        price = self.source.create_price_from_pcs_price_estimate_doc(json_data)
+        
+        self.assertEqual(price.available_balance, 3.20)
+        self.assertEqual(price.available_credit, 1.60)
+        self.assertEqual(price.applied_credit, 1.70)
+        self.assertEqual(price.time_amount, 58.54)
+        self.assertEqual(price.distance_amount, 24.00)
+        self.assertEqual(price.fee_amount, 0.00)
+        self.assertEqual(price.total_amount, 94.79)
+        self.assertEqual(price.distance, 96)
+        self.assertEqual(price.tax_amount, 12.25)
+        self.assertEqual(price.amount_due, 94.79)
+    
+    def testShouldReturnPriceEstimateAsCreatedFromJsonData(self):
+        @patch(self.source)
+        def create_host_connection(self):
+            return 'my connection'
+        
+        @patch(self.source)
+        def vehicle_price_estimate_from_pcs(self, conn, sessionid, vehicleid, start_time, end_time):
+            self.gpe_conn = conn
+            self.gpe_sessionid = sessionid
+            self.gpe_vehicleid = vehicleid
+            self.gpe_start_time = start_time
+            self.gpe_end_time = end_time
+            return ('my body', 'my head')
+        
+        @patch(self.source)
+        def get_json_data(self, response_body):
+            self.gjd_price_body = response_body
+            return 'my json data'
+        
+        @patch(self.source)
+        def create_price_from_pcs_price_estimate_doc(self, json_price_obj):
+            self.cp_price_obj = json_price_obj
+            return 'my price'
+        
+        sessionid = 'ses1234'
+        vehicleid = 'veh1234'
+        start_time = 100
+        end_time = 1000
+        
+        price = self.source.get_vehicle_price_estimate(sessionid, vehicleid, start_time, end_time)
+        
+        self.assertEqual(self.source.gpe_conn, 'my connection')
+        self.assertEqual(self.source.gpe_sessionid, 'ses1234')
+        self.assertEqual(self.source.gpe_vehicleid, 'veh1234')
+        self.assertEqual(self.source.gpe_start_time, 100)
+        self.assertEqual(self.source.gpe_end_time, 1000)
+        self.assertEqual(self.source.gjd_price_body, 'my body')
+        self.assertEqual(self.source.cp_price_obj, 'my json data')
+        self.assertEqual(price, 'my price')
+    
     
 from pcs.input.wsgi.vehicles import VehiclesHtmlHandler
 class VehiclesHtmlHandlerTest (unittest.TestCase):
@@ -987,13 +1080,13 @@ class VehiclesHtmlViewTest (unittest.TestCase):
         
         session = 'my session'
         location = 'my location'
-        start_time = '0'
-        end_time = '100'
+        start_time = datetime.datetime(2010,11,1,tzinfo=Eastern)
+        end_time = datetime.datetime(2011,1,1,tzinfo=Eastern)
         vehicles = ['v1','v2']
         view = VehiclesHtmlView(stub_render_method)
         
         rendering = view.get_vehicle_availability(session, location, start_time, end_time, vehicles)
         
-        self.assertEqual(self.values, {'session':'my session', 'location':'my location', 'start_time':'0', 'end_time':'100', 'vehicles':['v1','v2']})
+        self.assertEqual(self.values, {'session':'my session', 'location':'my location', 'start_time':datetime.datetime(2010,11,1,tzinfo=Eastern), 'end_time':datetime.datetime(2011,1,1,tzinfo=Eastern), 'start_stamp': 1288584000, 'end_stamp': 1293858000, 'vehicles':['v1','v2']})
         self.assertEqual(rendering, 'the rendering')
     

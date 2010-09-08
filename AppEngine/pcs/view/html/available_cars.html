@@ -49,7 +49,7 @@
           <li class="partially-available-vehicle">
         {% endifequal %}{% endifequal %}
           
-          <a href="/availability/{{ vehicle.id }}.html?start_time={{ start_time|date:"U" }}&end_time={{ end_time|date:"U" }}">
+          <a href="/availability/{{ vehicle.id }}.html?start_time={{ start_stamp }}&end_time={{ end_stamp }}">
             <span>{{ vehicle.make }} {{ vehicle.model }}</span>
             <div class="vehicle-stipulations">
               {% ifequal vehicle.availability 0 %}
