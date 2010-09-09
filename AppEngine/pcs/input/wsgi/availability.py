@@ -91,12 +91,6 @@ class VehicleAvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
         self.vehicle_source = vehicle_source
         self.vehicle_view = vehicle_view
     
-#    def get_vehicle_id(self):
-#        vehicle_id = self.request.get('vehicle_id')
-#        if vehicle_id is None:
-#            raise WsgiParameterError('No vehicle id found')
-#        return vehicle_id
-#    
     def get_vehicle(self, sessionid, vehicleid, start_time, end_time):
         vehicle = self.vehicle_source.get_vehicle(sessionid, vehicleid, start_time, end_time)
         return vehicle
@@ -106,17 +100,21 @@ class VehicleAvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
         return price
     
     def get(self, vehicleid):
-        userid = self.get_user_id()
-        sessionid = self.get_session_id()
-        session = self.get_session(userid, sessionid)
-        start_time, end_time = self.get_time_range()
-#        vehicleid = self.get_vehicle_id()
+        try:
+            userid = self.get_user_id()
+            sessionid = self.get_session_id()
+            session = self.get_session(userid, sessionid)
+            start_time, end_time = self.get_time_range()
+            
+            vehicle = self.get_vehicle(sessionid, vehicleid, start_time, end_time)
+            price = self.get_price_estimate(sessionid, vehicleid, start_time, end_time)
+            
+            response_body = self.vehicle_view.get_vehicle_info(session, vehicle,
+                start_time, end_time, price)
         
-        vehicle = self.get_vehicle(sessionid, vehicleid, start_time, end_time)
-        price = self.get_price_estimate(sessionid, vehicleid, start_time, end_time)
-        
-        response_body = self.vehicle_view.get_vehicle_info(session, vehicle,
-            start_time, end_time, price)
+        except Exception, e:
+            response_body = self.error_view.get_error(None, 
+                '%s: %s' % (e.__class__.__name__, str(e)))
         
         self.response.out.write(response_body);
         self.response.set_status(200);

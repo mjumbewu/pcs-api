@@ -137,30 +137,6 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
         self.assertEqual(self.vehicle_source.start_time, datetime.datetime.fromtimestamp(100, Eastern))
         self.assertEqual(self.vehicle_source.end_time, datetime.datetime.fromtimestamp(1000, Eastern))
         self.assertEqual(availability, 'My Availability')
-    
-#    def testShouldReturnVehicleIdBasedOnGivenParameters(self):
-#        self.request['vehicle_id'] = 'vid1234'
-#        
-#        handler = VehicleAvailabilityHandler(self.session_source, self.vehicle_source, 
-#                                 self.vehicle_view, self.error_view)
-#        handler.initialize(self.request, self.response)
-#        
-#        vehicleid = handler.get_vehicle_id()
-#        
-#        self.assertEqual(vehicleid, 'vid1234')
-    
-#    def testShouldRaiseAnErrorOnMissingVehicleId(self):
-#        handler = VehicleAvailabilityHandler(self.session_source, self.vehicle_source, 
-#                                 self.vehicle_view, self.error_view)
-#        handler.initialize(self.request, self.response)
-#        
-#        try:
-#            handler.get_vehicle_id()
-#        
-#        except WsgiParameterError:
-#            return
-#        
-#        self.fail('Should raise WsgiParameterError on missing vehicle id')
         
     def testShouldRespondWithVehicleAvailabilityInformationBasedOnTheAvailabilitySource(self):
         handler = VehicleAvailabilityHandler(self.session_source, self.vehicle_source, 
@@ -182,11 +158,6 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
             self.userid = userid
             self.sessionid = sessionid
             return 'my session'
-        
-#        @patch(handler)
-#        def get_vehicle_id(self):
-#            self.vehicleid_called = True
-#            return 'veh1234'
         
         @patch(handler)
         def get_vehicle(self, sessionid, vehicleid, start_time, end_time):
@@ -214,6 +185,58 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
         
         handler.get('veh1234')
         
+    def testReturnContentFromErrorViewWhenAnExceptionIsRaised(self):
+        handler = VehicleAvailabilityHandler(self.session_source, self.vehicle_source, 
+                                 self.vehicle_view, self.error_view)
+        handler.initialize(self.request, self.response)
+        
+        @patch(handler)
+        def get_user_id(self):
+            raise Exception('My Exception')
+        
+        @patch(handler)
+        def get_session_id(self):
+            self.sessionid_called = True
+            return 'ses1234'
+        
+        @patch(handler)
+        def get_session(self, userid, sessionid):
+            self.userid = userid
+            self.sessionid = sessionid
+            return 'my session'
+        
+        @patch(handler)
+        def get_vehicle(self, sessionid, vehicleid, start_time, end_time):
+            self.vehicle_sessionid = sessionid
+            self.vehicle_vehicleid = vehicleid
+            self.vehicle_start_time = start_time
+            self.vehicle_end_time = end_time
+            return 'my vehicle'
+        
+        @patch(handler)
+        def get_price_estimate(self, sessionid, vehicleid, start_time, end_time):
+            self.price_sessionid = sessionid
+            self.price_vehicleid = vehicleid
+            self.price_start_time = start_time
+            self.price_end_time = end_time
+            return 'my price estimate'
+        
+        @patch(self.vehicle_view)
+        def get_vehicle_info(self, session, vehicle, start_time, end_time, price):
+            self.session = session
+            self.vehicle = vehicle
+            self.start_time = start_time
+            self.end_time = end_time
+            return 'my vehicle info body'
+        
+        @patch(self.error_view)
+        def get_error(self, error_code, error_msg):
+            return str(error_msg)
+        
+        handler.get('veh1234')
+        
+        response = handler.response.out.getvalue()
+        self.assertEqual(response, "Exception: My Exception")
         
 
 class VehicleAvailabilityHandlerAndScreenscrapeSourceTest (unittest.TestCase):
@@ -254,21 +277,6 @@ class VehicleAvailabilityHandlerAndScreenscrapeSourceTest (unittest.TestCase):
         self.request = StubRequest()
         self.response = StubResponse()
     
-#    def testVehicleAvailabilityShouldBeConstructedBasedOnResponseFromPcs(self):
-#        # Given...
-#        vehicle_source = AvailabilityScreenscrapeSource()
-#        
-#        handler = VehicleAvailabilityHandler(
-#            self.session_source,
-#            vehicle_source,
-#            self.vehicle_view,
-#            self.error_view)
-#        
-#        # When...
-#        vehicle = handler.get_vehicle()
-#        
-#        # Then...
-
 class LocationAvailabilityHandlerTest (unittest.TestCase):
     
     def setUp(self):
