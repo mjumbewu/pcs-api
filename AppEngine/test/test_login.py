@@ -76,20 +76,28 @@ class LoginHtmlViewTest (unittest.TestCase):
 <html>
   <head>
     <title>Philly Car Share</title>
+    <link rel="stylesheet" href="/styles/pcs-basic-html.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable = no" />
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+    
+    <script>
+      $(document).ready(function() {
+      });
+    </script>
   </head>
   
   <body>
     <h1>Please Login</h1>
     <form action="/session.html" method="POST">
-      <div>
+      <div class="text_input_field">
         <label for="username">User ID:</label>
-        <input type="text" value="myuser" name="username" />
+        <input type="text" value="myuser" name="username" size="8" autofocus />
       </div>
-      <div>
+      <div class="text_input_field">
         <label for="password">Password:</label>
-        <input type="password" name="password" />
+        <input type="password" name="password"  size="12" />
       </div>
-      <input type="submit" />
+      <input type="submit" value="Log In" />
     </form>
   </body>
 </html>
