@@ -52,6 +52,16 @@
       </tr>
     </table>
     
+    <form method="POST" action="/reservations.html">
+      <input type="hidden" name="start_time" value="{{ start_stamp }}" />
+      <input type="hidden" name="end_time" value="{{ end_stamp }}" />
+      <input type="hidden" name="vehicle_id" value="{{ vehicle.id }}" />
+      
+      <input type="hidden" name="add[stack_pk]" value="vehicle.id" />
+      <input type="hidden" name="mv_action" value="add" />
+      <input type="hidden" name="add[tid]" value="10" />
+      <input type="submit" value="Reserve It" />
+    </form>
   </div>
   
 {% endblock content %}

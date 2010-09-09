@@ -3,15 +3,18 @@ import datetime
 import new
 
 from pcs.input.wsgi import WsgiParameterError
-from pcs.input.wsgi.vehicles import VehicleHandler
-from pcs.input.wsgi.vehicles import VehiclesHandler
+from pcs.input.wsgi.availability import VehicleHandler
+from pcs.input.wsgi.availability import VehiclesHandler
+from pcs.input.wsgi.availability import VehiclesHtmlHandler
 from pcs.source import _VehiclesSourceInterface
 from pcs.source import _LocationsSourceInterface
 from pcs.source import _SessionSourceInterface
 from pcs.source.screenscrape import ScreenscrapeParseError
+from pcs.source.screenscrape.availability import VehiclesScreenscrapeSource
 from pcs.source.screenscrape.pcsconnection import PcsConnection
 from pcs.view import _VehiclesViewInterface
 from pcs.view import _ErrorViewInterface
+from pcs.view.html.availability import VehiclesHtmlView
 from util.testing import patch
 from util.testing import Stub
 from util.TimeZone import Eastern
@@ -654,7 +657,6 @@ class VehiclesHandlerTest (unittest.TestCase):
             self.fail('No parameter exception should have been raised.')
         
 
-from pcs.source.screenscrape.vehicles import VehiclesScreenscrapeSource
 class VehiclesScreenscrapeSourceTest (unittest.TestCase):
     
     def setUp(self):
@@ -1048,15 +1050,14 @@ class VehiclesScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(price, 'my price')
     
     
-from pcs.input.wsgi.vehicles import VehiclesHtmlHandler
 class VehiclesHtmlHandlerTest (unittest.TestCase):
     def testShouldBeInitializedWithHtmlViewsAndScreenscrapeSources(self):
         handler = VehiclesHtmlHandler()
         
         from pcs.source.screenscrape.session import SessionScreenscrapeSource
         from pcs.source.screenscrape.locations import LocationsScreenscrapeSource
-        from pcs.source.screenscrape.vehicles import VehiclesScreenscrapeSource
-        from pcs.view.html.vehicles import VehiclesHtmlView
+        from pcs.source.screenscrape.availability import VehiclesScreenscrapeSource
+        from pcs.view.html.availability import VehiclesHtmlView
         
         self.assertEqual(handler.vehicle_view.__class__.__name__,
                          VehiclesHtmlView.__name__)
@@ -1067,7 +1068,6 @@ class VehiclesHtmlHandlerTest (unittest.TestCase):
         self.assertEqual(handler.session_source.__class__.__name__,
                          SessionScreenscrapeSource.__name__)
 
-from pcs.view.html.vehicles import VehiclesHtmlView
 class VehiclesHtmlViewTest (unittest.TestCase):
     def testShouldPassVariablesToTheTemplateCorrectly(self):
         self.path = None

@@ -11,9 +11,9 @@ from pcs.input.wsgi import _SessionBasedHandler
 from pcs.input.wsgi import _TimeRangeBasedHandler
 from pcs.input.wsgi import WsgiParameterError
 from pcs.source.screenscrape.session import SessionScreenscrapeSource
-from pcs.source.screenscrape.vehicles import VehiclesScreenscrapeSource
+from pcs.source.screenscrape.availability import VehiclesScreenscrapeSource
 from pcs.source.screenscrape.locations import LocationsScreenscrapeSource
-from pcs.view.html.vehicles import VehiclesHtmlView
+from pcs.view.html.availability import VehiclesHtmlView
 from pcs.view.html.error import ErrorHtmlView
 from util.TimeZone import Eastern
 
