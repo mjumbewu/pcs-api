@@ -22,7 +22,7 @@ handlers:
   secure: never
 
 - url: /availability.*
-  script: pcs/input/wsgi/vehicles.py
+  script: pcs/input/wsgi/availability.py
   secure: never
 
 - url: /locations.*
