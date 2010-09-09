@@ -14,7 +14,7 @@ except ImportError:
 from pcs.data.pod import Pod
 from pcs.data.vehicle import PriceEstimate
 from pcs.data.vehicle import Vehicle
-from pcs.source import _VehiclesSourceInterface
+from pcs.source import _AvailabilitySourceInterface
 from pcs.source.screenscrape import ScreenscrapeParseError
 from pcs.source.screenscrape.pcsconnection import PcsConnection
 from util.abstract import override
@@ -22,7 +22,7 @@ from util.BeautifulSoup import BeautifulSoup
 from util.TimeZone import Eastern
 from util.TimeZone import to_timestamp
 
-class VehiclesScreenscrapeSource (_VehiclesSourceInterface):
+class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
     """
     Responsible for logging in and constructing a session from a screenscrape
     of a PhillyCarShare response.
@@ -33,7 +33,7 @@ class VehiclesScreenscrapeSource (_VehiclesSourceInterface):
                  vehicles_path="/results.php?reservation_id=0&flexible=on&show_everything=on&offset=0",
                  vehicle_path="/lightbox.php",
                  price_path="/ajax_estimate.php?slider=true"):
-        super(VehiclesScreenscrapeSource, self).__init__()
+        super(AvailabilityScreenscrapeSource, self).__init__()
         self.__host = host
         self.__vehicles_path = vehicles_path
         self.__vehicle_path = vehicle_path

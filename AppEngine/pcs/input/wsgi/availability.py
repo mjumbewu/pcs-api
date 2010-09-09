@@ -11,13 +11,13 @@ from pcs.input.wsgi import _SessionBasedHandler
 from pcs.input.wsgi import _TimeRangeBasedHandler
 from pcs.input.wsgi import WsgiParameterError
 from pcs.source.screenscrape.session import SessionScreenscrapeSource
-from pcs.source.screenscrape.availability import VehiclesScreenscrapeSource
+from pcs.source.screenscrape.availability import AvailabilityScreenscrapeSource
 from pcs.source.screenscrape.locations import LocationsScreenscrapeSource
-from pcs.view.html.availability import VehiclesHtmlView
+from pcs.view.html.availability import AvailabilityHtmlView
 from pcs.view.html.error import ErrorHtmlView
 from util.TimeZone import Eastern
 
-class VehiclesHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
+class LocationAvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
     """
     Handles requests vehicle information
     """
@@ -27,7 +27,7 @@ class VehiclesHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
                  location_source,
                  vehicle_view,
                  error_view):
-        super(VehiclesHandler, self).__init__(session_source, error_view)
+        super(LocationAvailabilityHandler, self).__init__(session_source, error_view)
         
         self.vehicle_source = vehicle_source
         self.location_source = location_source
@@ -83,10 +83,10 @@ class VehiclesHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
     def post(self):
         self.get()
 
-class VehicleHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
+class VehicleAvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
     def __init__(self, session_source, vehicle_source, 
                  vehicle_view, error_view):
-        super(VehicleHandler, self).__init__(session_source, error_view)
+        super(VehicleAvailabilityHandler, self).__init__(session_source, error_view)
         
         self.vehicle_source = vehicle_source
         self.vehicle_view = vehicle_view
@@ -121,13 +121,13 @@ class VehicleHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
         self.response.out.write(response_body);
         self.response.set_status(200);
 
-class VehiclesHtmlHandler (VehiclesHandler):
+class LocationAvailabilityHtmlHandler (LocationAvailabilityHandler):
     def __init__(self):
-        super(VehiclesHtmlHandler, self).__init__(
+        super(LocationAvailabilityHtmlHandler, self).__init__(
             SessionScreenscrapeSource(),
-            VehiclesScreenscrapeSource(),
+            AvailabilityScreenscrapeSource(),
             LocationsScreenscrapeSource(),
-            VehiclesHtmlView(),
+            AvailabilityHtmlView(),
             ErrorHtmlView())
             
     def get_time_range(self):
@@ -167,17 +167,17 @@ class VehiclesHtmlHandler (VehiclesHandler):
         
         return start_time, end_time
     
-class VehicleHtmlHandler (VehicleHandler):
+class VehicleAvailabilityHtmlHandler (VehicleAvailabilityHandler):
     def __init__(self):
-        super(VehicleHtmlHandler, self).__init__(
+        super(VehicleAvailabilityHtmlHandler, self).__init__(
             SessionScreenscrapeSource(),
-            VehiclesScreenscrapeSource(),
-            VehiclesHtmlView(),
+            AvailabilityScreenscrapeSource(),
+            AvailabilityHtmlView(),
             ErrorHtmlView())
 
 application = webapp.WSGIApplication(
-        [('/availability.html', VehiclesHtmlHandler),
-         ('/availability/(.*).html', VehicleHtmlHandler)],
+        [('/availability.html', LocationAvailabilityHtmlHandler),
+         ('/availability/(.*).html', VehicleAvailabilityHtmlHandler)],
         debug=True)
 
 def main():

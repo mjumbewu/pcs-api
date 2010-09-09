@@ -3,11 +3,11 @@ import os
 
 from google.appengine.ext.webapp import template
 
-from pcs.view import _VehiclesViewInterface
+from pcs.view import _AvailabilityViewInterface
 from util.abstract import override
 from util.TimeZone import to_xchange_time
 
-class VehiclesHtmlView (_VehiclesViewInterface):
+class AvailabilityHtmlView (_AvailabilityViewInterface):
     def __init__(self, render_method=template.render):
         self.render_method = render_method
     

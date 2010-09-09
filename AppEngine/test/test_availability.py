@@ -3,23 +3,23 @@ import datetime
 import new
 
 from pcs.input.wsgi import WsgiParameterError
-from pcs.input.wsgi.availability import VehicleHandler
-from pcs.input.wsgi.availability import VehiclesHandler
-from pcs.input.wsgi.availability import VehiclesHtmlHandler
-from pcs.source import _VehiclesSourceInterface
+from pcs.input.wsgi.availability import VehicleAvailabilityHandler
+from pcs.input.wsgi.availability import LocationAvailabilityHandler
+from pcs.input.wsgi.availability import LocationAvailabilityHtmlHandler
+from pcs.source import _AvailabilitySourceInterface
 from pcs.source import _LocationsSourceInterface
 from pcs.source import _SessionSourceInterface
 from pcs.source.screenscrape import ScreenscrapeParseError
-from pcs.source.screenscrape.availability import VehiclesScreenscrapeSource
+from pcs.source.screenscrape.availability import AvailabilityScreenscrapeSource
 from pcs.source.screenscrape.pcsconnection import PcsConnection
-from pcs.view import _VehiclesViewInterface
+from pcs.view import _AvailabilityViewInterface
 from pcs.view import _ErrorViewInterface
-from pcs.view.html.availability import VehiclesHtmlView
+from pcs.view.html.availability import AvailabilityHtmlView
 from util.testing import patch
 from util.testing import Stub
 from util.TimeZone import Eastern
 
-class VehicleHandlerTest (unittest.TestCase):
+class VehicleAvailabilityHandlerTest (unittest.TestCase):
     def setUp(self):
         # A fake request class
         class StubRequest (dict):
@@ -36,12 +36,12 @@ class VehicleHandlerTest (unittest.TestCase):
         class StubSessionSource (object):
             pass
         
-        @Stub(_VehiclesSourceInterface)
-        class StubVehiclesSource (object):
+        @Stub(_AvailabilitySourceInterface)
+        class StubAvailabilitySource (object):
             pass
         
-        @Stub(_VehiclesViewInterface)
-        class StubVehiclesView (object):
+        @Stub(_AvailabilityViewInterface)
+        class StubAvailabilityView (object):
             pass
         
         @Stub(_ErrorViewInterface)
@@ -49,8 +49,8 @@ class VehicleHandlerTest (unittest.TestCase):
             pass
         
         self.session_source = StubSessionSource()
-        self.vehicle_source = StubVehiclesSource()
-        self.vehicle_view = StubVehiclesView()
+        self.vehicle_source = StubAvailabilitySource()
+        self.vehicle_view = StubAvailabilityView()
         self.error_view = StubErrorView()
         
         self.request = StubRequest()
@@ -58,7 +58,7 @@ class VehicleHandlerTest (unittest.TestCase):
     
     def testShouldUseCurrentTimeAndThreeHourDurationWhenNoStartOrEndIsGiven(self):
         # Given...
-        handler = VehicleHandler(self.session_source, self.vehicle_source, 
+        handler = VehicleAvailabilityHandler(self.session_source, self.vehicle_source, 
                                  self.vehicle_view, self.error_view)
         handler.initialize(self.request, self.response)
         
@@ -78,7 +78,7 @@ class VehicleHandlerTest (unittest.TestCase):
         self.assert_(-threshold < later_time - end_time < threshold,
             "Time between (%s) and (%s) should be less than %s" % (later_time, end_time, threshold))
     
-    def testShouldPassCorrectVehicleIdToVehicleSourceForVehicle(self):
+    def testShouldPassCorrectVehicleIdToAvailabilitySourceForVehicleAvailability(self):
         # Given...
         self.request.cookies = { 'sid':'sid1234' }
         
@@ -88,9 +88,9 @@ class VehicleHandlerTest (unittest.TestCase):
             self.vehicleid = vehicleid
             self.start_time = start_time
             self.end_time = end_time
-            return 'My Vehicle'
+            return 'My Availability'
         
-        handler = VehicleHandler(self.session_source, self.vehicle_source, 
+        handler = VehicleAvailabilityHandler(self.session_source, self.vehicle_source, 
                                  self.vehicle_view, self.error_view)
         handler.initialize(self.request, self.response)
         
@@ -106,9 +106,9 @@ class VehicleHandlerTest (unittest.TestCase):
         self.assertEqual(self.vehicle_source.sessionid, 'sid1234')
         self.assertEqual(self.vehicle_source.start_time, 0)
         self.assertEqual(self.vehicle_source.end_time, 100)
-        self.assertEqual(vehicle, 'My Vehicle')
+        self.assertEqual(vehicle, 'My Availability')
     
-    def testShouldPassCorrectVehicleIdAndTimeRangeToVehicleSourceForPriceEstimate(self):
+    def testShouldPassCorrectVehicleIdAndTimeRangeToAvailabilitySourceForPriceEstimate(self):
         # Given...
         self.request['start_time'] = '100'
         self.request['end_time'] = '1000'
@@ -121,7 +121,7 @@ class VehicleHandlerTest (unittest.TestCase):
             self.end_time = end_time
             return 'My Availability'
         
-        handler = VehicleHandler(self.session_source, self.vehicle_source, 
+        handler = VehicleAvailabilityHandler(self.session_source, self.vehicle_source, 
                                  self.vehicle_view, self.error_view)
         handler.initialize(self.request, self.response)
         
@@ -141,7 +141,7 @@ class VehicleHandlerTest (unittest.TestCase):
 #    def testShouldReturnVehicleIdBasedOnGivenParameters(self):
 #        self.request['vehicle_id'] = 'vid1234'
 #        
-#        handler = VehicleHandler(self.session_source, self.vehicle_source, 
+#        handler = VehicleAvailabilityHandler(self.session_source, self.vehicle_source, 
 #                                 self.vehicle_view, self.error_view)
 #        handler.initialize(self.request, self.response)
 #        
@@ -150,7 +150,7 @@ class VehicleHandlerTest (unittest.TestCase):
 #        self.assertEqual(vehicleid, 'vid1234')
     
 #    def testShouldRaiseAnErrorOnMissingVehicleId(self):
-#        handler = VehicleHandler(self.session_source, self.vehicle_source, 
+#        handler = VehicleAvailabilityHandler(self.session_source, self.vehicle_source, 
 #                                 self.vehicle_view, self.error_view)
 #        handler.initialize(self.request, self.response)
 #        
@@ -162,8 +162,8 @@ class VehicleHandlerTest (unittest.TestCase):
 #        
 #        self.fail('Should raise WsgiParameterError on missing vehicle id')
         
-    def testShouldRespondWithVehicleInformationBasedOnTheVehiclesSource(self):
-        handler = VehicleHandler(self.session_source, self.vehicle_source, 
+    def testShouldRespondWithVehicleAvailabilityInformationBasedOnTheAvailabilitySource(self):
+        handler = VehicleAvailabilityHandler(self.session_source, self.vehicle_source, 
                                  self.vehicle_view, self.error_view)
         handler.initialize(self.request, self.response)
         
@@ -216,7 +216,7 @@ class VehicleHandlerTest (unittest.TestCase):
         
         
 
-class VehicleHandlerAndScreenscrapeSourceTest (unittest.TestCase):
+class VehicleAvailabilityHandlerAndScreenscrapeSourceTest (unittest.TestCase):
     
     def setUp(self):
         # A fake request class
@@ -234,12 +234,12 @@ class VehicleHandlerAndScreenscrapeSourceTest (unittest.TestCase):
         class StubSessionSource (object):
             pass
         
-        @Stub(_VehiclesSourceInterface)
-        class StubVehiclesSource (object):
+        @Stub(_AvailabilitySourceInterface)
+        class StubAvailabilitySource (object):
             pass
         
-        #@Stub(_VehiclesViewInterface)
-        #class StubVehiclesView (object):
+        #@Stub(_AvailabilityViewInterface)
+        #class StubAvailabilityView (object):
         #    pass
         
         @Stub(_ErrorViewInterface)
@@ -247,18 +247,18 @@ class VehicleHandlerAndScreenscrapeSourceTest (unittest.TestCase):
             pass
         
         self.session_source = StubSessionSource()
-        #self.vehicle_source = StubVehiclesSource()
-        self.vehicle_view = StubVehiclesView()
+        #self.vehicle_source = StubAvailabilitySource()
+        self.vehicle_view = StubAvailabilityView()
         self.error_view = StubErrorView()
         
         self.request = StubRequest()
         self.response = StubResponse()
     
-#    def testVehicleShouldBeConstructedBasedOnResponseFromPcs(self):
+#    def testVehicleAvailabilityShouldBeConstructedBasedOnResponseFromPcs(self):
 #        # Given...
-#        vehicle_source = VehiclesScreenscrapeSource()
+#        vehicle_source = AvailabilityScreenscrapeSource()
 #        
-#        handler = VehicleHandler(
+#        handler = VehicleAvailabilityHandler(
 #            self.session_source,
 #            vehicle_source,
 #            self.vehicle_view,
@@ -269,7 +269,7 @@ class VehicleHandlerAndScreenscrapeSourceTest (unittest.TestCase):
 #        
 #        # Then...
 
-class VehiclesHandlerTest (unittest.TestCase):
+class LocationAvailabilityHandlerTest (unittest.TestCase):
     
     def setUp(self):
         # A fake request class
@@ -289,8 +289,8 @@ class VehiclesHandlerTest (unittest.TestCase):
             pass
         
         # A source for vehicle availability information
-        @Stub(_VehiclesSourceInterface)
-        class StubVehiclesSource (object):
+        @Stub(_AvailabilitySourceInterface)
+        class StubAvailabilitySource (object):
             pass
         
         @Stub(_LocationsSourceInterface)
@@ -298,8 +298,8 @@ class VehiclesHandlerTest (unittest.TestCase):
             pass
         
         # A generator for a representation (view) of the availability information
-        @Stub(_VehiclesViewInterface)
-        class StubVehiclesView (object):
+        @Stub(_AvailabilityViewInterface)
+        class StubAvailabilityView (object):
             pass
         
         @Stub(_ErrorViewInterface)
@@ -308,12 +308,12 @@ class VehiclesHandlerTest (unittest.TestCase):
         
         # The system under test
         self.session_source = StubSessionSource()
-        self.vehicle_source = StubVehiclesSource()
+        self.vehicle_source = StubAvailabilitySource()
         self.location_source = StubLocationsSource()
-        self.vehicle_view = StubVehiclesView()
+        self.vehicle_view = StubAvailabilityView()
         self.error_view = StubErrorView()
         
-        self.handler = VehiclesHandler(session_source=self.session_source, 
+        self.handler = LocationAvailabilityHandler(session_source=self.session_source, 
             vehicle_source=self.vehicle_source,
             location_source=self.location_source,
             vehicle_view=self.vehicle_view,
@@ -427,7 +427,7 @@ class VehiclesHandlerTest (unittest.TestCase):
         
         self.fail('Lack of session id should have caused a WsgiParameterError')
     
-    def testShouldReturnAvailableVehiclesBasedOnTheVehiclesSource(self):
+    def testShouldReturnAvailableVehiclesNearLocationBasedOnTheAvailabilitySource(self):
         # Given...
         @patch(self.vehicle_source)
         def get_available_vehicles_near(self, sessionid, locationid, start_time, end_time):
@@ -657,10 +657,10 @@ class VehiclesHandlerTest (unittest.TestCase):
             self.fail('No parameter exception should have been raised.')
         
 
-class VehiclesScreenscrapeSourceTest (unittest.TestCase):
+class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
     
     def setUp(self):
-        self.source = VehiclesScreenscrapeSource('res.pcs.org', '/vehicles.php?action=new', '/vehicle.php', '/price.php')
+        self.source = AvailabilityScreenscrapeSource('res.pcs.org', '/vehicles.php?action=new', '/vehicle.php', '/price.php')
     
     def testCreateHostConnectionShouldReturnAPcsConnection(self):
         # When...
@@ -776,7 +776,7 @@ class VehiclesScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(pod.name, '47th &amp; Baltimore')
         self.assertEqual(dist, 0.08)
     
-    def testShouldCreateCorrectVehicleFromHtmlData(self):
+    def testShouldCreateCorrectVehicleAvailabilityFromHtmlData(self):
         # Given...
         doc_string = r'''<html><body><div class="pod_bot pod_bot_maybe" id="page_result_1"><div id="time_line"><img width="439" height="25" src="skin/base_images/day_guage.gif"><span class="pod_estimates_images"><img src="/skin/base_images/hourly_cost.gif"></span></div><div class="list_left"><div class="v_img"><a href="http://www.phillycarshare.org/cars/prius" target="_blank"><img style="border: 0;" src="/images/client_images/prius_lift_thumb.gif"></a></div><div class="v_name"><h4>Prius Liftback</h4></div><div class="v_amenities"><ul><li><img src="/skin/base_images/hybrid.gif" label="Hybrid" title="Hybrid"></li><li><img src="/skin/base_images/folding_seat.gif" label="Folding Rear Seats" title="Folding Rear Seats"></li></ul></div></div><div class="list_mid"><div class="time"><ul class="segments"><li><ul><li class="bad pad_end"></li><li class="bad"></li><li class="bad"></li><li class="bad pad_end"></li></ul></li><li><ul><li class="bad pad_end"></li><li class="bad"></li><li class="bad"></li><li class="bad pad_end"></li></ul></li><li><ul><li class="bad pad_end"></li><li class="bad"></li><li class="bad"></li><li class="bad pad_end"></li></ul></li><li><ul><li class="bad pad_end"></li><li class="bad"></li><li class="bad"></li><li class="bad pad_end"></li></ul></li><li><ul><li class="bad pad_end"></li><li class="bad"></li><li class="bad"></li><li class="bad pad_end"></li></ul></li><li><ul><li class="bad pad_end"></li><li class="bad"></li><li class="bad"></li><li class="bad pad_end"></li></ul></li><li><ul><li class="bad pad_end"></li><li class="bad"></li><li class="bad"></li><li class="bad pad_end"></li></ul></li><li><ul><li class="bad pad_end"></li><li class="bad"></li><li class="bad"></li><li class="bad pad_end"></li></ul></li><li><ul><li class="slct_bkd pad_end"></li><li class="slct_bkd"></li><li class="slct_bkd"></li><li class="slct_bkd pad_end"></li></ul></li><li><ul><li class="slct_bkd pad_end"></li><li class="good"></li><li class="good"></li><li class="good pad_end"></li></ul></li><li><ul><li class="good pad_end"></li><li class="good"></li><li class="good"></li><li class="good pad_end"></li></ul></li><li><ul><li class="free pad_end"></li><li class="free"></li><li class="free"></li><li class="free pad_end"></li></ul></li><li><ul><li class="free pad_end"></li><li class="free"></li><li class="free"></li><li class="free pad_end"></li></ul></li><li><ul><li class="free pad_end"></li><li class="free"></li><li class="free"></li><li class="free pad_end"></li></ul></li><li><ul><li class="free pad_end"></li><li class="free"></li><li class="free"></li><li class="free pad_end"></li></ul></li><li><ul><li class="free pad_end"></li><li class="free"></li><li class="free"></li><li class="free pad_end"></li></ul></li><li><ul><li class="free pad_end"></li><li class="free"></li><li class="free"></li><li class="free pad_end"></li></ul></li><li><ul><li class="free pad_end"></li><li class="free"></li><li class="free"></li><li class="free pad_end"></li></ul></li><li><ul><li class="free pad_end"></li><li class="free"></li><li class="free"></li><li class="free pad_end"></li></ul></li><li><ul><li class="free pad_end"></li><li class="free"></li><li class="free"></li><li class="free pad_end"></li></ul></li><li><ul><li class="free pad_end"></li><li class="free"></li><li class="free"></li><li class="free pad_end"></li></ul></li><li><ul><li class="free pad_end"></li><li class="free"></li><li class="free"></li><li class="free pad_end"></li></ul></li><li><ul><li class="free pad_end"></li><li class="free"></li><li class="free"></li><li class="free pad_end"></li></ul></li><li><ul><li class="free pad_end"></li><li class="free"></li><li class="free"></li><li class="free pad_end"></li></ul></li></ul></div><div class="brick" style="width:50px; margin-left: 141px; -margin-left: 68px;"></div><div class="timestamp"><p class="maybe">Available from 3:15 pm on 08/24</p></div></div><div class="list_right"><div class="reserve"><a href="javascript:MV.controls.reserve.lightbox.create('1282672800', '1282683600', '96692246', '');">Select<span id="estimate_stack_956" class="est">$22.47</span></a></div><div id="rates_stack_956" class="price"><div><nobr><strong>$4.45</strong></nobr><br><nobr></nobr></div></div></div></div></body></html>'''
         from util.BeautifulSoup import BeautifulSoup
@@ -796,7 +796,7 @@ class VehiclesScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(vehicle.pod, fake_pod)
         self.assertEqual(vehicle.id, '96692246')
     
-    def testShouldGetTheCorrectNumberOfVehiclesSpecifiedOnPcsSite(self):
+    def testShouldGetTheCorrectNumberOfAvailabilitiesSpecifiedOnPcsSite(self):
         # Given...
         @Stub(PcsConnection)
         class StubConnection (object):
@@ -824,8 +824,8 @@ class VehiclesScreenscrapeSourceTest (unittest.TestCase):
         # Then...
         self.assertEqual([v.model for v in vehicles], ['Tacoma Pickup','Prius Liftback','Honda Element','Prius Liftback'])
     
-    def testShouldCorrectlyParseVehiclesFromStipulationAboutEarliestVehicles(self):
-        source = VehiclesScreenscrapeSource()
+    def testShouldCorrectlyParseAvailabilityFromStipulationAboutEarliestAvailability(self):
+        source = AvailabilityScreenscrapeSource()
         class StubVehicle (object):
             pass
         vehicle = StubVehicle()
@@ -841,8 +841,8 @@ class VehiclesScreenscrapeSourceTest (unittest.TestCase):
         minute = 30
         self.assertEqual(vehicle.available_from, datetime.datetime(year, month, day, hour, minute, tzinfo=Eastern))
     
-    def testShouldCorrectlyParseVehiclesFromStipulationAboutLatestVehicles(self):
-        source = VehiclesScreenscrapeSource()
+    def testShouldCorrectlyParseAvailabilityFromStipulationAboutLatestAvailability(self):
+        source = AvailabilityScreenscrapeSource()
         class StubVehicle (object):
             pass
         vehicle = StubVehicle()
@@ -858,8 +858,8 @@ class VehiclesScreenscrapeSourceTest (unittest.TestCase):
         minute = 30
         self.assertEqual(vehicle.available_until, datetime.datetime(year, month, day, hour, minute, tzinfo=Eastern))
     
-    def testShouldCorrectlyParseVehiclesFromStipulationAboutSandwichedVehicles(self):
-        source = VehiclesScreenscrapeSource()
+    def testShouldCorrectlyParseAvailabilityFromStipulationAboutSandwichedAvailability(self):
+        source = AvailabilityScreenscrapeSource()
         class StubVehicle (object):
             pass
         vehicle = StubVehicle()
@@ -881,7 +881,7 @@ class VehiclesScreenscrapeSourceTest (unittest.TestCase):
         minute = 45
         self.assertEqual(vehicle.available_until, datetime.datetime(year, month, day, hour, minute, tzinfo=Eastern))
     
-    def testConnectionShouldRespndWithCorrectVehicleInfo(self):
+    def testConnectionShouldRespndWithCorrectVehicleAvailability(self):
         # Given...
         class StubResponse (object):
             def read(self):
@@ -926,7 +926,7 @@ class VehiclesScreenscrapeSourceTest (unittest.TestCase):
         # Then...
         self.assertEqual(html_data.find('body').find('div').text, 'Hello')
     
-    def testHtmlBodyFromVehicleRequestShouldProduceExpectedVehicle(self):
+    def testHtmlBodyFromAvailabilityRequestShouldProduceExpectedVehicleAvailability(self):
         html_body = r'''<html><body><div class="lightbox" id="fakeLightbox"><h3 >Your Reservation</h3><div class="lightbox_contents"><p id="lightbox_instruction" class="error"></p><form class="reservation" id="add" name="add" method="post" action="lightbox.php"><div class="left_panel"><fieldset class="stack_fieldset"><input type="hidden" name="add[stack_pk]" value="91800598" /><table ><tr ><td ><label for="add_stack_pk__location">Location:</label></td><td ><span id="add_stack_pk__location">47th & Baltimore</span></td></tr><tr ><td ><label for="add_stack_pk_vt">Vehicle Type:</label></td><td ><span id="add_stack_pk_vt">Tacoma Pickup</span></td></tr></table></fieldset><fieldset class="range_fieldset"><table ><tr ><td ><label for="add_start_stamp__start_date_">Start:</label></td><td class="stamp_control"><input id="add_start_stamp__start_date_" name="add[start_stamp][start_date][date]" class="date_control" onchange="" value="09/06/10" />    <script language="javascript" type="text/javascript">
         DateInput('add_start_stamp__start_date__calendar', 'add_start_stamp__start_date_', true, '1283753498', 'm/d/y', null, null);
     </script><select id="add_start_stamp__start_time_" name="add[start_stamp][start_time][time]" class="time_control"><option value="0">Midnight</option><option value="900">12:15 AM</option><option value="1800">12:30 AM</option><option value="2700">12:45 AM</option><option value="3600">01:00 AM</option><option value="4500">01:15 AM</option><option value="5400">01:30 AM</option><option value="6300">01:45 AM</option><option value="7200">02:00 AM</option><option value="8100" selected="selected">02:15 AM</option><option value="9000">02:30 AM</option><option value="9900">02:45 AM</option><option value="10800">03:00 AM</option><option value="11700">03:15 AM</option><option value="12600">03:30 AM</option><option value="13500">03:45 AM</option><option value="14400">04:00 AM</option><option value="15300">04:15 AM</option><option value="16200">04:30 AM</option><option value="17100">04:45 AM</option><option value="18000">05:00 AM</option><option value="18900">05:15 AM</option><option value="19800">05:30 AM</option><option value="20700">05:45 AM</option><option value="21600">06:00 AM</option><option value="22500">06:15 AM</option><option value="23400">06:30 AM</option><option value="24300">06:45 AM</option><option value="25200">07:00 AM</option><option value="26100">07:15 AM</option><option value="27000">07:30 AM</option><option value="27900">07:45 AM</option><option value="28800">08:00 AM</option><option value="29700">08:15 AM</option><option value="30600">08:30 AM</option><option value="31500">08:45 AM</option><option value="32400">09:00 AM</option><option value="33300">09:15 AM</option><option value="34200">09:30 AM</option><option value="35100">09:45 AM</option><option value="36000">10:00 AM</option><option value="36900">10:15 AM</option><option value="37800">10:30 AM</option><option value="38700">10:45 AM</option><option value="39600">11:00 AM</option><option value="40500">11:15 AM</option><option value="41400">11:30 AM</option><option value="42300">11:45 AM</option><option value="-1"></option><option value="43200">Noon</option><option value="44100">12:15 PM</option><option value="45000">12:30 PM</option><option value="45900">12:45 PM</option><option value="46800">01:00 PM</option><option value="47700">01:15 PM</option><option value="48600">01:30 PM</option><option value="49500">01:45 PM</option><option value="50400">02:00 PM</option><option value="51300">02:15 PM</option><option value="52200">02:30 PM</option><option value="53100">02:45 PM</option><option value="54000">03:00 PM</option><option value="54900">03:15 PM</option><option value="55800">03:30 PM</option><option value="56700">03:45 PM</option><option value="57600">04:00 PM</option><option value="58500">04:15 PM</option><option value="59400">04:30 PM</option><option value="60300">04:45 PM</option><option value="61200">05:00 PM</option><option value="62100">05:15 PM</option><option value="63000">05:30 PM</option><option value="63900">05:45 PM</option><option value="64800">06:00 PM</option><option value="65700">06:15 PM</option><option value="66600">06:30 PM</option><option value="67500">06:45 PM</option><option value="68400">07:00 PM</option><option value="69300">07:15 PM</option><option value="70200">07:30 PM</option><option value="71100">07:45 PM</option><option value="72000">08:00 PM</option><option value="72900">08:15 PM</option><option value="73800">08:30 PM</option><option value="74700">08:45 PM</option><option value="75600">09:00 PM</option><option value="76500">09:15 PM</option><option value="77400">09:30 PM</option><option value="78300">09:45 PM</option><option value="79200">10:00 PM</option><option value="80100">10:15 PM</option><option value="81000">10:30 PM</option><option value="81900">10:45 PM</option><option value="82800">11:00 PM</option><option value="83700">11:15 PM</option><option value="84600">11:30 PM</option><option value="85500">11:45 PM</option></select></td></tr><tr ><td ><label for="add_end_stamp__end_date_">End:</label></td><td class="stamp_control"><input id="add_end_stamp__end_date_" name="add[end_stamp][end_date][date]" class="date_control" onchange="" value="09/06/10" />    <script language="javascript" type="text/javascript">
@@ -1050,25 +1050,25 @@ class VehiclesScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(price, 'my price')
     
     
-class VehiclesHtmlHandlerTest (unittest.TestCase):
+class LocationAvailabilityHtmlHandlerTest (unittest.TestCase):
     def testShouldBeInitializedWithHtmlViewsAndScreenscrapeSources(self):
-        handler = VehiclesHtmlHandler()
+        handler = LocationAvailabilityHtmlHandler()
         
         from pcs.source.screenscrape.session import SessionScreenscrapeSource
         from pcs.source.screenscrape.locations import LocationsScreenscrapeSource
-        from pcs.source.screenscrape.availability import VehiclesScreenscrapeSource
-        from pcs.view.html.availability import VehiclesHtmlView
+        from pcs.source.screenscrape.availability import AvailabilityScreenscrapeSource
+        from pcs.view.html.availability import AvailabilityHtmlView
         
         self.assertEqual(handler.vehicle_view.__class__.__name__,
-                         VehiclesHtmlView.__name__)
+                         AvailabilityHtmlView.__name__)
         self.assertEqual(handler.vehicle_source.__class__.__name__,
-                         VehiclesScreenscrapeSource.__name__)
+                         AvailabilityScreenscrapeSource.__name__)
         self.assertEqual(handler.location_source.__class__.__name__,
                          LocationsScreenscrapeSource.__name__)
         self.assertEqual(handler.session_source.__class__.__name__,
                          SessionScreenscrapeSource.__name__)
 
-class VehiclesHtmlViewTest (unittest.TestCase):
+class AvailabilityHtmlViewTest (unittest.TestCase):
     def testShouldPassVariablesToTheTemplateCorrectly(self):
         self.path = None
         self.values = None
@@ -1083,7 +1083,7 @@ class VehiclesHtmlViewTest (unittest.TestCase):
         start_time = datetime.datetime(2010,11,1,tzinfo=Eastern)
         end_time = datetime.datetime(2011,1,1,tzinfo=Eastern)
         vehicles = ['v1','v2']
-        view = VehiclesHtmlView(stub_render_method)
+        view = AvailabilityHtmlView(stub_render_method)
         
         rendering = view.get_vehicle_availability(session, location, start_time, end_time, vehicles)
         
