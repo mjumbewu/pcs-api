@@ -19,6 +19,10 @@ class _AvailabilityViewInterface (object):
     def get_vehicle_info(self, session, vehicle, start_time, end_time, price):
         raise NotImplementedError()
 
+class _ReservationsViewInterface (object):
+    def get_reservations(self, session, reservations):
+        raise NotImplementedError()
+
 class _ErrorViewInterface (object):
     def get_error(self, error_code, error_msg):
         raise NotImplementedError()

@@ -20,6 +20,10 @@ class _AvailabilitySourceInterface (object):
     def get_vehicle_price_estimate(self, sessionid, vehicleid, start_time, end_time):
         raise NotImplementedError()
 
+class _ReservationsSourceInterface (object):
+    def get_reservations(self, sessionid):
+        raise NotImplementedError()
+
 class _LocationsSourceInterface (object):
     def get_location_profiles(self, sessionid):
         raise NotImplementedError()

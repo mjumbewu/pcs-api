@@ -17,8 +17,8 @@ handlers:
   script: pcs/input/wsgi/session.py
   secure: optional
 
-- url: /newreservation.*
-  script: pcs/input/wsgi/newreservation.py
+- url: /reservations.*
+  script: pcs/input/wsgi/reservations.py
   secure: never
 
 - url: /availability.*
