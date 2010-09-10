@@ -69,4 +69,12 @@ Here are my testing guidelines:
   of the original class, an error will be raised.  The function decorator 
   @patch allows you to override a method on a class (or a Stub class), and 
   automatically verifies that the signature of the patch matches a method on 
-  the actual class.
+  the actual class.  If I have control over the design of a class, then I will
+  always use these decorators.  If I have no control (e.g. with the standard
+  libraries), then I will just create stub classes and methods without the 
+  decorators.
+  
+- I will not put my PCS userid/password anywhere in this project, and no one
+  else should either.  This type of thing should go in the private_info file in 
+  the test directory.  Copy private_info.py.template to private_info.py, and 
+  enter your credentials there.  Changes to this file will not be checked in.
