@@ -1,3 +1,5 @@
+All files in this project are Copyright (C) 2010 Mjumbe Poe
+
 This is an attempt at an API over HTTP for the PhillyCarShare reservation 
 system.  It is built to run on Google App Engine, though there is very little
 App Engine-specific code.  It should be easily adaptable to a Django install
@@ -25,4 +27,46 @@ Most of the code is well tested, and the tests are an important part of the
 package, especially since the only source for now is screenscraping.  The tests
 reside in the AppEngine/test directory.
 
-All files in this project are Copyright (C) 2010 Mjumbe Poe
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+So, a little background...
+
+I'm using this project to overcome the following situations:
+- PhillyCarShare does not appear to have a public API for their reservation
+  system.
+- The full website is a beast to browse on any mobile device.  It's bearable on
+  and iPhone, but far from ideal.
+- There are little features that would be nice to have that are not available 
+  through the main PCS site, that I'd like the option of building.
+
+Here are my testing guidelines:
+- Tests are important.  That's pretty much always true, but especially so for
+  this project.  I currently have no API as even a loose contract with PCS, and
+  at any time they could choose to change anything about their web interface.
+  Since I am dependent on screenscraping said interface, I need to know ASAP 
+  when something breaks.  Automated tests are thus a large part of my disaster-
+  prevention strategy.  They also make refactoring really easy, which is nice,
+  because I'm really indecisive with my design decisions.
+  
+  The structure I'm adopting for most of my tests is to use each test case to
+  test one class at a time.  I then create empty stubs for each of the objects
+  needed to create the class being tested, as well as an instance of said class
+  in the test case's setUp method.  Then, in each test function, I patch in
+  functionality to the stubbed objects.  I use one test function (or more, if
+  there are multiple execution paths) to test each method on the class being
+  tested.  This means that I may have to patch collaborating function on the 
+  tested class as well.
+  
+  When patching methods, I test each of the inputs for an expected value, so 
+  that I can be sure that data is being passed in to the correct parameters in
+  the method being tested.  I also test that each stubbed method is called an 
+  appropriate number of times.
+  
+  I created a few decorators to automatically check the method names and 
+  parameter order on my stubs and patches.  The class decorator @Stub allows
+  you to specify a class to create a stub of.  If you then attempt to create
+  a member method of the stub that does not match the signature of some method
+  of the original class, an error will be raised.  The function decorator 
+  @patch allows you to override a method on a class (or a Stub class), and 
+  automatically verifies that the signature of the patch matches a method on 
+  the actual class.
