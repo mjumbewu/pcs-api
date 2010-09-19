@@ -1,16 +1,23 @@
 
-class Vehicle (object):
-    
-    def __init__(self): #, vehiclemodel, vehiclepod):
-        pass
-#        self.model = vehiclemodel
-#        self.pod = vehiclepod
-#        self.info_url = info_url
-#        self.img_url = img_url
-#        self.amenities = amenities
+class VehicleType (object):
+#    model
+#    info_url
+#    img_url
+#    amenities
+    def __init__(self, vehicleid):
+        self.id = vehicleid
+
+class AvailableVehicle (object):
+#    pod
+#    vehicle
+    def __init__(self, availableid):
+        self.id = availableid
+
+class Rate (object):
+    def __init__(self, rateid):
+        self.id = rateid
 
 class PriceEstimate (object):
-    pass
     # available_balance
     # available_credit
     # applied_credit
@@ -23,3 +30,5 @@ class PriceEstimate (object):
     # fee_amount
     # total_amount
     # amount_due
+    pass
+
