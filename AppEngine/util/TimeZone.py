@@ -175,6 +175,9 @@ def to_timestamp(dt):
     stamp = _time.mktime(tt)
     return int(stamp)
 
+def to_isostring(dt):
+    return dt.isoformat()
+
 def to_xchange_time(dt):
     """
     Returns a time suitable for passing around to different systems.  This may
