@@ -1,5 +1,6 @@
-# Put your PCS credentials here.  If you don't change the .gitignore settings,
-# this file will not be checked in (as it should not be).
+# Copy this file to private_info.py, and put your PCS credentials in that file.  
+# If you don't change the .gitignore settings, that file will not be checked in 
+# (as it should not be).
 
 USERID = ''
 PASSWORD = ''
