@@ -25,7 +25,9 @@ into four sub-directories:
 
 Most of the code is well tested, and the tests are an important part of the 
 package, especially since the only source for now is screenscraping.  The tests
-reside in the AppEngine/test directory.
+reside in the AppEngine/test directory.  To run the tests, start the appengine
+server, and browse to http://localhost:8080/test.  Make sure to sign in as 
+administrator.  
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
