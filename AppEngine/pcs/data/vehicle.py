@@ -1,15 +1,23 @@
 
-class VehicleType (object):
-#    model
+class VehicleModel (object):
+#    name
 #    info_url
 #    img_url
 #    amenities
+    def __init__(self, modelid=None):
+        self.id = modelid
+
+class Vehicle (object):
+#    pod
+#    model
+#    rate
     def __init__(self, vehicleid):
         self.id = vehicleid
 
 class AvailableVehicle (object):
-#    pod
 #    vehicle
+#    start_time
+#    end_time
     def __init__(self, availableid):
         self.id = availableid
 

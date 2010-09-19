@@ -800,7 +800,7 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
         vehicle = self.source.get_vehicle_from_html_data(fake_pod, vehicle_info_div)
         
         # Then...
-        self.assertEqual(vehicle.model, 'Prius Liftback')
+        self.assertEqual(vehicle.model.name, 'Prius Liftback')
         self.assertEqual(vehicle.pod, fake_pod)
         self.assertEqual(vehicle.id, '96692246')
     
@@ -830,7 +830,7 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
         vehicles = self.source.get_available_vehicles_near(sessionid,locationid,stime,etime)
         
         # Then...
-        self.assertEqual([v.model for v in vehicles], ['Tacoma Pickup','Prius Liftback','Honda Element','Prius Liftback'])
+        self.assertEqual([v.model.name for v in vehicles], ['Tacoma Pickup','Prius Liftback','Honda Element','Prius Liftback'])
     
     def testShouldCorrectlyParseAvailabilityFromStipulationAboutEarliestAvailability(self):
         source = AvailabilityScreenscrapeSource()
@@ -962,7 +962,7 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
         
         # Then...
         self.assertEqual(vehicle.id, '91800598')
-        self.assertEqual(vehicle.model, 'Tacoma Pickup')
+        self.assertEqual(vehicle.model.name, 'Tacoma Pickup')
     
     def testShouldReturnVehiclePriceEstimateBodyFromThePcsConnection(self):
         class StubResponse (object):

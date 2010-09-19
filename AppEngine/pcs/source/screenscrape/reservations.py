@@ -13,7 +13,8 @@ except ImportError:
 
 from pcs.data.pod import Pod
 from pcs.data.vehicle import PriceEstimate
-from pcs.data.vehicle import VehicleType
+from pcs.data.vehicle import Vehicle
+from pcs.data.vehicle import VehicleModel
 from pcs.data.reservation import Reservation
 from pcs.source import _ReservationsSourceInterface
 from pcs.source.screenscrape import ScreenscrapeParseError
@@ -84,7 +85,7 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
         td_text = td.text
         return td_text
     
-    def get_pod_and_vehicle_from_td_data(self, td):
+    def get_vehicle_from_td_data(self, td):
         pod_a = td.find('a')
         
         pod_url = pod_a['href']
@@ -101,10 +102,14 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
         pod.url = pod_url
         pod.name = pod_name
         
-        vehicle = VehicleType(None)
-        vehicle.model = vehicle_model
+        model = VehicleModel()
+        model.name = vehicle_model
         
-        return pod, vehicle
+        vehicle = Vehicle(None)
+        vehicle.model = model
+        vehicle.pod = pod
+        
+        return vehicle
     
     def get_time_from_td_data(self, td):
         time_pattern = r'(?P<hour>\d+):(?P<minute>\d+) (?P<midi>[ap])m [A-Za-z]+, (?P<month>[A-Za-z]+) (?P<day>\d+), (?P<year>\d+)'
@@ -154,8 +159,8 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
                 reservation = Reservation(reservationid)
                 
             elif td_count == 1:
-                reservation.pod, reservation.vehicle = \
-                    self.get_pod_and_vehicle_from_td_data(td)
+                reservation.vehicle = \
+                    self.get_vehicle_from_td_data(td)
                     
             elif td_count == 2:
                 reservation.start_time = \

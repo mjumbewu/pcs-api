@@ -289,8 +289,8 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(reservation.id, '2472498')
         self.assertEqual(reservation.start_time, datetime.datetime(2010,9,15,6,0,tzinfo=Eastern))
         self.assertEqual(reservation.price.total_amount, 3.24)
-        self.assertEqual(reservation.vehicle.model, 'Prius Liftback')
-        self.assertEqual(reservation.pod.name, '47th & Baltimore')
+        self.assertEqual(reservation.vehicle.model.name, 'Prius Liftback')
+        self.assertEqual(reservation.vehicle.pod.name, '47th & Baltimore')
     
     ONE_CURRENT_ONE_UPCOMING_RESERVATIONS = r'''<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
@@ -360,15 +360,15 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(reservation.id, '2472500')
         self.assertEqual(reservation.start_time, datetime.datetime(2010,9,15,0,45,tzinfo=Eastern))
         self.assertEqual(reservation.price.total_amount, 3.24)
-        self.assertEqual(reservation.vehicle.model, 'Prius Liftback')
-        self.assertEqual(reservation.pod.name, '47th & Baltimore')
+        self.assertEqual(reservation.vehicle.model.name, 'Prius Liftback')
+        self.assertEqual(reservation.vehicle.pod.name, '47th & Baltimore')
         
         reservation = reservations[1]
         self.assertEqual(reservation.id, '2472498')
         self.assertEqual(reservation.start_time, datetime.datetime(2010,9,15,6,0,tzinfo=Eastern))
         self.assertEqual(reservation.price.total_amount, 3.24)
-        self.assertEqual(reservation.vehicle.model, 'Prius Liftback')
-        self.assertEqual(reservation.pod.name, '47th & Baltimore')
+        self.assertEqual(reservation.vehicle.model.name, 'Prius Liftback')
+        self.assertEqual(reservation.vehicle.pod.name, '47th & Baltimore')
     
     def testShouldReturnUpcomingReservationsResponseBodyAccordingToConnectionResponseIfNoExceptionsRaised(self):
         self.source.past_res_called = False

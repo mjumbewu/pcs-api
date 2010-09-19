@@ -13,7 +13,8 @@ except ImportError:
 
 from pcs.data.pod import Pod
 from pcs.data.vehicle import PriceEstimate
-from pcs.data.vehicle import VehicleType
+from pcs.data.vehicle import Vehicle
+from pcs.data.vehicle import VehicleModel
 from pcs.data.vehicle import AvailableVehicle
 from pcs.source import _AvailabilitySourceInterface
 from pcs.source.screenscrape import ScreenscrapeParseError
@@ -217,8 +218,11 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
         match = re.match(r"javascript:MV.controls.reserve.lightbox.create\('(?P<start_time>[0-9]*)', '(?P<end_time>[0-9]*)', '(?P<vehicle_id>[0-9]*)', ''\);", lightbox_script)
         vehicleid = match.group('vehicle_id')
         
-        vehicle = VehicleType(vehicleid)
-        vehicle.model = vehicle_name
+        model = VehicleModel()
+        model.name = vehicle_name
+        
+        vehicle = Vehicle(vehicleid)
+        vehicle.model = model
         vehicle.pod = pod
         
         # Since the availability information is in the div too, store it.
@@ -306,10 +310,13 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
         if model_tag is None:
             raise ScreenscrapeParseError('Vehicle model not found in vehicle information.')
         
-        vehicle_model = model_tag.text
+        model_name = model_tag.text
         
-        vehicle = VehicleType(vehicleid)
-        vehicle.model = vehicle_model
+        model = VehicleModel()
+        model.name = model_name
+        
+        vehicle = Vehicle(vehicleid)
+        vehicle.model = model
         return vehicle
     
     @override
