@@ -43,6 +43,9 @@ class _TimeRangeBasedHandler (webapp.RequestHandler):
         super(_TimeRangeBasedHandler, self).__init__()
     
     def get_time_range(self):
+        return self.get_epoch_time_range()
+    
+    def get_epoch_time_range(self):
         import datetime
         start_time_str = self.request.get('start_time')
         end_time_str = self.request.get('end_time')
@@ -55,6 +58,43 @@ class _TimeRangeBasedHandler (webapp.RequestHandler):
         
         if end_time_str:
             end_time = datetime.datetime.fromtimestamp(int(end_time_str), Eastern)
+        else:
+            end_time = now_time + datetime.timedelta(hours=3)
+        
+        return start_time, end_time
+    
+    def get_iso_time_range(self):
+        """
+        A custom redefinition of get_time_range, as we expect the results from
+        HTML date and time form fields for the start and end times.  The normal
+        method operates on UTC timestamps.
+        """
+        import datetime
+        start_date_str = self.request.get('start_date')
+        end_date_str = self.request.get('end_date')
+        start_time_str = self.request.get('start_time')
+        end_time_str = self.request.get('end_time')
+        
+        now_time = datetime.datetime.now(Eastern) + datetime.timedelta(minutes=1)
+        if start_date_str and start_time_str:
+            date_match = re.match('(?P<year>[0-9]+)-(?P<month>[0-9]+)-(?P<day>[0-9]+)', start_date_str)
+            time_match = re.match('(?P<hour>[0-9]+):(?P<minute>[0-9]+)', start_time_str)
+            start_time = datetime.datetime(int(date_match.group('year')),
+                int(date_match.group('month')),
+                int(date_match.group('day')),
+                int(time_match.group('hour')),
+                int(time_match.group('minute')), tzinfo=Eastern)
+        else:
+            start_time = now_time
+        
+        if end_date_str and end_time_str:
+            date_match = re.match('(?P<year>[0-9]+)-(?P<month>[0-9]+)-(?P<day>[0-9]+)', end_date_str)
+            time_match = re.match('(?P<hour>[0-9]+):(?P<minute>[0-9]+)', end_time_str)
+            end_time = datetime.datetime(int(date_match.group('year')),
+                int(date_match.group('month')),
+                int(date_match.group('day')),
+                int(time_match.group('hour')),
+                int(time_match.group('minute')), tzinfo=Eastern)
         else:
             end_time = now_time + datetime.timedelta(hours=3)
         
