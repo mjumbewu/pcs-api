@@ -1,0 +1,39 @@
+{% extends "session_base.html" %}
+
+{% block title %} Edit Reservation {{ reservationid }} {% endblock %}
+
+{% block content %}
+  
+  <style>
+    .reservation-time {
+      font-weight: normal;
+      font-size: 0.7em;
+      display: block;
+    }
+    .reservation-price {
+      font-size: 0.7em;
+      display: block;
+      text-align: right;
+    }
+  </style>
+  
+  <h1>Edit Reservation {{ reservationid }}</h1>
+  
+  <div>{{ reservation.vehicle.model }} at {{ reservation.pod.name }}</div>
+  <form method="PUT" action="/reservations/{{ reservationid }}.html">
+    {% ifequal status "1" %}
+      <label for="start_time">From:</label>
+      <input type="datetime-local" name="start_time" value="{{ start_time|date:"Y-m-d\TH:i" }}" /><br />
+    {% else %}
+      <span>From {{ start_time|time }}, {{ start_time|date }}</span>
+      <input type="hidden" name="start_time" value="{{ start_time|date:"Y-m-d\TH:i" }}" /><br />
+    {% endifequal %}
+    
+    <label for="end_time">Until:</label>
+    <input type="datetime-local" name="end_time" value="{{ end_time|date:"Y-m-d\TH:i" }}" /><br />
+    
+    <input type="submit" value="Save Reservation" />
+  </form>
+  
+{% endblock content %}
+

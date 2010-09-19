@@ -21,7 +21,7 @@ class _AvailabilitySourceInterface (object):
         raise NotImplementedError()
 
 class _ReservationsSourceInterface (object):
-    def get_reservations(self, sessionid):
+    def get_reservations(self, sessionid, year_month=None):
         raise NotImplementedError()
 
 class _LocationsSourceInterface (object):
