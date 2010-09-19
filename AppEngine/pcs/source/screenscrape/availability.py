@@ -13,7 +13,8 @@ except ImportError:
 
 from pcs.data.pod import Pod
 from pcs.data.vehicle import PriceEstimate
-from pcs.data.vehicle import Vehicle
+from pcs.data.vehicle import VehicleType
+from pcs.data.vehicle import AvailableVehicle
 from pcs.source import _AvailabilitySourceInterface
 from pcs.source.screenscrape import ScreenscrapeParseError
 from pcs.source.screenscrape.pcsconnection import PcsConnection
@@ -216,10 +217,9 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
         match = re.match(r"javascript:MV.controls.reserve.lightbox.create\('(?P<start_time>[0-9]*)', '(?P<end_time>[0-9]*)', '(?P<vehicle_id>[0-9]*)', ''\);", lightbox_script)
         vehicleid = match.group('vehicle_id')
         
-        vehicle = Vehicle()
+        vehicle = VehicleType(vehicleid)
         vehicle.model = vehicle_name
         vehicle.pod = pod
-        vehicle.id = vehicleid
         
         # Since the availability information is in the div too, store it.
         if availability_p['class'] == 'good':
@@ -308,9 +308,8 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
         
         vehicle_model = model_tag.text
         
-        vehicle = Vehicle()
+        vehicle = VehicleType(vehicleid)
         vehicle.model = vehicle_model
-        vehicle.id = vehicleid
         return vehicle
     
     @override
