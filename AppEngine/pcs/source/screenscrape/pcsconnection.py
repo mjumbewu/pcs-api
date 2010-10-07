@@ -1,5 +1,7 @@
 import httplib
 
+from google.appengine.api.urlfetch import DownloadError 
+
 class PcsConnectionError (Exception):
     pass
 
@@ -56,19 +58,26 @@ class PcsConnection (object):
             return self.__request_helper(location, method, data, headers, follow_count-1)
         return response
     
-    def __request_helper(self, url, method, data, headers, follow_count=5):
-        scheme, host, path = self.parse_url(url)
-        conn = self.create_host_connection(scheme, host)
-        self.make_request(conn, method, path, data, headers)
-        
-        initial_response = self.get_response(conn)
-        final_response = self.follow_if_redirect(initial_response, method, 
-            data, headers, follow_count)
-        return final_response
+    def __request_helper(self, url, method, data, headers, follow_count=5, retry_count=3):
+        try:
+            scheme, host, path = self.parse_url(url)
+            conn = self.create_host_connection(scheme, host)
+            self.make_request(conn, method, path, data, headers)
+            
+            initial_response = self.get_response(conn)
+            final_response = self.follow_if_redirect(initial_response, method, 
+                data, headers, follow_count)
+            return final_response
+        except DownloadError, de:
+            if retry_count > 0:
+                return self.__request_helper(url, method, data, headers, follow_count, retry_count-1)
+            else:
+                raise PcsConnectionError('Failed to connect to %s after max retry count: %s' % (url, de))
     
     def request(self, url, method, data, headers):
         """
         This should be the only method in the public interface.  Get a response
         from the given url, following any redirects.
         """
-        return self.__request_helper(url, method, data, headers, 5)
+        return self.__request_helper(url, method, data, headers, 5, 3)
+
