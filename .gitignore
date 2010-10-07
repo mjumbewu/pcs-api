@@ -1,5 +1,8 @@
 *~
 *.py[c|o]
+*.anjuta
+*.tasks
+AppEngine/.anjuta_sym_db.db
 
 jQTouch/
 Titanium/
