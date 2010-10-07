@@ -40,6 +40,8 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
         self.__vehicles_path = vehicles_path
         self.__vehicle_path = vehicle_path
         self.__price_path = price_path
+        
+        self._vehicle_cache = {}
     
     def get_location_query(self, locationid):
         if isinstance(locationid, (basestring, int)):
@@ -123,7 +125,12 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
         pod_name = str(matches.group('name'))
         pod_dist = float(matches.group('dist'))
         
-        pod = Pod(pod_name)
+        matches = re.match(r'MV\.controls\.results\.show_pod_details\((?P<pod_id>[0-9]+)\)',
+                          pod_link['onclick'])
+        pod_id = matches.group('pod_id')
+        
+        pod = Pod(pod_id)
+        pod.name = pod_name
         return pod, pod_dist
     
     def assign_vehicle_availability_stipulation(self, vehicle, stipulation):
@@ -273,27 +280,29 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
         return vehicles
     
     def vehicle_info_from_pcs(self, conn, sessionid, vehicleid, start_time, end_time):
-        host = self.__host
-        path = self.__vehicle_path
-        # The PhillyCarShare servers do not take into account time zone 
-        # information in their timestamp calculations, so we have to reverse
-        # our timezone info.  However, we have to keep it in the first place
-        # because Google's servers aren't necessarily on Eastern time (but 
-        # PhillyCarShare always will be).
-        start_stamp = to_timestamp(start_time)
-        end_stamp = to_timestamp(end_time)
-        
-        url = 'http://%s%s' % (host, path)
-        method = 'POST'
-        data = urllib.urlencode({'mv_action':'add',
-                'default[stack_pk]':vehicleid,
-                'default[start_stamp]':str(int(start_stamp)),
-                'default[end_stamp]':str(int(end_stamp))})
-        headers = { 'Cookie':'sid=%s' % sessionid }
-        response = \
-            conn.request(url, method, data, headers)
-        
-        return response.read(), response.getheaders()
+        if (sessionid, vehicleid, start_time, end_time) not in self._vehicle_cache:
+            host = self.__host
+            path = self.__vehicle_path
+            # The PhillyCarShare servers do not take into account time zone 
+            # information in their timestamp calculations, so we have to reverse
+            # our timezone info.  However, we have to keep it in the first place
+            # because Google's servers aren't necessarily on Eastern time (but 
+            # PhillyCarShare always will be).
+            start_stamp = to_timestamp(start_time)
+            end_stamp = to_timestamp(end_time)
+            
+            url = 'http://%s%s' % (host, path)
+            method = 'POST'
+            data = urllib.urlencode({'mv_action':'add',
+                    'default[stack_pk]':vehicleid,
+                    'default[start_stamp]':str(int(start_stamp)),
+                    'default[end_stamp]':str(int(end_stamp))})
+            headers = { 'Cookie':'sid=%s' % sessionid }
+            response = \
+                conn.request(url, method, data, headers)
+            
+            self._vehicle_cache[(sessionid, vehicleid, start_time, end_time)] = (response.read(), response.getheaders())
+        return self._vehicle_cache[(sessionid, vehicleid, start_time, end_time)]
     
     def get_html_vehicle_data(self, html_body):
         html_data = BeautifulSoup('<html><body>%s</body></html>' % html_body)
@@ -329,6 +338,21 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
         
         vehicle = self.create_vehicle_from_pcs_information_doc(html_vehicle_data)
         return vehicle
+    
+    def transaction_from_pcs_information_doc(self, html_data):
+        tid_field = html_data.find('input', {'id':'add_tid_'})
+        return tid_field['value']
+    
+    @override
+    def get_updated_transaction(self, sessionid, vehicleid, start_time, end_time):
+        conn = self.create_host_connection()
+        
+        pcs_vehicle_body, pcs_vehicle_headers = \
+            self.vehicle_info_from_pcs(conn, sessionid, vehicleid, start_time, end_time)
+        html_vehicle_data = self.get_html_vehicle_data(pcs_vehicle_body)
+        
+        transactionid = self.transaction_from_pcs_information_doc(html_vehicle_data)
+        return transactionid
     
     def vehicle_price_estimate_from_pcs(self, conn, sessionid, vehicleid, start_time, end_time):
         host = self.__host
@@ -366,6 +390,7 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
         price.amount_due = json_price_obj['amount_due'][0]
         
         return price
+    
     @override
     def get_vehicle_price_estimate(self, sessionid, vehicleid, start_time, end_time):
         conn = self.create_host_connection()

@@ -21,7 +21,11 @@ handlers:
   script: pcs/input/wsgi/reservations.py
   secure: never
 
-- url: /availability.*
+- url: /locations/.*/availability.*
+  script: pcs/input/wsgi/availability.py
+  secure: never
+
+- url: /vehicles/.*/availability.*
   script: pcs/input/wsgi/availability.py
   secure: never
 

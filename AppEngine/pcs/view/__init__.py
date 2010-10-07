@@ -22,6 +22,9 @@ class _AvailabilityViewInterface (object):
 class _ReservationsViewInterface (object):
     def get_reservations(self, session, reservations):
         raise NotImplementedError()
+    
+    def get_successful_new_reservation(self, session, reservation):
+        raise NotImplementedError()
 
 class _ErrorViewInterface (object):
     def get_error(self, error_code, error_msg):

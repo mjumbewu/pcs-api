@@ -178,9 +178,15 @@ def to_timestamp(dt):
 def to_isostring(dt):
     return dt.isoformat()
 
+def to_pcs_date_time(dt):
+    date_string = "%02d/%02d/%02d" % (dt.month, dt.day, dt.year%100)
+    time_string = str(dt.hour*60*60 + dt.minute*60 + dt.second)
+    return (date_string, time_string)
+
 def to_xchange_time(dt):
     """
     Returns a time suitable for passing around to different systems.  This may
     be a time stamp or an ISO 8601 time string.
     """
     return to_timestamp(dt)
+

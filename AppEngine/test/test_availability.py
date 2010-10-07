@@ -547,7 +547,7 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
             return error_msg
         
         # When...
-        self.handler.get()
+        self.handler.get('loc1234')
         
         # Then...
         response = self.handler.response.out.getvalue()
@@ -608,13 +608,13 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
             return error_msg
         
         # When...
-        self.handler.get()
+        self.handler.get('loc1234')
         response_body = self.handler.response.out.getvalue()
         
         # Then...
         self.assert_(self.handler.get_user_id_called)
         self.assert_(self.handler.get_session_id_called)
-        self.assert_(self.handler.get_location_id_called)
+#        self.assert_(self.handler.get_location_id_called)
         self.assertEqual(self.handler.get_session_userid, 'user1234')
         self.assertEqual(self.handler.get_session_sessionid, 'ses1234')
         self.assertEqual(self.handler.get_location_sessionid, 'ses1234')
@@ -658,7 +658,7 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
         
         # When...
         try:
-            self.handler.get()
+            self.handler.get(0)
         
         # Then...
         except WsgiParameterError:
@@ -781,6 +781,7 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
         pod, dist = self.source.get_pod_and_distance_from_html_data(pod_info_div)
         
         # Then...
+        self.assertEqual(pod.id, '30005')
         self.assertEqual(pod.name, '47th &amp; Baltimore')
         self.assertEqual(dist, 0.08)
     

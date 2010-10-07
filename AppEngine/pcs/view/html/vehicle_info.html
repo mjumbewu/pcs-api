@@ -37,7 +37,8 @@
   <h1>Vehicle Availability</h1>
   
   <div>
-    <span>A {{ vehicle.model }}</span>
+    <span><a href="javascript:history.go(-1);">&lt; Other Vehicles</a></span>
+    <span>A {{ vehicle.model.name }}</span>
     <span>from {{ start_time|time }} {{ start_time|date:"D M d Y" }}</span>
     <span>until {{ end_time|time }} {{ end_time|date:"D M d Y" }}</span>
     <table>
@@ -55,11 +56,9 @@
     <form method="POST" action="/reservations.html">
       <input type="hidden" name="start_time" value="{{ start_stamp }}" />
       <input type="hidden" name="end_time" value="{{ end_stamp }}" />
-      <input type="hidden" name="vehicle_id" value="{{ vehicle.id }}" />
+      <input type="hidden" name="vehicle" value="{{ vehicle.id }}" />
+      <input type="hidden" name="transaction" value="{{ session.transaction }}" />
       
-      <input type="hidden" name="add[stack_pk]" value="vehicle.id" />
-      <input type="hidden" name="mv_action" value="add" />
-      <input type="hidden" name="add[tid]" value="10" />
       <input type="submit" value="Reserve It" />
     </form>
   </div>

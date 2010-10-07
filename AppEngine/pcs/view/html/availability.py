@@ -40,7 +40,9 @@ class AvailabilityHtmlView (_AvailabilityViewInterface):
             'vehicle': vehicle,
             'start_time': start_time,
             'end_time': end_time,
-            'price': price
+            'price': price,
+            'start_stamp': to_xchange_time(start_time),
+            'end_stamp': to_xchange_time(end_time)
         }
         
         path = os.path.join(os.path.dirname(__file__), 'vehicle_info.html')

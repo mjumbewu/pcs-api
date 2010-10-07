@@ -15,6 +15,7 @@ from pcs.source.screenscrape.availability import AvailabilityScreenscrapeSource
 from pcs.source.screenscrape.locations import LocationsScreenscrapeSource
 from pcs.view.html.availability import AvailabilityHtmlView
 from pcs.view.html.error import ErrorHtmlView
+from util.abstract import override
 from util.TimeZone import Eastern
 
 class LocationAvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
@@ -59,11 +60,13 @@ class LocationAvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler)
     
     
     
-    def get(self):
+    def get(self, locationid):
         try:
             userid = self.get_user_id()
             sessionid = self.get_session_id()
-            locationid = self.get_location_id()
+            
+            if locationid == '.form':
+              locationid = self.get_location_id()
             
             session = self.get_session(userid, sessionid)
             location = self.get_location(sessionid, locationid)
@@ -99,6 +102,10 @@ class VehicleAvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
         price = self.vehicle_source.get_vehicle_price_estimate(sessionid, vehicleid, start_time, end_time)
         return price
     
+    def get_updated_transaction(self, sessionid, vehicleid, start_time, end_time):
+        transaction = self.vehicle_source.get_updated_transaction(sessionid, vehicleid, start_time, end_time)
+        return transaction
+    
     def get(self, vehicleid):
         try:
             userid = self.get_user_id()
@@ -108,6 +115,9 @@ class VehicleAvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
             
             vehicle = self.get_vehicle(sessionid, vehicleid, start_time, end_time)
             price = self.get_price_estimate(sessionid, vehicleid, start_time, end_time)
+            transaction = self.get_updated_transaction(sessionid, vehicleid, start_time, end_time)
+            
+            session.transaction = transaction
             
             response_body = self.vehicle_view.get_vehicle_info(session, vehicle,
                 start_time, end_time, price)
@@ -127,9 +137,10 @@ class LocationAvailabilityHtmlHandler (LocationAvailabilityHandler):
             LocationsScreenscrapeSource(),
             AvailabilityHtmlView(),
             ErrorHtmlView())
-            
+    
+    @override
     def get_time_range(self):
-        return self.get_iso_time_range()
+        return self.get_separate_iso_date_and_time_range()
     
 class VehicleAvailabilityHtmlHandler (VehicleAvailabilityHandler):
     def __init__(self):
@@ -140,8 +151,8 @@ class VehicleAvailabilityHtmlHandler (VehicleAvailabilityHandler):
             ErrorHtmlView())
 
 application = webapp.WSGIApplication(
-        [('/availability.html', LocationAvailabilityHtmlHandler),
-         ('/availability/(.*).html', VehicleAvailabilityHtmlHandler)],
+        [('/locations/(.*)/availability.html', LocationAvailabilityHtmlHandler),
+         ('/vehicles/(.*)/availability.html', VehicleAvailabilityHtmlHandler)],
         debug=True)
 
 def main():
