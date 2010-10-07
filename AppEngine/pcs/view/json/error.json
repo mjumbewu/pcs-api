@@ -1,0 +1,4 @@
+{"error" : {
+	"msg" : "{{ error_msg }}",
+	"code" : "{{ error_code }}"
+}}

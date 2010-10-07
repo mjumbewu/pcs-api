@@ -10,6 +10,8 @@ from pcs.input.wsgi import _SessionBasedHandler
 from pcs.view.html.error import ErrorHtmlView
 from pcs.view.html.login import LoginHtmlView
 from pcs.view.html.session import SessionHtmlView
+from pcs.view.json.error import ErrorJsonView
+from pcs.view.json.session import SessionJsonView
 from pcs.source.screenscrape.session import SessionScreenscrapeSource
 from util.abstract import override
 
@@ -86,10 +88,17 @@ class SessionHtmlHandler (SessionHandler):
                                                  SessionHtmlView(),
                                                  ErrorHtmlView())
 
+class SessionJsonHandler (SessionHandler):
+    def __init__(self):
+        super(SessionJsonHandler, self).__init__(SessionScreenscrapeSource(), 
+                                                 SessionJsonView(),
+                                                 ErrorJsonView())
+
 
 
 application = webapp.WSGIApplication(
-        [('/session.html', SessionHtmlHandler)],
+        [('/session.html', SessionHtmlHandler),
+         ('/session.json', SessionJsonHandler)],
         debug=True)
 
 def main():
