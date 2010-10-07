@@ -31,6 +31,52 @@ administrator.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+/login.[format]
+GET
+    Get a form or some other mechanism for the user to be able to submit their
+    username and password
+
+/session.[format]
+POST
+    Create a new session from the given user credentials.  Note: this should be
+    done through a secure connection, since credentials are submitted.
+    
+  - Params:
+    userid
+    password
+    
+  - Response:
+    Response will contain a session identifier that should be sent in a cookie
+    named sid with any subsequent calls to the API.
+
+/locations/[id]/availability.[format]
+GET
+    Check for available vehicles near the given location.
+  
+  - Params:
+    start_time (ISO8601 string - defaults to now rounded to next 15 minutes)
+    end_time (ISO8601 string - defaults to 3 hours later than start_time)
+    flexible (True/False - defaults to True)
+    show_all (True/False - defaults to True)
+
+/vehicles/[id]/availability.[format]
+GET
+    Check the availability (and price) of a given vehicle during a certain time
+  
+  - Params:
+    start_time (ISO8601 string)
+    end_time (ISO8601 string)
+
+/reservations.[format]
+GET
+POST
+
+/reservations/[id].[format]
+GET
+PUT
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 So, a little background...
 
 I'm using this project to overcome the following situations:
@@ -80,3 +126,24 @@ Here are my testing guidelines:
   else should either.  This type of thing should go in the private_info file in 
   the test directory.  Copy private_info.py.template to private_info.py, and 
   enter your credentials there.  Changes to this file will not be checked in.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Reservation Identifiers
+-----------------------
+
+In the PCS system, every reservation made has a unique identifier. However, the
+ID that the user sees is the confirmation ID, not the reservation ID (this is
+still called the reservation ID on things like the reservations list and the gas
+remibursement request form though). There is a way to get information on a
+reservation with the reservation ID, but it doesn't seem that there is any way
+using the confirmation ID, aside from browsing through all of the reservations
+listings.
+
+The best way to get information on a single reservation is with the reservation
+ID. This is only available (to my knowledge) for current and upcoming
+reservations. If there is a guarantee that confirmation IDs are monotonic with
+respect to the reservation date, then I can do a binary search through the
+reservation lists for a specific reservation.  However, I do not yet have a way
+to recover the actual reservation ID for a past reservation given just the 
+confirmation ID.
