@@ -19,22 +19,33 @@ from pcs.data.reservation import Reservation
 from pcs.source import _ReservationsSourceInterface
 from pcs.source.screenscrape import ScreenscrapeParseError
 from pcs.source.screenscrape.pcsconnection import PcsConnection
+from pcs.source.screenscrape.availability import AvailabilityScreenscrapeSource
 from util.abstract import override
 from util.BeautifulSoup import BeautifulSoup
 from util.TimeZone import Eastern
 from util.TimeZone import to_timestamp
+from util.TimeZone import to_pcs_date_time
 
 class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
     
     def __init__(self, host="reservations.phillycarshare.org",
                  upcoming_path="/my_reservations.php?mv_action=main",
                  past_path="/my_reservations.php?mv_action=main",
-                 price_path="/ajax_estimate.php?slider=true"):
+                 price_path="/ajax_estimate.php?slider=true",
+                 newres_path="/lightbox.php?mv_action=add",
+                 detail_path="/my_reservations.php?mv_action=confirm",
+                 confirm_path="/my_reservations.php?mv_action=confirm",
+                 vehicle_source = AvailabilityScreenscrapeSource()):
         super(ReservationsScreenscrapeSource, self).__init__()
         self.__host = host
         self.__upcoming_path = upcoming_path
         self.__past_path = past_path
         self.__price_path = price_path
+        self.__newres_path = newres_path
+        self.__detail_path = detail_path
+        self.__confirm_path = confirm_path
+        
+        self.vehicle_source = vehicle_source
     
     def get_driver_query(self, driverid):
         query = "main[multi_filter][driver_pk]=%s" % (driverid)
@@ -51,9 +62,7 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
         headers = {
             'Cookie': 'sid=%s' % sessionid}
         query = ''
-#        query = self.get_driver_query(driverid)
         connector = ''
-#        connector = '&' if '?' in path else '?'
         
         url = "http://%s%s%s%s" % (host, path, connector, query)
         
@@ -67,9 +76,7 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
         headers = {
             'Cookie': 'sid=%s' % sessionid}
         query = ''
-#        query = self.get_driver_query(driverid)
         query += self.get_datefilter_query(year, month)
-#        query += '&' + self.get_datefilter_query(year, month)
         connector = '&' if '?' in path else '?'
         
         url = "http://%s%s%s%s" % (host, path, connector, query)
@@ -146,6 +153,21 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
         
         return price
     
+    def get_confirm_id_from_td_data(self, td):
+        edit_button = td.find('button', {'id':'edit'})
+        early_button = td.find('button', {'id':'early'})
+        
+        if edit_button:
+            confirm_script = edit_button['onclick']
+        elif early_button:
+            confirm_script = early_button['onclick']
+        
+        confirm_pattern = r"\&pk=(?P<confirmid>[0-9]+)'"
+        confirm_match = re.match(confirm_pattern, confirm_script)
+        conifrmid = confirm_match.groups('confirmid')
+        
+        return confirmid
+    
     def get_reservation_from_table_row_data(self, reservation_tr):
         tds = reservation_tr.findAll('td')
         
@@ -181,6 +203,10 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
             elif td_count == 6:
                 reservation.memo = \
                     self.get_text_from_td_data(td)
+            
+            elif td_count == 7:
+                reservation.confirmid = \
+                    self.get_confirm_id_from_td_data(td)
             
             td_count += 1
         
@@ -219,4 +245,149 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
         reservations = self.get_reservation_data_from_html_data(reservations_html_doc)
         
         return reservations
+    
+    def get_time_query(self, start_time, end_time):
+        sdate, stime = to_pcs_date_time(start_time)
+        edate, etime = to_pcs_date_time(end_time)
+        
+        data = {
+            'add[start_stamp][start_date][date]' : sdate,
+            'add[start_stamp][start_time][time]' : stime,
+            'add[end_stamp][end_date][date]' : edate,
+            'add[end_stamp][end_time][time]' : etime}
+        query = urllib.urlencode(data)
+        return query
+    
+    def get_vehicle_query(self, vehicleid):
+        data = {
+            'add[stack_pk]' : (vehicleid)}
+        query = urllib.urlencode(data)
+        return query
+    
+    def get_memo_query(self, memo):
+        data = {
+            'add[job_code]' : memo}
+        query = urllib.urlencode(data)
+        return query
+    
+    def get_transaction_query(self, transactionid):
+        data = {
+            'add[tid]' : transactionid}
+        query = urllib.urlencode(data)
+        return query
+    
+    def send_reservation_request_to_pcs(self, conn, sessionid, vehicleid, transactionid, start_time, end_time, reservation_memo):
+        host = self.__host
+        path = self.__newres_path
+        
+        headers = {
+            'Cookie': 'sid=%s' % sessionid}
+        
+        data = self.get_time_query(start_time, end_time)
+        data += '&' + self.get_vehicle_query(vehicleid)
+        data += '&' + self.get_memo_query(reservation_memo)
+        data += '&' + self.get_transaction_query(transactionid)
+        
+        query = ''
+        connector = ''
+        
+        url = "http://%s%s%s%s" % (host, path, connector, query)
+        
+        response = conn.request(url, "POST", data, headers)
+        return (response.read(), response.getheaders())
+    
+    def get_reservation_from_pcs_with_confirmation_id(self, conn, sessionid, confirmid):
+        host = self.__host
+        path = self.__confirm_path
+        
+        headers = {
+            'Cookie': 'sid=%s' % sessionid}
+        
+        data = ''
+        
+        query = 'pk=%s' % confirmid
+        connector = '&' if '?' in path else '?'
+        
+        url = "http://%s%s%s%s" % (host, path, connector, query)
+        
+        response = conn.request(url, "GET", data, headers)
+        return (response.read(), response.getheaders())
+    
+    def get_vehicle_id_from_confirmation_doc(self, confirm_doc):
+        table = confirm_doc.find('table', {'class':'mi'})
+        tbody = table.find('tbody')
+        trs = tbody.findAll('tr')
+        
+        row = 0
+        for tr in trs:
+            row += 1
+            if row == 3:
+                td = tr.find('td', {'align':'left'})
+                anchor = td.find('a')
+                href = anchor['href']
+                
+                vid_pattern = r'stack_pk=(?P<vid>[0-9]+)'
+                vid_match = re.match(vid_pattern, href)
+                return vid_match.groups('vid')
+    
+    def get_reservation_from_confirmation_id(self, conn, sessionid, confirmid):
+        confirm_body, confirm_head = self.get_reservation_from_pcs_with_confirmation_id(conn, sessionid, confirmid)
+        confirm_doc = self.get_html_data(confirm_body)
+        
+        # NOTE: I am switching up the reservation id and the confirmation id.  
+        #       PhillyCarShare uses "reservation id" when referring to the human
+        #       reservations in the Existing Reservations list, as well as on
+        #       the gas reimbursement request form.  Moreover, what I'm calling
+        #       the confirmation id is only available (to my knowledge) for 
+        #       current and upcoming reservations.  The other reservations have
+        #       confirmation ids, they're just not available publicly.  So, to
+        #       save a little bit of headache, PCS's confirmation id is my 
+        #       reservation id.  I keep both around because the confirmation id
+        #       is useful when changing or cancelling a reservation.  I can 
+        #       obtain it in other ways than storing it directly, but not in 
+        #       any way that will be fast yet.
+        res_id_span = confirm_doc.find('span', {'id':'confirm_id_'})
+        reservationid = res_id_span.text
+        
+        return reservationid
+        
+    def get_reservation_from_confirmation_script_code(self, conn, sessionid, script_code):
+        resid_pattern = r"""window\.location = 'my_reservations\.php\?mv_action=confirm&_r=([0-9]+)&pk=(?P<resid>[0-9]+)'""";
+        resid_match = re.match(resid_pattern, script_code)
+        confirmid = resid_match.group('resid')
+        
+        reservationid = self.get_reservation_from_confirmation_id(conn, sessionid, confirmid)
+        return reservationid, confirmid
+    
+    def get_reservation_from_html_pcs_confirmation_redirect_script(self, conn, sessionid, script_doc):
+        script_tag = script_doc.find('script')
+        if script_tag is None:
+            raise ScreenscrapeParseError('Resulting reservation confirmation document has no "script" tag: %s' 
+                % (str(script_doc).replace('>','&gt;').replace('<','&lt;')))
+        script_code = script_tag.text
+        reservationid, confirmid = \
+            self.get_reservation_from_confirmation_script_code(conn, sessionid, script_code)
+        return reservationid, confirmid
+    
+    @override 
+    def get_new_reservation(self, sessionid, vehicleid, transactionid, start_time, end_time, reservation_memo):
+        conn = self.get_pcs_connection()
+        
+        pcs_body, pcs_head = \
+            self.send_reservation_request_to_pcs(conn, sessionid, vehicleid, transactionid, start_time, end_time, reservation_memo)
+        
+        reservation_html_doc = self.get_html_data(pcs_body)
+        reservationid, confirmid = self.get_reservation_from_html_pcs_confirmation_redirect_script(
+            conn, sessionid, reservation_html_doc)
+        
+        reservation = Reservation(reservationid, confirmid)
+        reservation.vehicle = self.vehicle_source.get_vehicle(sessionid, vehicleid, start_time, end_time)
+        reservation.start_time = start_time
+        reservation.end_time = end_time
+        
+        return reservation
+    
+    @override
+    def get_existing_reservation(self, sessionid, reservationid):
+        pass
 

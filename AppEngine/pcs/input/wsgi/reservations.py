@@ -52,6 +52,47 @@ class ReservationsHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
         self.response.out.write(response_body);
         self.response.set_status(200);
     
+    def get_vehicle_id(self):
+        vehicle_id = self.request.get('vehicle', None)
+        if vehicle_id is None:
+            raise WsgiParameterError('Could not find vehicle id.')
+        return vehicle_id
+    
+    def get_reservation_memo(self):
+        return 'new reservation'
+    
+    def get_transaction_id(self):
+        transaction_id = self.request.get('transaction', None)
+        if transaction_id is None:
+            raise WsgiParameterError('Could not find transaction id.')
+        return transaction_id
+    
+    def handle_create_reservation(self):
+        try:
+            userid =  self.get_user_id()
+            sessionid = self.get_session_id()
+            vehicleid = self.get_vehicle_id()
+            transactionid = self.get_transaction_id()
+            start_time, end_time = self.get_time_range()
+            memo = self.get_reservation_memo()
+            
+            session = self.session_source.get_existing_session(userid, sessionid)
+            reservation = self.reservation_source.get_new_reservation(sessionid, vehicleid, transactionid, start_time, end_time, memo)
+            if reservation:
+                response_body = \
+                    self.reservation_view.get_successful_new_reservation(
+                        session, reservation)
+            else:
+                response_body = \
+                    self.reservation_view.get_failed_new_reservation(
+                        session, start_time, end_time)
+            
+        except Exception, e:
+            response_body = self.generate_error(e)
+        
+        self.response.out.write(response_body);
+        self.response.set_status(200)
+    
     def get(self):
         self.handle_get_reservations()
     

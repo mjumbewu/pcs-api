@@ -34,7 +34,7 @@
       <ul class="reservations">
       {% for reservation in reservation_group.list %}
         <li>
-          <span>{{ reservation.vehicle.model }} at {{ reservation.pod.name }}</span>
+          <span>{{ reservation.vehicle.model.name }} at {{ reservation.vehicle.pod.name }}</span>
           <span class="reservation-time">from {{ reservation.start_time|time }}, {{ reservation.start_time|date }}</span>
           <span class="reservation-time">until {{ reservation.end_time|time }}, {{ reservation.end_time|date }}</span>
           <span class="reservation-price">for ${{ reservation.price.total_amount }}</span>
@@ -44,21 +44,24 @@
               <input type="hidden" name="start_time" value="{{ reservation.start_stamp }}" />
               <input type="hidden" name="end_time" value="{{ reservation.end_stamp }}" />
               <input type="hidden" name="status" value="{{ reservation.status }}" />
+              <input type="hidden" name="confirmid" value="{{ reservation.confirmid }}" />
               <input type="submit" value="Edit Reservation" />
             </form>
           {% endifequal %}
           
           {% ifequal reservation.status 1 %}
-            <form method="GET" action="/reservations/{{ reservation.id }}/editor.html">
+            <form method="GET" action="/reservations/current/{{ reservation.confirmid }}/editor.html">
               <input type="hidden" name="start_time" value="{{ reservation.start_stamp }}" />
               <input type="hidden" name="end_time" value="{{ reservation.end_stamp }}" />
               <input type="hidden" name="status" value="{{ reservation.status }}" />
+              <input type="hidden" name="confirmid" value="{{ reservation.confirmid }}" />
               <input type="submit" value="Edit Reservation" />
             </form>
             <form method="GET" action="/reservations/{{ reservation.id }}/canceller.html">
               <input type="hidden" name="start_time" value="{{ reservation.start_stamp }}" />
               <input type="hidden" name="end_time" value="{{ reservation.end_stamp }}" />
               <input type="hidden" name="status" value="{{ reservation.status }}" />
+              <input type="hidden" name="confirmid" value="{{ reservation.confirmid }}" />
               <input type="submit" value="Cancel Reservation" />
             </form>
           {% endifequal %}

@@ -12,8 +12,9 @@ class Reservation (object):
 #    pod
 #    start_time
 #    end_time
-    def __init__(self, reservationid):
+    def __init__(self, reservationid, confirmid=None):
         self.id = reservationid
+        self.confirmid = confirmid
     
     @property
     def status(self):

@@ -467,4 +467,20 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(self.source.html_body, 'my body')
         self.assertEqual(self.source.html_doc, 'my html doc')
         self.assertEqual(reservations, 'my reservations')
+    
+    def testShouldCreateReservationPastBasedOnContentsOfTableRow(self):
+        tr_str = r"""<tr class="zebra"><td >2460589</td><td   width="25%"  align="center" valign="middle"  ><a class="text" href="my_fleet.php?mv_action=show&_r=6&pk=5736346"    >47th & Pine - Prius Liftback</a></td> 
+<td >12:45 pm Wednesday, September 1, 2010</td><td >4:45 pm Wednesday, September 1, 2010</td><td ><a href="#" class="tooltip_target" style="cursor: help;">$29.28</a> 
+                <span class="tooltip" style="position: absolute; z-index: 1000; display: none;">$17.80&nbsp;(Time)&nbsp;+<br/>$7.00&nbsp;(Distance&nbsp;@&nbsp;28&nbsp;mile(s))&nbsp;+<br/>$0.00&nbsp;(Fees)&nbsp;+<br/>$4.48&nbsp;(Tax)</span></td><td >Normal</td><td >rasheed</td></tr>"""
+        tr = BeautifulSoup(tr_str)
+        
+        reservation = self.source.get_reservation_from_table_row_data(tr)
+        from pcs.data.reservation import ReservationStatus
+        self.assertEqual(reservation.id, '2460589')
+        self.assertEqual(reservation.vehicle.pod.id, '5736346')
+        self.assertEqual(reservation.vehicle.pod.name, '47th & Pine')
+        self.assertEqual(reservation.vehicle.model.name, 'Prius Liftback')
+        self.assertEqual(reservation.start_time.timetuple()[:6], (2010,9,1,12,45,0))
+        self.assertEqual(reservation.end_time.timetuple()[:6], (2010,9,1,16,45,0))
+        self.assertEqual(reservation.status, ReservationStatus.PAST)
 

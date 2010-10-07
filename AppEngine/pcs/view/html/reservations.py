@@ -13,9 +13,6 @@ class ReservationsHtmlView (_ReservationsViewInterface):
     
     @override
     def get_reservations(self, session, reservations):
-        """
-        Return a response with vehicle availability near a given location
-        """
         reservations.sort(key=lambda res: res.start_time)
         reservations.reverse()
         reservations.sort(key=lambda res: res.status)
@@ -30,6 +27,17 @@ class ReservationsHtmlView (_ReservationsViewInterface):
         }
         
         path = os.path.join(os.path.dirname(__file__), 'reservations.html')
+        response = self.render_method(path, values)
+        return response
+    
+    @override
+    def get_successful_new_reservation(self, session, reservation):
+        values = {
+            'session' : session,
+            'reservation' : reservation
+        }
+        
+        path = os.path.join(os.path.dirname(__file__), 'reservation-confirmation.html')
         response = self.render_method(path, values)
         return response
 
