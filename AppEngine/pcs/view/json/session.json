@@ -1,0 +1,11 @@
+{"session" : {
+{% if session %}
+	"is_valid" : true,
+	"id" : "{{ session.id }}",
+	"userid" : "{{ session.user }}",
+	"name" : "{{ session.name }}"
+{% else %}
+	"is_valid" : false,
+	"error" : "{{ error_msg }}"
+{% endif %}
+}}

@@ -428,6 +428,39 @@ class SessionHandlerTest (unittest.TestCase):
         self.assertEqual(self.handler.password, 'pass1234')
         self.assert_(response_body.startswith('SessionLoginError'), 'Response does not start with SessionLoginError: %r' % response_body)
 
+from pcs.data.session import Session
+from pcs.view.json.session import SessionJsonView
+class SessionJsonViewTest (unittest.TestCase):
+		def testShouldReturnAppropriateBodyWhenSessionIsNone(self):
+				expected = \
+"""{"session" : {
+
+	"is_valid" : false,
+	"error" : ""
+
+}}"""
+				view = SessionJsonView()
+				
+				result = view.get_session_overview(None)
+				self.assertEqual(result, expected)
+		
+		def testShouldReturnAppropriateBodyWithValidSession(self):
+				expected = \
+"""{"session" : {
+
+	"is_valid" : true,
+	"id" : "ses123",
+	"userid" : "user123",
+	"name" : "user name"
+
+}}"""
+				view = SessionJsonView()
+				session = Session('ses123', 'user123', 'user name')
+				
+				result = view.get_session_overview(session)
+				self.assertEqual(result, expected)
+				
+				
 from pcs.input.wsgi.session import SessionHtmlHandler
 from pcs.view.html.session import SessionHtmlView
 from pcs.view.html.error import ErrorHtmlView
@@ -438,3 +471,14 @@ class SessionHtmlHandlerTest (unittest.TestCase):
         self.assertEqual(handler.session_view.__class__.__name__, SessionHtmlView.__name__)
         self.assertEqual(handler.session_source.__class__.__name__, SessionScreenscrapeSource.__name__)
         self.assertEqual(handler.error_view.__class__.__name__, ErrorHtmlView.__name__)
+
+#from pcs.input.wsgi.session import SessionJsonHandler
+#from pcs.view.json.session import SessionJsonView
+#from pcs.view.json.error import ErrorJsonView
+#class SessionJsonHandlerTest (unittest.TestCase):
+#    def testShouldBeInitializedWithASessionJsonView(self):
+#        handler = SessionJsonHandler()
+#        
+#        self.assertEqual(handler.session_view.__class__.__name__, SessionJsonView.__name__)
+#        self.assertEqual(handler.session_source.__class__.__name__, SessionScreenscrapeSource.__name__)
+#        self.assertEqual(handler.error_view.__class__.__name__, ErrorJsonView.__name__)
