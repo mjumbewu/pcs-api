@@ -95,7 +95,7 @@ class LocationHandlerTest (unittest.TestCase):
             return 'location profiles body'
         
         @patch(self.error_view)
-        def get_error(self, error_code, error_msg):
+        def render_error(self, error_code, error_msg):
             pass
         
         # When...
@@ -131,7 +131,7 @@ class LocationHandlerTest (unittest.TestCase):
             raise SessionExpiredError()
         
         @patch(self.error_view)
-        def get_error(self, error_code, error_msg):
+        def render_error(self, error_code, error_msg):
             return error_msg
         
         # When...

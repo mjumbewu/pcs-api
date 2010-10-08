@@ -60,7 +60,7 @@ class SessionHandler (_SessionBasedHandler):
             sessionid = self.get_session_id()
             session = self.get_session(userid, sessionid)
             
-            response_body = self.session_view.get_session_overview(session)
+            response_body = self.session_view.render_session(session)
         
         except Exception, e:
             response_body = self.generate_error(e)
@@ -73,7 +73,7 @@ class SessionHandler (_SessionBasedHandler):
             userid, password = self.get_credentials()
             session = self.get_new_session(userid, password)
             
-            response_body = self.session_view.get_session_overview(session)
+            response_body = self.session_view.render_session(session)
             self.save_session(session)
         
         except Exception, e:

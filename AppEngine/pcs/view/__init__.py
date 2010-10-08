@@ -5,7 +5,7 @@ class _LoginViewInterface (object):
         raise NotImplementedError()
 
 class _SessionViewInterface (object):
-    def get_session_overview(self, session):
+    def render_session(self, session):
         raise NotImplementedError()
 
 class _LocationsViewInterface (object):
@@ -27,5 +27,5 @@ class _ReservationsViewInterface (object):
         raise NotImplementedError()
 
 class _ErrorViewInterface (object):
-    def get_error(self, error_code, error_msg):
+    def render_error(self, error_code, error_msg):
         raise NotImplementedError()

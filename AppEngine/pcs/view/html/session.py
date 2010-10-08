@@ -6,7 +6,7 @@ from util.abstract import override
 
 class SessionHtmlView (_SessionViewInterface):
     @override
-    def get_session_overview(self, session):
+    def render_session(self, session):
         """
         Return a response with overview information about the given session.
         """

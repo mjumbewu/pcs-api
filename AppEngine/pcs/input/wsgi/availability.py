@@ -123,8 +123,7 @@ class VehicleAvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
                 start_time, end_time, price)
         
         except Exception, e:
-            response_body = self.error_view.get_error(None, 
-                '%s: %s' % (e.__class__.__name__, str(e)))
+            response_body = self.generate_error(e)
         
         self.response.out.write(response_body);
         self.response.set_status(200);

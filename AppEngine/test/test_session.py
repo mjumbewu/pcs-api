@@ -222,12 +222,12 @@ class SessionHandlerTest (unittest.TestCase):
         
         @Stub(_SessionViewInterface)
         class StubSessionView (object):
-            def get_session_overview(self, session):
+            def render_session(self, session):
                 self.session = session
                 return 'Session'
         
         class StubErrorView (object):
-            def get_error(self, error_code, error_msg):
+            def render_error(self, error_code, error_msg):
                 return 'No Session'
         
         self.session_view = StubSessionView()
@@ -304,7 +304,7 @@ class SessionHandlerTest (unittest.TestCase):
             return 'my session'
         
         @patch(self.session_view)
-        def get_session_overview(self, session):
+        def render_session(self, session):
             self.session = session
             return 'session overview body'
         
@@ -339,7 +339,7 @@ class SessionHandlerTest (unittest.TestCase):
             raise SessionExpiredError()
         
         @patch(self.error_view)
-        def get_error(self, error_code, error_msg):
+        def render_error(self, error_code, error_msg):
             return error_msg
         
         # When...
@@ -381,7 +381,7 @@ class SessionHandlerTest (unittest.TestCase):
             return 'my session'
         
         @patch(self.session_view)
-        def get_session_overview(self, session):
+        def render_session(self, session):
             self.session = session
             return 'session overview body'
         
@@ -415,7 +415,7 @@ class SessionHandlerTest (unittest.TestCase):
             raise SessionLoginError()
         
         @patch(self.error_view)
-        def get_error(self, error_code, error_msg):
+        def render_error(self, error_code, error_msg):
             return error_msg
         
         # When...
@@ -435,7 +435,7 @@ class SessionJsonViewTest (unittest.TestCase):
 				view = SessionJsonView()
 				
 				try:
-						result = view.get_session_overview(None)
+						result = view.render_session(None)
 				except Exception:
 						return
 				
@@ -451,7 +451,7 @@ class SessionJsonViewTest (unittest.TestCase):
 				view = SessionJsonView()
 				session = Session('ses123', 'user123', 'user name')
 				
-				result = view.get_session_overview(session)
+				result = view.render_session(session)
 				self.assertEqual(result, expected)
 				
 				

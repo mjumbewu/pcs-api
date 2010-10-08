@@ -37,7 +37,7 @@ class _SessionBasedHandler (webapp.RequestHandler):
         return session
 
     def generate_error(self, error):
-        return self.error_view.get_error(None, type(error).__name__ + ': ' + str(error))
+        return self.error_view.render_error(None, type(error).__name__ + ': ' + str(error))
 
 class _TimeRangeBasedHandler (webapp.RequestHandler):
     def __init__(self):
