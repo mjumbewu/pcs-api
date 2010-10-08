@@ -12,7 +12,7 @@ class AvailabilityHtmlView (_AvailabilityViewInterface):
         self.render_method = render_method
     
     @override
-    def get_vehicle_availability(self, session, location, start_time, end_time, vehicles):
+    def render_location_availability(self, session, location, start_time, end_time, vehicles):
         """
         Return a response with vehicle availability near a given location
         """
@@ -31,7 +31,7 @@ class AvailabilityHtmlView (_AvailabilityViewInterface):
         return response
     
     @override
-    def get_vehicle_info(self, session, vehicle, start_time, end_time, price):
+    def render_vehicle_availability(self, session, vehicle, start_time, end_time, price):
         """
         Return a response with the availability of the given vehicle
         """

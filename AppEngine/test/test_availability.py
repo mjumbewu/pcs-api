@@ -176,7 +176,7 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
             return 'my price estimate'
         
         @patch(self.vehicle_view)
-        def get_vehicle_info(self, session, vehicle, start_time, end_time, price):
+        def render_vehicle_availability(self, session, vehicle, start_time, end_time, price):
             self.session = session
             self.vehicle = vehicle
             self.start_time = start_time
@@ -238,7 +238,7 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
             return 'my price estimate'
         
         @patch(self.vehicle_view)
-        def get_vehicle_info(self, session, vehicle, start_time, end_time, price):
+        def render_vehicle_availability(self, session, vehicle, start_time, end_time, price):
             self.session = session
             self.vehicle = vehicle
             self.start_time = start_time
@@ -611,7 +611,7 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
             return ['v1','v2']
         
         @patch(self.vehicle_view)
-        def get_vehicle_availability(self, session, location, start_time, end_time, vehicles):
+        def render_location_availability(self, session, location, start_time, end_time, vehicles):
             self.available_session = session
             self.available_location = location
             self.available_vehicles = vehicles
@@ -1110,7 +1110,7 @@ class AvailabilityHtmlViewTest (unittest.TestCase):
         vehicles = ['v1','v2']
         view = AvailabilityHtmlView(stub_render_method)
         
-        rendering = view.get_vehicle_availability(session, location, start_time, end_time, vehicles)
+        rendering = view.render_location_availability(session, location, start_time, end_time, vehicles)
         
         self.assertEqual(self.values, {'session':'my session', 'location':'my location', 'start_time':datetime.datetime(2010,11,1,tzinfo=Eastern), 'end_time':datetime.datetime(2011,1,1,tzinfo=Eastern), 'start_stamp': 1288584000, 'end_stamp': 1293858000, 'vehicles':['v1','v2']})
         self.assertEqual(rendering, 'the rendering')

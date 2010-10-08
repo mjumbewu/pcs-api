@@ -75,7 +75,7 @@ class LocationAvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler)
 
             vehicles = self.get_available_vehicles(sessionid, locationid, start_time, end_time)
             
-            response_body = self.vehicle_view.get_vehicle_availability(
+            response_body = self.vehicle_view.render_location_availability(
                 session, location, start_time, end_time, vehicles)
         except Exception, e:
             response_body = self.generate_error(e)
@@ -119,7 +119,7 @@ class VehicleAvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
             
 #            session.transaction = transaction
             
-            response_body = self.vehicle_view.get_vehicle_info(session, vehicle,
+            response_body = self.vehicle_view.render_vehicle_availability(session, vehicle,
                 start_time, end_time, price)
         
         except Exception, e:
