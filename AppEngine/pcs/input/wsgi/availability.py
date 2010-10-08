@@ -115,9 +115,9 @@ class VehicleAvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
             
             vehicle = self.get_vehicle(sessionid, vehicleid, start_time, end_time)
             price = self.get_price_estimate(sessionid, vehicleid, start_time, end_time)
-            transaction = self.get_updated_transaction(sessionid, vehicleid, start_time, end_time)
+#            transaction = self.get_updated_transaction(sessionid, vehicleid, start_time, end_time)
             
-            session.transaction = transaction
+#            session.transaction = transaction
             
             response_body = self.vehicle_view.get_vehicle_info(session, vehicle,
                 start_time, end_time, price)

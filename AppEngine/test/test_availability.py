@@ -183,7 +183,23 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
             self.end_time = end_time
             return 'my vehicle info body'
         
+        @patch(self.error_view)
+        def get_error(self, error_code, error_msg):
+            return str(error_msg)
+        
         handler.get('veh1234')
+        
+        self.assert_(handler.userid_called)
+        self.assert_(handler.sessionid_called)
+        self.assertEqual(handler.userid, 'user1234')
+        self.assertEqual(handler.sessionid, 'ses1234')
+        self.assertEqual(handler.vehicle_sessionid, 'ses1234')
+        self.assertEqual(handler.vehicle_vehicleid, 'veh1234')
+        self.assertEqual(handler.price_sessionid, 'ses1234')
+        self.assertEqual(handler.price_vehicleid, 'veh1234')
+#        self.assertEqual(self.vehicle_view.session, 'my session')
+#        self.assertEqual(self.vehicle_view.vehicle, 'my vehicle')
+        self.assertEqual(self.response.out.getvalue(), 'my vehicle info body')
         
     def testReturnContentFromErrorViewWhenAnExceptionIsRaised(self):
         handler = VehicleAvailabilityHandler(self.session_source, self.vehicle_source, 
