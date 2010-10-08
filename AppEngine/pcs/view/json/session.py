@@ -10,6 +10,9 @@ class SessionJsonView (_SessionViewInterface):
         """
         Return a response with overview information about the given session.
         """
+        if session is None:
+        		raise Exception('No session found.');
+        
         values = {
             'session': session
         }

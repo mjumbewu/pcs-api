@@ -432,27 +432,22 @@ from pcs.data.session import Session
 from pcs.view.json.session import SessionJsonView
 class SessionJsonViewTest (unittest.TestCase):
 		def testShouldReturnAppropriateBodyWhenSessionIsNone(self):
-				expected = \
-"""
-{"error" : {
-	"msg" : "No session found",
-	"code" : ""
-}}
-"""
 				view = SessionJsonView()
 				
-				result = view.get_session_overview(None)
-				self.assertEqual(result, expected)
+				try:
+						result = view.get_session_overview(None)
+				except Exception:
+						return
+				
+				self.fail('Exception expected')
 		
 		def testShouldReturnAppropriateBodyWithValidSession(self):
 				expected = \
-"""
-{"session" : {
+"""{"session" : {
 	"id" : "ses123",
 	"userid" : "user123",
 	"name" : "user name"
-}}
-"""
+}}"""
 				view = SessionJsonView()
 				session = Session('ses123', 'user123', 'user name')
 				
