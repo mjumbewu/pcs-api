@@ -18,8 +18,10 @@ class AvailableVehicle (object):
 #    vehicle
 #    start_time
 #    end_time
-    def __init__(self, availableid):
-        self.id = availableid
+#    earliest
+#    latest
+    def __init__(self):
+        pass
 
 class Rate (object):
     def __init__(self, rateid):
