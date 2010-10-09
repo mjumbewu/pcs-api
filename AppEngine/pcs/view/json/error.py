@@ -6,7 +6,7 @@ from util.abstract import override
 
 class ErrorJsonView (_ErrorViewInterface):
     @override
-    def get_error(self, error_code, error_msg):
+    def render_error(self, error_code, error_msg):
         """
         Return an error response.
         """

@@ -363,9 +363,7 @@ class SessionHandlerTest (unittest.TestCase):
         self.handler.save_session(session)
         
         self.assertEqual(self.handler.response.headers.header_list, 
-            [ ('Set-Cookie','sid=ses1234; path=/'), 
-              ('Set-Cookie','suser=user1234; path=/'),
-              ('Set-Cookie','sname=My User Name; path=/') ])
+            [ ('Set-Cookie',r'session="{\"id\": \"ses1234\", \"name\": \"My User Name\", \"user\": \"user1234\"}"; path=/') ])
     
     def testShouldRespondWithSuccessContentWhenUserIdAndPasswordAreRecognized(self):
         # Given...

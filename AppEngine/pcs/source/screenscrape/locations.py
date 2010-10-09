@@ -51,15 +51,17 @@ class LocationsScreenscrapeSource (_LocationsSourceInterface):
         for tr_tag in tr_tags:
             profile_name_td_tag = tr_tag.findAll('td', {'class':'profile_name'})[0]
             profile_desc_td_tag = tr_tag.findAll('td', {'class':'profile_descr'})[0]
-            profile_id_td_tag = tr_tag.findAll('input', {'class':'profile_default'})[0]
+            profile_id_radio_tag = tr_tag.findAll('input', {'class':'profile_default'})[0]
             
             profile_name = profile_name_td_tag.text
             profile_desc = profile_desc_td_tag.text
-            profile_id = profile_id_td_tag['value']
+            profile_id = profile_id_radio_tag['value']
+            profile_def = (profile_id_radio_tag.get('checked',None) == 'checked')
             
             location_profile = LocationProfile(profile_name,
                                       profile_id,
                                       profile_desc)
+            location_profile.is_default = profile_def
             location_profiles.append(location_profile)
         
         return location_profiles
@@ -80,7 +82,9 @@ class LocationsScreenscrapeSource (_LocationsSourceInterface):
         locations = self.get_location_profiles(sessionid)
         
         for location in locations:
-            if location.id == locationid:
+            if locationid is None and location.is_default:
+                return location
+            elif location.id == locationid:
                 return location
         
         raise ScreenscrapeParseError('No location with id %r found' % locationid)

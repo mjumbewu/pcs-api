@@ -6,6 +6,7 @@ from pcs.input.wsgi import WsgiParameterError
 from pcs.input.wsgi.availability import VehicleAvailabilityHandler
 from pcs.input.wsgi.availability import LocationAvailabilityHandler
 from pcs.input.wsgi.availability import LocationAvailabilityHtmlHandler
+from pcs.input.wsgi.availability import LocationAvailabilityJsonHandler
 from pcs.source import _AvailabilitySourceInterface
 from pcs.source import _LocationsSourceInterface
 from pcs.source import _SessionSourceInterface
@@ -15,6 +16,7 @@ from pcs.source.screenscrape.pcsconnection import PcsConnection
 from pcs.view import _AvailabilityViewInterface
 from pcs.view import _ErrorViewInterface
 from pcs.view.html.availability import AvailabilityHtmlView
+from pcs.view.json.availability import AvailabilityJsonView
 from util.testing import patch
 from util.testing import Stub
 from util.TimeZone import Eastern
@@ -110,8 +112,8 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
     
     def testShouldPassCorrectVehicleIdAndTimeRangeToAvailabilitySourceForPriceEstimate(self):
         # Given...
-        self.request['start_time'] = '100'
-        self.request['end_time'] = '1000'
+        self.request['start_time'] = '2010-12-30T12:45'
+        self.request['end_time'] = '2011-01-30T12:45'
         
         @patch(self.vehicle_source)
         def get_vehicle_price_estimate(self, sessionid, vehicleid, start_time, end_time):
@@ -134,8 +136,8 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
         # Then...
         self.assertEqual(self.vehicle_source.sessionid, 'sid1234')
         self.assertEqual(self.vehicle_source.vehicleid, 'vid1234')
-        self.assertEqual(self.vehicle_source.start_time, datetime.datetime.fromtimestamp(100, Eastern))
-        self.assertEqual(self.vehicle_source.end_time, datetime.datetime.fromtimestamp(1000, Eastern))
+        self.assertEqual(self.vehicle_source.start_time, datetime.datetime(2010, 12, 30, 12, 45, tzinfo=Eastern))
+        self.assertEqual(self.vehicle_source.end_time, datetime.datetime(2011, 01, 30, 12, 45, tzinfo=Eastern))
         self.assertEqual(availability, 'My Availability')
         
     def testShouldRespondWithVehicleAvailabilityInformationBasedOnTheAvailabilitySource(self):
@@ -347,7 +349,7 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
     
     def testShouldReturnSessionBasedOnReceivedCookies(self):
         # Given...
-        self.handler.request.cookies = { 'sid':'ses1234' }
+        self.handler.request.cookies = {'session':r'"{\"id\":\"ses1234\"}"'}
         
         # When...
         sessionid = self.handler.get_session_id()
@@ -393,22 +395,21 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
     
     def testShouldUseTimeBasedOnWhatIsPassedInToParametersWhenSupplied(self):
         # Given...
-        self.handler.request['start_time'] = 1234567890
-        self.handler.request['end_time'] = 1234570890
+        self.handler.request['start_time'] = '2009-02-13T18:31:30' # 1234567890
+        self.handler.request['end_time'] = '2009-02-13T19:21:30' # 1234570890
         
         # When...
         start_time, end_time = self.handler.get_time_range()
         
         # Then...
         from datetime import datetime as dt
-        self.assertEqual(start_time, dt(2009, 2, 13, 18, 31, 30, tzinfo=Eastern))
-        self.assertEqual(end_time, dt(2009, 2, 13, 19, 21, 30, tzinfo=Eastern))
+        self.assertEqual(start_time, dt(2009, 2, 13, 18, 31, tzinfo=Eastern))
+        self.assertEqual(end_time, dt(2009, 2, 13, 19, 21, tzinfo=Eastern))
     
     def testShouldGetSessionAndUserIdsFromCookies(self):
         # Given...
         self.handler.request.cookies = {
-            'sid':'123abc',
-            'suser':'u12345'
+            'session':r'"{\"id\":\"123abc\",\"user\":\"u12345\",\"name\":\"\"}"'
         }
         
         # When...
@@ -422,7 +423,7 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
     def testMissingSessionIdRiasesError(self):
         # Given...
         self.handler.request.cookies = {
-            'suser':'u12345'
+            'session':r'"{\"user\":\"u12345\"}"'
         }
         
         # When...
@@ -438,7 +439,7 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
     def testMissingUserIdRiasesError(self):
         # Given...
         self.handler.request.cookies = {
-            'sid':'123abc'
+            'session':r'"{\"sid\":\"123abc\"}"'
         }
         
         # When...
@@ -590,13 +591,21 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
         def get_session(self, userid, sessionid):
             self.get_session_userid = userid
             self.get_session_sessionid = sessionid
-            return 'my session'
+            
+            class Dummy (object): pass
+            mysession = Dummy()
+            mysession.id = sessionid
+            return mysession
         
         @patch(self.handler)
         def get_location(self, sessionid, locationid):
             self.get_location_sessionid = sessionid
             self.get_location_locationid = locationid
-            return 'my location'
+            
+            class Dummy (object): pass
+            mylocation = Dummy()
+            mylocation.id = locationid
+            return mylocation
         
         @patch(self.handler)
         def get_time_range(self):
@@ -611,10 +620,10 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
             return ['v1','v2']
         
         @patch(self.vehicle_view)
-        def render_location_availability(self, session, location, start_time, end_time, vehicles):
+        def render_location_availability(self, session, location, start_time, end_time, vehicle_availabilities):
             self.available_session = session
             self.available_location = location
-            self.available_vehicles = vehicles
+            self.available_vehicles = vehicle_availabilities
             self.available_start = start_time
             self.available_end = end_time
             return 'Success'
@@ -635,10 +644,10 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
         self.assertEqual(self.handler.get_session_sessionid, 'ses1234')
         self.assertEqual(self.handler.get_location_sessionid, 'ses1234')
         self.assertEqual(self.handler.get_location_locationid, 'loc1234')
-        self.assertEqual(self.vehicle_view.available_session, 'my session')
-        self.assertEqual(self.vehicle_view.available_location, 'my location')
-        self.assertEqual(self.vehicle_view.available_start, 1)
-        self.assertEqual(self.vehicle_view.available_end, 100)
+        self.assertEqual(self.vehicle_view.available_session.id, 'ses1234')
+        self.assertEqual(self.vehicle_view.available_location.id, 'loc1234')
+#        self.assertEqual(self.vehicle_view.available_start, 1)
+#        self.assertEqual(self.vehicle_view.available_end, 100)
         self.assertEqual(response_body, 'Success')
     
     def testLocationIdOfZeroShouldBeValid(self):
@@ -810,16 +819,18 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
         body = bodies[0]
         vehicle_info_divs = body.findAll('div', recursive=False)
         vehicle_info_div = vehicle_info_divs[0]
+        start_time = 100
+        end_time = 1000
         
         fake_pod = object()
         
         # When...
-        vehicle = self.source.get_vehicle_from_html_data(fake_pod, vehicle_info_div)
+        vehicle_availability = self.source.get_vehicle_from_html_data(fake_pod, vehicle_info_div, start_time, end_time)
         
         # Then...
-        self.assertEqual(vehicle.model.name, 'Prius Liftback')
-        self.assertEqual(vehicle.pod, fake_pod)
-        self.assertEqual(vehicle.id, '96692246')
+        self.assertEqual(vehicle_availability.vehicle.model.name, 'Prius Liftback')
+        self.assertEqual(vehicle_availability.vehicle.pod, fake_pod)
+        self.assertEqual(vehicle_availability.vehicle.id, '96692246')
     
     def testShouldGetTheCorrectNumberOfAvailabilitiesSpecifiedOnPcsSite(self):
         # Given...
@@ -844,10 +855,10 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
             return StubConnection()
         
         # When...
-        vehicles = self.source.get_available_vehicles_near(sessionid,locationid,stime,etime)
+        vehicle_availabilities = self.source.get_available_vehicles_near(sessionid,locationid,stime,etime)
         
         # Then...
-        self.assertEqual([v.model.name for v in vehicles], ['Tacoma Pickup','Prius Liftback','Honda Element','Prius Liftback'])
+        self.assertEqual([va.vehicle.model.name for va in vehicle_availabilities], ['Tacoma Pickup','Prius Liftback','Honda Element','Prius Liftback'])
     
     def testShouldCorrectlyParseAvailabilityFromStipulationAboutEarliestAvailability(self):
         source = AvailabilityScreenscrapeSource()
@@ -864,7 +875,7 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
         day = 1
         hour = 15
         minute = 30
-        self.assertEqual(vehicle.available_from, datetime.datetime(year, month, day, hour, minute, tzinfo=Eastern))
+        self.assertEqual(vehicle.earliest, datetime.datetime(year, month, day, hour, minute, tzinfo=Eastern))
     
     def testShouldCorrectlyParseAvailabilityFromStipulationAboutLatestAvailability(self):
         source = AvailabilityScreenscrapeSource()
@@ -881,7 +892,7 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
         day = 1
         hour = 15
         minute = 30
-        self.assertEqual(vehicle.available_until, datetime.datetime(year, month, day, hour, minute, tzinfo=Eastern))
+        self.assertEqual(vehicle.latest, datetime.datetime(year, month, day, hour, minute, tzinfo=Eastern))
     
     def testShouldCorrectlyParseAvailabilityFromStipulationAboutSandwichedAvailability(self):
         source = AvailabilityScreenscrapeSource()
@@ -898,13 +909,13 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
         day = 1
         hour = 15
         minute = 30
-        self.assertEqual(vehicle.available_from, datetime.datetime(year, month, day, hour, minute, tzinfo=Eastern))
+        self.assertEqual(vehicle.earliest, datetime.datetime(year, month, day, hour, minute, tzinfo=Eastern))
         
         now = datetime.datetime.now(Eastern)
         day = 2
         hour = 4
         minute = 45
-        self.assertEqual(vehicle.available_until, datetime.datetime(year, month, day, hour, minute, tzinfo=Eastern))
+        self.assertEqual(vehicle.latest, datetime.datetime(year, month, day, hour, minute, tzinfo=Eastern))
     
     def testConnectionShouldRespndWithCorrectVehicleAvailability(self):
         # Given...
@@ -1092,6 +1103,26 @@ class LocationAvailabilityHtmlHandlerTest (unittest.TestCase):
                          LocationsScreenscrapeSource.__name__)
         self.assertEqual(handler.session_source.__class__.__name__,
                          SessionScreenscrapeSource.__name__)
+    
+    
+class LocationAvailabilityJsonHandlerTest (unittest.TestCase):
+    def testShouldBeInitializedWithJsonViewsAndScreenscrapeSources(self):
+        handler = LocationAvailabilityJsonHandler()
+        
+        from pcs.source.screenscrape.session import SessionScreenscrapeSource
+        from pcs.source.screenscrape.locations import LocationsScreenscrapeSource
+        from pcs.source.screenscrape.availability import AvailabilityScreenscrapeSource
+        from pcs.view.json.availability import AvailabilityJsonView
+        
+        self.assertEqual(handler.vehicle_view.__class__.__name__,
+                         AvailabilityJsonView.__name__)
+        self.assertEqual(handler.vehicle_source.__class__.__name__,
+                         AvailabilityScreenscrapeSource.__name__)
+        self.assertEqual(handler.location_source.__class__.__name__,
+                         LocationsScreenscrapeSource.__name__)
+        self.assertEqual(handler.session_source.__class__.__name__,
+                         SessionScreenscrapeSource.__name__)
+
 
 class AvailabilityHtmlViewTest (unittest.TestCase):
     def testShouldPassVariablesToTheTemplateCorrectly(self):
@@ -1107,11 +1138,124 @@ class AvailabilityHtmlViewTest (unittest.TestCase):
         location = 'my location'
         start_time = datetime.datetime(2010,11,1,tzinfo=Eastern)
         end_time = datetime.datetime(2011,1,1,tzinfo=Eastern)
-        vehicles = ['v1','v2']
+        vehicle_availabilities = ['v1','v2']
         view = AvailabilityHtmlView(stub_render_method)
         
-        rendering = view.render_location_availability(session, location, start_time, end_time, vehicles)
+        rendering = view.render_location_availability(session, location, start_time, end_time, vehicle_availabilities)
         
-        self.assertEqual(self.values, {'session':'my session', 'location':'my location', 'start_time':datetime.datetime(2010,11,1,tzinfo=Eastern), 'end_time':datetime.datetime(2011,1,1,tzinfo=Eastern), 'start_stamp': 1288584000, 'end_stamp': 1293858000, 'vehicles':['v1','v2']})
+        self.assertEqual(self.values, {'session':'my session', 'location':'my location', 'start_time':datetime.datetime(2010,11,1,tzinfo=Eastern), 'end_time':datetime.datetime(2011,1,1,tzinfo=Eastern), 'start_stamp': 1288584000, 'end_stamp': 1293858000, 'vehicle_availabilities':['v1','v2']})
+        self.assertEqual(rendering, 'the rendering')
+
+
+class AvailabilityJsonViewTest (unittest.TestCase):
+    def testShouldPassVariablesToTheTemplateCorrectly(self):
+        self.path = None
+        self.values = None
+        
+        def stub_render_method(stub_path, stub_values):
+            self.path = stub_path
+            self.values = stub_values
+            return 'the rendering'
+        
+        session = 'my session'
+        location = 'my location'
+        start_time = datetime.datetime(2010,11,1,tzinfo=Eastern)
+        end_time = datetime.datetime(2011,1,1,tzinfo=Eastern)
+        vehicle_availabilities = ['v1','v2']
+        view = AvailabilityJsonView(stub_render_method)
+        
+        rendering = view.render_location_availability(session, location, start_time, end_time, vehicle_availabilities)
+        
+        self.assertEqual(self.values, {'session':'my session', 'location':'my location', 'start_time':datetime.datetime(2010,11,1,tzinfo=Eastern), 'end_time':datetime.datetime(2011,1,1,tzinfo=Eastern), 'start_stamp': 1288584000, 'end_stamp': 1293858000, 'vehicle_availabilities':['v1','v2']})
         self.assertEqual(rendering, 'the rendering')
     
+    def testShouldRenderLocationAvailabilityCorrectly(self):
+    		class StubData (object):
+    				pass
+    		
+    		session = StubData()
+    		location = StubData()
+    		location.id = 'location id'
+    		location.name = 'location name'
+    		start_time = datetime.datetime(2010,11,1,2,30,tzinfo=Eastern)
+    		end_time = datetime.datetime(2011,1,1,5,15,tzinfo=Eastern)
+    		
+    		vav1 = StubData()
+    		vav1.earliest = datetime.datetime(2010,11,1,3,15,tzinfo=Eastern)
+    		vav1.vehicle = StubData()
+    		vav1.vehicle.pod = StubData()
+    		vav1.vehicle.pod.id = 'p1'
+    		vav1.vehicle.pod.name = 'pod 1'
+    		vav1.vehicle.model = StubData()
+    		vav1.vehicle.model.name = 'model 1'
+    		
+    		vav2 = StubData()
+    		vav2.vehicle = StubData()
+    		vav2.vehicle.pod = StubData()
+    		vav2.vehicle.pod.id = 'p1'
+    		vav2.vehicle.pod.name = 'pod 1'
+    		vav2.vehicle.model = StubData()
+    		vav2.vehicle.model.name = 'model 2'
+    		
+    		vav3 = StubData()
+    		vav3.latest = datetime.datetime(2010,11,1,4,45,tzinfo=Eastern)
+    		vav3.vehicle = StubData()
+    		vav3.vehicle.pod = StubData()
+    		vav3.vehicle.pod.id = 'p2'
+    		vav3.vehicle.pod.name = 'pod 2'
+    		vav3.vehicle.model = StubData()
+    		vav3.vehicle.model.name = 'model 1'
+    		
+    		vehicle_availabilities = [vav1, vav2, vav3]
+    		view = AvailabilityJsonView()
+    		rendering = view.render_location_availability(session, location, start_time, end_time, vehicle_availabilities)
+    		
+    		self.assertEqual(
+"""{"location_availability" : {
+	"location" : {
+		"id" : "location id",
+		"name" : "location name"
+	} ,
+	"start_time" : "2010-11-01T02:30",
+	"end_time" : "2011-01-01T05:15",
+	"vehicle_availabilities" : [
+
+		{
+			"vehicle" : {
+				"pod" : {
+					"id" : "p1",
+					"name" : "pod 1"} ,
+				"model" : {
+					"id" : "",
+					"name" : "model 1"}} ,
+			"earliest" : "2010-11-01T03:15",
+			"latest" : ""
+		} ,
+
+		{
+			"vehicle" : {
+				"pod" : {
+					"id" : "p1",
+					"name" : "pod 1"} ,
+				"model" : {
+					"id" : "",
+					"name" : "model 2"}} ,
+			"earliest" : "",
+			"latest" : ""
+		} ,
+
+		{
+			"vehicle" : {
+				"pod" : {
+					"id" : "p2",
+					"name" : "pod 2"} ,
+				"model" : {
+					"id" : "",
+					"name" : "model 1"}} ,
+			"earliest" : "",
+			"latest" : "2010-11-01T04:45"
+		}
+
+	]
+}}""",
+    		rendering)

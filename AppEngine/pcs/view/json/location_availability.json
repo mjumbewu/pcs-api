@@ -1,0 +1,23 @@
+{"location_availability" : {
+	"location" : {
+		"id" : "{{ location.id }}",
+		"name" : "{{ location.name }}"
+	} ,
+	"start_time" : "{{ start_time|date:"Y-m-d\TH:i" }}",
+	"end_time" : "{{ end_time|date:"Y-m-d\TH:i" }}",
+	"vehicle_availabilities" : [
+{% for vehicle_availability in vehicle_availabilities %}
+		{
+			"vehicle" : {
+				"pod" : {
+					"id" : "{{ vehicle_availability.vehicle.pod.id }}",
+					"name" : "{{ vehicle_availability.vehicle.pod.name }}"} ,
+				"model" : {
+					"id" : "{{ vehicle_availability.vehicle.model.id }}",
+					"name" : "{{ vehicle_availability.vehicle.model.name }}"}} ,
+			"earliest" : "{{ vehicle_availability.earliest|date:"Y-m-d\TH:i" }}",
+			"latest" : "{{ vehicle_availability.latest|date:"Y-m-d\TH:i" }}"
+		}{% if not forloop.last %} ,{% endif%}
+{% endfor %}
+	]
+}}

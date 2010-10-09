@@ -3,6 +3,11 @@ import urllib
 import Cookie as cookielib
 import HTMLParser as htmlparserlib
 
+try:
+    import json
+except ImportError:
+    from django.utils import simplejson as json
+
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 
@@ -50,9 +55,14 @@ class SessionHandler (_SessionBasedHandler):
         Attempt to save the given login session to a cookie on the user's 
         machine.
         """
-        self.response.headers.add_header('Set-Cookie',str('sid='+session.id+'; path=/'))
-        self.response.headers.add_header('Set-Cookie',str('suser='+session.user+'; path=/'))
-        self.response.headers.add_header('Set-Cookie',str('sname='+session.name+'; path=/'))
+        session_data = {
+            'id':session.id,
+            'user':session.user,
+            'name':session.name
+        }
+        
+        session_string = json.dumps(session_data).replace(r'"', r'\"')
+        self.response.headers.add_header('Set-Cookie',str('session="'+session_string+'"; path=/'))
         
     def get(self):
         try:

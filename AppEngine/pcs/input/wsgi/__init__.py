@@ -1,5 +1,11 @@
 """Package for the wsgi user input source."""
 import re
+import sys
+
+try:
+    import json
+except ImportError:
+    from django.utils import simplejson as json
 
 from google.appengine.ext import webapp
 
@@ -15,14 +21,27 @@ class _SessionBasedHandler (webapp.RequestHandler):
         self.session_source = session_source
         self.error_view = error_view
     
+    def get_session_data(self):
+        session_string = self.request.cookies.get('session', None)
+        if session_string is None:
+            raise WsgiParameterError('Cound not find session cookie')
+        
+        session_string = session_string.replace(r'\"',r'"')[1:-1]
+        try:
+            return json.loads(session_string)
+        except ValueError:
+            raise Exception(repr(session_string))
+    
     def get_user_id(self):
-        user_id = self.request.cookies.get('suser', None)
+        session_data = self.get_session_data()
+        user_id = session_data.get('user', None)
         if user_id is None:
             raise WsgiParameterError('Could not find user id.')
         return user_id
     
     def get_session_id(self):
-        session_id = self.request.cookies.get('sid', None)
+        session_data = self.get_session_data()
+        session_id = session_data.get('id', None)
         if session_id is None:
             raise WsgiParameterError('Could not find session id.')
         return session_id
@@ -37,14 +56,18 @@ class _SessionBasedHandler (webapp.RequestHandler):
         return session
 
     def generate_error(self, error):
-        return self.error_view.render_error(None, type(error).__name__ + ': ' + str(error))
+        import traceback
+        
+        _,_,tb = sys.exc_info()
+        tb_str = traceback.format_tb(tb)
+        return self.error_view.render_error(None, type(error).__name__ + ': ' + str(error) + '\n'.join(tb_str))
 
 class _TimeRangeBasedHandler (webapp.RequestHandler):
     def __init__(self):
         super(_TimeRangeBasedHandler, self).__init__()
     
     def get_time_range(self):
-        return self.get_epoch_time_range()
+        return self.get_single_iso_datetime_range()
     
     def get_epoch_time_range(self):
         import datetime

@@ -154,7 +154,7 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
             if available_from < now:
                 available_from = available_from.replace(year=now.year+1)
             
-            vehicle.available_from = available_from
+            vehicle.earliest = available_from
             return
         
         until_match = re.match(until_pattern, stipulation)
@@ -173,7 +173,7 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
             if available_until < now:
                 available_until = available_until.replace(year=now.year+1)
             
-            vehicle.available_until = available_until
+            vehicle.latest = available_until
             return
         
         between_match = re.match(between_pattern, stipulation)
@@ -206,12 +206,12 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
             if available_until < available_from:
                 available_until = available_until.replace(year=available_from.year+1)
             
-            vehicle.available_from = available_from
-            vehicle.available_until = available_until
+            vehicle.earliest = available_from
+            vehicle.latest = available_until
             return
         
     
-    def get_vehicle_from_html_data(self, pod, vehicle_info_div):
+    def get_vehicle_from_html_data(self, pod, vehicle_info_div, start_time, end_time):
         vehicle_header = vehicle_info_div.find('h4')
         vehicle_name = vehicle_header.text
         
@@ -232,19 +232,24 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
         vehicle.model = model
         vehicle.pod = pod
         
+        vehicle_availability = AvailableVehicle()
+        vehicle_availability.vehicle = vehicle
+        vehicle_availability.start_time = start_time
+        vehicle_availability.end_time = end_time
+        
         # Since the availability information is in the div too, store it.
         if availability_p['class'] == 'good':
-            vehicle.availability = 1
+            vehicle_availability.score = 1
         elif availability_p['class'] == 'bad':
-            vehicle.availability = 0
+            vehicle_availability.score = 0
         elif availability_p['class'] == 'maybe':
-            vehicle.availability = 0.5
-            self.assign_vehicle_availability_stipulation(vehicle, availability_p.text)
+            vehicle_availability.score = 0.5
+            self.assign_vehicle_availability_stipulation(vehicle_availability, availability_p.text)
         
-        return vehicle
+        return vehicle_availability
     
-    def create_vehicles_from_pcs_availability_doc(self, pcs_results_doc):
-        vehicles = []
+    def create_vehicles_from_pcs_availability_doc(self, pcs_results_doc, start_time, end_time):
+        vehicle_availabilities = []
         current_pod = None
         current_dist = None
         
@@ -256,10 +261,10 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
                 current_pod, current_dist = self.get_pod_and_distance_from_html_data(pod_div)
             elif 'pod_bot' in info_div['class']:
                 vehicle_div = info_div
-                vehicle = self.get_vehicle_from_html_data(current_pod, vehicle_div)
-                vehicles.append(vehicle)
+                vehicle_availability = self.get_vehicle_from_html_data(current_pod, vehicle_div, start_time, end_time)
+                vehicle_availabilities.append(vehicle_availability)
         
-        return vehicles
+        return vehicle_availabilities
     
     def create_host_connection(self):
         return PcsConnection()
@@ -276,7 +281,7 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
         json_availability_data = self.get_json_data(pcs_available_body)
         html_pods_data = self.get_html_data(json_availability_data)
         
-        vehicles = self.create_vehicles_from_pcs_availability_doc(html_pods_data)
+        vehicles = self.create_vehicles_from_pcs_availability_doc(html_pods_data, start_time, end_time)
         return vehicles
     
     def vehicle_info_from_pcs(self, conn, sessionid, vehicleid, start_time, end_time):
