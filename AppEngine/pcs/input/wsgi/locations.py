@@ -10,6 +10,8 @@ from pcs.source.screenscrape.session import SessionScreenscrapeSource
 from pcs.source.screenscrape.locations import LocationsScreenscrapeSource
 from pcs.view.html.error import ErrorHtmlView
 from pcs.view.html.locations import LocationsHtmlView
+from pcs.view.json.error import ErrorJsonView
+from pcs.view.json.locations import LocationsJsonView
 
 class LocationsHandler (_SessionBasedHandler):
     """
@@ -32,7 +34,7 @@ class LocationsHandler (_SessionBasedHandler):
             
             session = self.get_session(userid, sessionid)
             locations = self.locations_source.get_location_profiles(sessionid)
-            response_body = self.locations_view.get_locations(session, locations)
+            response_body = self.locations_view.render_locations(session, locations)
         except Exception, e:
             response_body = self.generate_error(e)
         
@@ -46,11 +48,20 @@ class LocationsHtmlHandler (LocationsHandler):
             LocationsScreenscrapeSource(),
             LocationsHtmlView(),
             ErrorHtmlView())
+
+class LocationsJsonHandler (LocationsHandler):
+    def __init__(self):
+        super(LocationsJsonHandler, self).__init__(
+            SessionScreenscrapeSource(),
+            LocationsScreenscrapeSource(),
+            LocationsJsonView(),
+            ErrorJsonView())
     
 
 
 application = webapp.WSGIApplication(
-        [('/locations.html', LocationsHtmlHandler)],
+        [('/locations.html', LocationsHtmlHandler),
+         ('/locations.json', LocationsJsonHandler)],
         debug=True)
 
 def main():

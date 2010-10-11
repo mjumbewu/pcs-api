@@ -4,6 +4,7 @@ import new
 
 from pcs.data.session import Session
 from pcs.input.wsgi.locations import LocationsHandler
+from pcs.input.wsgi.locations import LocationsJsonHandler
 from pcs.source import _LocationsSourceInterface
 from pcs.source import _SessionSourceInterface
 from pcs.source import SessionExpiredError
@@ -11,6 +12,7 @@ from pcs.source.screenscrape import ScreenscrapeParseError
 from pcs.source.screenscrape.pcsconnection import PcsConnection
 from pcs.view import _ErrorViewInterface
 from pcs.view import _LocationsViewInterface
+from pcs.view.json.locations import LocationsJsonView
 from util.testing import patch
 from util.testing import Stub
 
@@ -42,7 +44,7 @@ class LocationHandlerTest (unittest.TestCase):
         # A generator for a representation (view) of the availability information
         @Stub(_LocationsViewInterface)
         class StubLocationsView (object):
-            def get_locations(self, session, locations):
+            def render_locations(self, session, locations):
                 if session:
                     return "Success"
                 else:
@@ -89,7 +91,7 @@ class LocationHandlerTest (unittest.TestCase):
             return 'my locations'
         
         @patch(self.locations_view)
-        def get_locations(self, session, locations):
+        def render_locations(self, session, locations):
             self.session = session
             self.locations = locations
             return 'location profiles body'
@@ -254,3 +256,71 @@ class LocationsScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(location.latitude, 123)
         self.assertEqual(location.longitude, 456)
 
+class LocationsJsonHandlerTest (unittest.TestCase):
+    def testShouldBeInitializedWithJsonViewsAndScreenscrapeSources(self):
+        handler = LocationsJsonHandler()
+        
+        from pcs.source.screenscrape.session import SessionScreenscrapeSource
+        from pcs.source.screenscrape.locations import LocationsScreenscrapeSource
+        from pcs.view.json.error import ErrorJsonView
+        from pcs.view.json.locations import LocationsJsonView
+        
+        self.assertEqual(handler.error_view.__class__.__name__,
+                         ErrorJsonView.__name__)
+        self.assertEqual(handler.locations_view.__class__.__name__,
+                         LocationsJsonView.__name__)
+        self.assertEqual(handler.locations_source.__class__.__name__,
+                         LocationsScreenscrapeSource.__name__)
+        self.assertEqual(handler.session_source.__class__.__name__,
+                         SessionScreenscrapeSource.__name__)
+
+class LocationsJsonViewTest (unittest.TestCase):
+    def testShouldRenderLocationAvailabilityCorrectly(self):
+    		class StubData (object):
+    				pass
+    		
+    		session = StubData()
+    		
+    		l1 = StubData()
+    		l1.id = 'l1'
+    		l1.name = 'location 1'
+    		l1.is_default = False
+    		
+    		l2 = StubData()
+    		l2.id = 'l2'
+    		l2.name = 'location 2'
+    		l2.is_default = True
+    		
+    		l3 = StubData()
+    		l3.id = (123,456)
+    		l3.name = 'location 3'
+    		l3.is_default = False
+    		
+    		locations = [l1, l2, l3]
+    		view = LocationsJsonView()
+    		rendering = view.render_locations(session, locations)
+    		
+    		self.assertEqual(
+"""{"locations" : [
+
+	{
+		"id" : "l1",
+		"name" : "location 1",
+		"is_default" : false
+	} ,
+
+	{
+		"id" : "l2",
+		"name" : "location 2",
+		"is_default" : true
+	} ,
+
+	{
+		"id" : "(123, 456)",
+		"name" : "location 3",
+		"is_default" : false
+	}
+
+]}
+""",
+    		rendering)

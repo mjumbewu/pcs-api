@@ -1,0 +1,9 @@
+{"locations" : [
+{% for location in locations %}
+	{
+		"id" : "{{ location.id }}",
+		"name" : "{{ location.name }}",
+		"is_default" : {{ location.is_default|lower }}
+	}{% if not forloop.last %} ,{% endif%}
+{% endfor %}
+]}

@@ -9,7 +9,7 @@ class _SessionViewInterface (object):
         raise NotImplementedError()
 
 class _LocationsViewInterface (object):
-    def get_locations(self, session, locations):
+    def render_locations(self, session, locations):
         raise NotImplementedError()
     
 class _AvailabilityViewInterface (object):
