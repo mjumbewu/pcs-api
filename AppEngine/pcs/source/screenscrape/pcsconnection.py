@@ -35,9 +35,9 @@ class PcsConnection (object):
     
     def create_host_connection(self, scheme, host):
         if scheme == self.HTTP:
-            conn = httplib.HTTPConnection(host)
+            conn = httplib.HTTPConnection(host, timeout=10)
         elif scheme == self.HTTPS:
-            conn = httplib.HTTPSConnection(host)
+            conn = httplib.HTTPSConnection(host, timeout=10)
         else:
             raise PcsConnectionError('Unrecognized connection scheme: %r' % scheme)
         
@@ -79,5 +79,5 @@ class PcsConnection (object):
         This should be the only method in the public interface.  Get a response
         from the given url, following any redirects.
         """
-        return self.__request_helper(url, method, data, headers, 5, 3)
+        return self.__request_helper(url, method, data, headers, 5, 0)
 
