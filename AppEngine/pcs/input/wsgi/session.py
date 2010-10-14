@@ -12,6 +12,7 @@ from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 
 from pcs.input.wsgi import _SessionBasedHandler
+from pcs.input.wsgi import WsgiParameterError
 from pcs.view.html.error import ErrorHtmlView
 from pcs.view.html.login import LoginHtmlView
 from pcs.view.html.session import SessionHtmlView
@@ -33,10 +34,10 @@ class SessionHandler (_SessionBasedHandler):
         self.session_view = session_view
     
     def get_credentials(self):
-        username = self.request.get('username')
+        username = self.request.get('user')
         password = self.request.get('password')
         
-        if username is None or password is None:
+        if username in ('', None) or password in ('', None):
             raise WsgiParameterError('Both userid and password must be supplied')
         
         return username, password

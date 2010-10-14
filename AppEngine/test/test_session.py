@@ -4,6 +4,7 @@ import StringIO
 from util.testing import Stub
 from util.testing import patch
 
+from pcs.input.wsgi import WsgiParameterError
 from pcs.source import SessionLoginError
 from pcs.source import SessionExpiredError
 
@@ -239,46 +240,46 @@ class SessionHandlerTest (unittest.TestCase):
         self.handler.request = StubRequest()
         self.handler.response = StubResponse()
     
-    def testShouldReturnGivenUsernameAndPasswordAsCredentials(self):
+    def testShouldReturnGivenUseridAndPasswordAsCredentials(self):
         # Given...
-        self.handler.request['username'] = 'uname'
+        self.handler.request['user'] = 'userid'
         self.handler.request['password'] = 'pword'
         
         # When...
-        uname, pword = self.handler.get_credentials()
+        uid, pword = self.handler.get_credentials()
         
         # Then...
-        self.assertEqual(uname, 'uname')
+        self.assertEqual(uid, 'userid')
         self.assertEqual(pword, 'pword')
     
-    def testShouldCreateNewSessionFromValidUsernameAndPassword(self):
+    def testShouldCreateNewSessionFromValidUseridAndPassword(self):
         @patch(self.session_source)
         def get_new_session(self, userid, password):
-            if userid == 'uname' and password == 'pword':
+            if userid == 'uid' and password == 'pword':
                 return 'my session'
             else:
                 raise SessionLoginError()
         
-        uname = 'uname'
+        uid = 'uid'
         pword = 'pword'
         
-        session = self.handler.get_new_session(uname, pword)
+        session = self.handler.get_new_session(uid, pword)
         
         self.assertEqual(session, 'my session')
     
-    def testShouldRaiseErrorWhenGivenInvalidUsernamePasswordCombination(self):
+    def testShouldRaiseErrorWhenGivenInvalidUseridPasswordCombination(self):
         @patch(self.session_source)
         def get_new_session(self, userid, password):
-            if userid == 'uname' and password == 'pword':
+            if userid == 'uid' and password == 'pword':
                 return 'my session'
             else:
                 raise SessionLoginError()
         
-        uname = 'uname'
+        uid = 'uid'
         pword = 'wrong_pword'
         
         try:
-            session = self.handler.get_new_session(uname, pword)
+            session = self.handler.get_new_session(uid, pword)
         
         except SessionLoginError:
             return
@@ -425,6 +426,43 @@ class SessionHandlerTest (unittest.TestCase):
         self.assertEqual(self.handler.userid, 'user1234')
         self.assertEqual(self.handler.password, 'pass1234')
         self.assert_(response_body.startswith('SessionLoginError'), 'Response does not start with SessionLoginError: %r' % response_body)
+    
+    def testShouldRaiseWsgiParameterErrorWhenUseridOrPasswordIsEmpty(self):
+        self.handler.request['user'] = 'user1234'
+        self.handler.request['password'] = ''
+        try:
+          self.handler.get_credentials()
+        except WsgiParameterError:
+          pass
+        else:
+          self.fail('Empty password should raise error')
+        
+        self.handler.request['user'] = ''
+        self.handler.request['password'] = 'pass1234'
+        try:
+          self.handler.get_credentials()
+        except WsgiParameterError:
+          pass
+        else:
+          self.fail('Empty user id should raise error')
+    
+    def testShouldRaiseWsgiParameterErrorWhenUseridOrPasswordIsMissing(self):
+        self.handler.request['user'] = 'user1234'
+        try:
+          self.handler.get_credentials()
+        except WsgiParameterError:
+          pass
+        else:
+          self.fail('Missing password should raise error')
+        
+        del self.handler.request['user']
+        self.handler.request['password'] = 'pass1234'
+        try:
+          self.handler.get_credentials()
+        except WsgiParameterError:
+          pass
+        else:
+          self.fail('Missing user id should raise error')
 
 from pcs.data.session import Session
 from pcs.view.json.session import SessionJsonView
