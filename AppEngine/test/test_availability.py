@@ -34,21 +34,21 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
             def set_status(self, status):
                 self.status = status
         
-        @Stub(_SessionSourceInterface)
         class StubSessionSource (object):
             pass
+        StubSessionSource = Stub(_SessionSourceInterface)(StubSessionSource)
         
-        @Stub(_AvailabilitySourceInterface)
         class StubAvailabilitySource (object):
             pass
+        StubAvailabilitySource = Stub(_AvailabilitySourceInterface)(StubAvailabilitySource)
         
-        @Stub(_AvailabilityViewInterface)
         class StubAvailabilityView (object):
             pass
+        StubAvailabilityView = Stub(_AvailabilityViewInterface)(StubAvailabilityView)
         
-        @Stub(_ErrorViewInterface)
         class StubErrorView (object):
             pass
+        StubErrorView = Stub(_ErrorViewInterface)(StubErrorView)
         
         self.session_source = StubSessionSource()
         self.vehicle_source = StubAvailabilitySource()
@@ -271,21 +271,21 @@ class VehicleAvailabilityHandlerAndScreenscrapeSourceTest (unittest.TestCase):
             def set_status(self, status):
                 self.status = status
         
-        @Stub(_SessionSourceInterface)
         class StubSessionSource (object):
             pass
+        StubSessionSource = Stub(_SessionSourceInterface)(StubSessionSource)
         
-        @Stub(_AvailabilitySourceInterface)
         class StubAvailabilitySource (object):
             pass
+        StubAvailabilitySource = Stub(_AvailabilitySourceInterface)(StubAvailabilitySource)
         
-        #@Stub(_AvailabilityViewInterface)
         #class StubAvailabilityView (object):
         #    pass
+        #StubAvailabilityView = Stub(_AvailabilityViewInterface)(StubAvailabilityView)
         
-        @Stub(_ErrorViewInterface)
         class StubErrorView (object):
             pass
+        StubErrorView = Stub(_ErrorViewInterface)(StubErrorView)
         
         self.session_source = StubSessionSource()
         #self.vehicle_source = StubAvailabilitySource()
@@ -310,27 +310,27 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
                 self.status = status
         
         # A source for session information
-        @Stub(_SessionSourceInterface)
         class StubSessionSource (object):
             pass
+        StubSessionSource = Stub(_SessionSourceInterface)(StubSessionSource)
         
         # A source for vehicle availability information
-        @Stub(_AvailabilitySourceInterface)
         class StubAvailabilitySource (object):
             pass
+        StubAvailabilitySource = Stub(_AvailabilitySourceInterface)(StubAvailabilitySource)
         
-        @Stub(_LocationsSourceInterface)
         class StubLocationsSource (object):
             pass
+        StubLocationsSource = Stub(_LocationsSourceInterface)(StubLocationsSource)
         
         # A generator for a representation (view) of the availability information
-        @Stub(_AvailabilityViewInterface)
         class StubAvailabilityView (object):
             pass
+        StubAvailabilityView = Stub(_AvailabilityViewInterface)(StubAvailabilityView)
         
-        @Stub(_ErrorViewInterface)
         class StubErrorView (object):
             pass
+        StubErrorView = Stub(_ErrorViewInterface)(StubErrorView)
         
         # The system under test
         self.session_source = StubSessionSource()
@@ -710,7 +710,6 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
             def getheaders(self):
                 return 'my head'
         
-        @Stub(PcsConnection)
         class StubConnection (object):
             def request(self, url, method, data, headers):
                 self.url = url
@@ -718,7 +717,7 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
                 self.data = data
                 self.headers = headers
                 return StubResponse()
-        
+        StubConnection = Stub(PcsConnection)(StubConnection)
         conn = StubConnection()
         
         sessionid = 'ses1234'
@@ -834,7 +833,6 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
     
     def testShouldGetTheCorrectNumberOfAvailabilitiesSpecifiedOnPcsSite(self):
         # Given...
-        @Stub(PcsConnection)
         class StubConnection (object):
             def request(self, url, method, data, headers):
                 import StringIO
@@ -845,6 +843,7 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
                     ','.join([r'''"<div class=\"pod_top\"><div class=\"pod_head\"><h4 ><a class=\"text\" href=\"my_fleet.php?mv_action=show&_r=16&pk=30005\"   onclick=\"MV.controls.results.show_pod_details(30005); return false;\" >47th & Baltimore - 0.08 mile(s)</a></h4></div></div><div class=\"pod_bot \" id=\"page_result_1\"><div id=\"time_line\"><img width=\"439\" height=\"25\" src=\"skin/base_images/day_guage.gif\" /><span class=\"pod_estimates_images\"><img src=\"/skin/base_images/hourly_cost.gif\" /></span></div><div class=\"list_left\"><div class=\"v_img\"><a href=\"http://www.phillycarshare.org/cars/tacoma\" target=\"_blank\"><img style=\"border: 0;\" src=\"/images/client_images/toyota_tacoma_thumb.gif\"/></a></div><div class=\"v_name\"><h4>Tacoma Pickup</h4></div><div class=\"v_amenities\"><ul></ul></div></div><div class=\"list_mid\"><div class=\"time\"><ul class=\"segments\"><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"free\" /><li class=\"free pad_end\" /></ul></li><li ><ul ><li class=\"free pad_end\" /><li class=\"good\" /><li class=\"good\" /><li class=\"good pad_end\" /></ul></li><li ><ul ><li class=\"good pad_end\" /><li class=\"good\" /><li class=\"good\" /><li class=\"good pad_end\" /></ul></li><li ><ul ><li class=\"good pad_end\" /><li class=\"free\" /><li class=\"free\" /><li class=\"free pad_end\" /></ul></li><li ><ul ><li class=\"free pad_end\" /><li class=\"free\" /><li class=\"free\" /><li class=\"free pad_end\" /></ul></li><li ><ul ><li class=\"free pad_end\" /><li class=\"free\" /><li class=\"free\" /><li class=\"free pad_end\" /></ul></li></ul></div><div class=\"brick\" style=\"width:32px; margin-left: 333px; -margin-left: 164px;\"></div><div class=\"timestamp\"><p class=\"good\">Available</p></div></div><div class=\"list_right\"><div class=\"reserve\"><a href=\"javascript:MV.controls.reserve.lightbox.create('1282540500', '1282547700', '91800598', '');\">Select<span id=\"estimate_stack_894\" class=\"est\"></span></a></div><div id=\"rates_stack_894\" class=\"price\"></div></div></div><div class=\"pod_bot \" id=\"page_result_2\"><div class=\"list_left\"><div class=\"v_img\"><img style=\"border: 0;\" src=\"/images/client_images/prius_lift_thumb.gif\"/></div><div class=\"v_name\"><h4>Prius Liftback</h4></div><div class=\"v_amenities\"><ul><li><img src=\"/skin/base_images/hybrid.gif\" label=\"Hybrid\" title=\"Hybrid\"/></li>n<li><img src=\"/skin/base_images/folding_seat.gif\" label=\"Folding Rear Seats\" title=\"Folding Rear Seats\"/></li></ul></div></div><div class=\"list_mid\"><div class=\"time\"><ul class=\"segments\"><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"free\" /><li class=\"free pad_end\" /></ul></li><li ><ul ><li class=\"free pad_end\" /><li class=\"good\" /><li class=\"good\" /><li class=\"good pad_end\" /></ul></li><li ><ul ><li class=\"good pad_end\" /><li class=\"good\" /><li class=\"good\" /><li class=\"good pad_end\" /></ul></li><li ><ul ><li class=\"good pad_end\" /><li class=\"free\" /><li class=\"free\" /><li class=\"free pad_end\" /></ul></li><li ><ul ><li class=\"free pad_end\" /><li class=\"free\" /><li class=\"free\" /><li class=\"free pad_end\" /></ul></li><li ><ul ><li class=\"free pad_end\" /><li class=\"free\" /><li class=\"free\" /><li class=\"free pad_end\" /></ul></li></ul></div><div class=\"brick\" style=\"width:32px; margin-left: 333px; -margin-left: 164px;\"></div><div class=\"timestamp\"><p class=\"good\">Available</p></div></div><div class=\"list_right\"><div class=\"reserve\"><a href=\"javascript:MV.controls.reserve.lightbox.create('1282540500', '1282547700', '96692246', '');\">Select<span id=\"estimate_stack_956\" class=\"est\"></span></a></div><div id=\"rates_stack_956\" class=\"price\"></div></div></div>"''',
                               r'''"<div class=\"pod_top\"><div class=\"pod_head\"><h4 ><a class=\"text\" href=\"my_fleet.php?mv_action=show&_r=16&pk=12174212\"   onclick=\"MV.controls.results.show_pod_details(12174212); return false;\" >46th & Baltimore - 0.2 mile(s)</a></h4></div></div><div class=\"pod_bot \" id=\"page_result_3\"><div class=\"list_left\"><div class=\"v_img\"><a href=\"http://www.phillycarshare.org/cars/element\" target=\"_blank\"><img style=\"border: 0;\" src=\"/images/client_images/honda_element_thumb.gif\"/></a></div><div class=\"v_name\"><h4>Honda Element</h4></div><div class=\"v_amenities\"><ul><li><img src=\"/skin/base_images/awd.gif\" label=\"All Wheel Drive\" title=\"All Wheel Drive\"/></li>n<li><img src=\"/skin/base_images/folding_seat.gif\" label=\"Folding Rear Seats\" title=\"Folding Rear Seats\"/></li></ul></div></div><div class=\"list_mid\"><div class=\"time\"><ul class=\"segments\"><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"free\" /><li class=\"free pad_end\" /></ul></li><li ><ul ><li class=\"free pad_end\" /><li class=\"good\" /><li class=\"good\" /><li class=\"good pad_end\" /></ul></li><li ><ul ><li class=\"good pad_end\" /><li class=\"good\" /><li class=\"good\" /><li class=\"good pad_end\" /></ul></li><li ><ul ><li class=\"good pad_end\" /><li class=\"free\" /><li class=\"free\" /><li class=\"free pad_end\" /></ul></li><li ><ul ><li class=\"free pad_end\" /><li class=\"free\" /><li class=\"free\" /><li class=\"free pad_end\" /></ul></li><li ><ul ><li class=\"free pad_end\" /><li class=\"free\" /><li class=\"free\" /><li class=\"free pad_end\" /></ul></li></ul></div><div class=\"brick\" style=\"width:32px; margin-left: 333px; -margin-left: 164px;\"></div><div class=\"timestamp\"><p class=\"good\">Available</p></div></div><div class=\"list_right\"><div class=\"reserve\"><a href=\"javascript:MV.controls.reserve.lightbox.create('1282540500', '1282547700', '130868710', '');\">Select<span id=\"estimate_stack_1195\" class=\"est\"></span></a></div><div id=\"rates_stack_1195\" class=\"price\"></div></div></div><div class=\"pod_bot \" id=\"page_result_4\"><div class=\"list_left\"><div class=\"v_img\"><img style=\"border: 0;\" src=\"/images/client_images/prius_lift_thumb.gif\"/></div><div class=\"v_name\"><h4>Prius Liftback</h4></div><div class=\"v_amenities\"><ul><li><img src=\"/skin/base_images/hybrid.gif\" label=\"Hybrid\" title=\"Hybrid\"/></li>n<li><img src=\"/skin/base_images/folding_seat.gif\" label=\"Folding Rear Seats\" title=\"Folding Rear Seats\"/></li></ul></div></div><div class=\"list_mid\"><div class=\"time\"><ul class=\"segments\"><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"bad pad_end\" /></ul></li><li ><ul ><li class=\"bad pad_end\" /><li class=\"bad\" /><li class=\"bad\" /><li class=\"free pad_end\" /></ul></li><li ><ul ><li class=\"free pad_end\" /><li class=\"good\" /><li class=\"good\" /><li class=\"good pad_end\" /></ul></li><li ><ul ><li class=\"good pad_end\" /><li class=\"good\" /><li class=\"good\" /><li class=\"good pad_end\" /></ul></li><li ><ul ><li class=\"good pad_end\" /><li class=\"free\" /><li class=\"free\" /><li class=\"free pad_end\" /></ul></li><li ><ul ><li class=\"free pad_end\" /><li class=\"free\" /><li class=\"free\" /><li class=\"free pad_end\" /></ul></li><li ><ul ><li class=\"free pad_end\" /><li class=\"free\" /><li class=\"free\" /><li class=\"free pad_end\" /></ul></li></ul></div><div class=\"brick\" style=\"width:32px; margin-left: 333px; -margin-left: 164px;\"></div><div class=\"timestamp\"><p class=\"good\">Available</p></div></div><div class=\"list_right\"><div class=\"reserve\"><a href=\"javascript:MV.controls.reserve.lightbox.create('1282540500', '1282547700', '73484842', '');\">Select<span id=\"estimate_stack_734\" class=\"est\"></span></a></div><div id=\"rates_stack_734\" class=\"price\"></div></div></div>"''']) + 
                     ']}')
+        StubConnection = Stub(PcsConnection)(StubConnection)
         
         sessionid = ''
         locationid = ''
@@ -925,7 +924,6 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
             def getheaders(self):
                 return 'my head'
         
-        @Stub(PcsConnection)
         class StubConnection (object):
             def request(self, url, method, data, headers):
                 self.url = url
@@ -933,7 +931,7 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
                 self.data = data
                 self.headers = headers
                 return StubResponse()
-        
+        StubConnection = Stub(PcsConnection)(StubConnection)
         conn = StubConnection()
         
         sessionid = 'ses1234'
@@ -999,7 +997,6 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
             def getheaders(self):
                 return 'my head'
         
-        @Stub(PcsConnection)
         class StubConnection (object):
             def request(self, url, method, data, headers):
                 self.url = url
@@ -1007,8 +1004,9 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
                 self.data = data
                 self.headers = headers
                 return StubResponse()
-        
+        StubConnection = Stub(PcsConnection)(StubConnection)
         conn = StubConnection()
+        
         sessionid = 'ses1234'
         vehicleid = 'veh1234'
         start_time = datetime.datetime.fromtimestamp(100, Eastern)

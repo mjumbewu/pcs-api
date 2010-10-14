@@ -8,10 +8,10 @@ from pcs.view import _LoginViewInterface
 class LoginHandlerTest (unittest.TestCase):
     def testShouldRespondWithLoginForm(self):
         # Given...
-        @Stub(_LoginViewInterface)
         class StubLoginView (object):
             def get_login_form(self, userid):
                 return 'LoginForm'
+        StubLoginView = Stub(_LoginViewInterface)(StubLoginView)
         
         class StubRequest (dict):
             pass

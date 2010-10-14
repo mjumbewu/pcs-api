@@ -31,21 +31,21 @@ class ReservationsHandlerTest (unittest.TestCase):
             def set_status(self, status):
                 self.status = status
         
-        @Stub(_SessionSourceInterface)
         class StubSessionSource (object):
             pass
+        StubSessionSource = Stub(_SessionSourceInterface)(StubSessionSource)
         
-        @Stub(_ReservationsSourceInterface)
         class StubReservationsSource (object):
             pass
+        StubReservationsSource = Stub(_ReservationsSourceInterface)(StubReservationsSource)
         
-        @Stub(_ReservationsViewInterface)
         class StubReservationsView (object):
             pass
+        StubReservationsView = Stub(_ReservationsViewInterface)(StubReservationsView)
         
-        @Stub(_ErrorViewInterface)
         class StubErrorView (object):
             pass
+        StubErrorView = Stub(_ErrorViewInterface)(StubErrorView)
         
         self.session_source = StubSessionSource()
         self.reservation_source = StubReservationsSource()
@@ -134,7 +134,6 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(conn.__class__.__name__, 'PcsConnection')
     
     def testShouldReturnUpcomingBodyAndHeadFromPcsConnection(self):
-        @Stub(PcsConnection)
         class StubConnection (object):
             def request(self, url, method, data, headers):
                 self.url = url
@@ -145,6 +144,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
                     def getheaders(self): return 'my headers'
                     def read(self): return 'my body'
                 return StubResponse()
+        StubConnection = Stub(PcsConnection)(StubConnection)
         
         conn = StubConnection()
         sessionid = 'ses1234'
@@ -159,7 +159,6 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(head, 'my headers')
     
     def testShouldReturnPastBodyAndHeadFromPcsConnection(self):
-        @Stub(PcsConnection)
         class StubConnection (object):
             def request(self, url, method, data, headers):
                 self.url = url
@@ -170,6 +169,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
                     def getheaders(self): return 'my headers'
                     def read(self): return 'my body'
                 return StubResponse()
+        StubConnection = Stub(PcsConnection)(StubConnection)
         
         conn = StubConnection()
         sessionid = 'ses1234'

@@ -18,10 +18,10 @@ class StubTest (unittest.TestCase):
         
         # When...
         try:
-            @Stub(Real)
             class Fake (object):
                 def x(self, a, b=2):
                     return 5
+            Fake = Stub(Real)(Fake)
             
         # Then...
         except StubException, e:
@@ -37,11 +37,11 @@ class StubTest (unittest.TestCase):
         
         # When...
         try:
-            @Stub(Real)
             class Fake (object):
                 x = 4
                 def y(self, a):
                     return 5
+            Fake = Stub(Real)(Fake)
         
         # Then...
         except StubException:
@@ -58,10 +58,10 @@ class StubTest (unittest.TestCase):
         
         # When...
         try:
-            @Stub(Real)
             class Fake (object):
                 def y(self, a):
                     pass
+            Fake = Stub(Real)(Fake)
         
         # Then...
         except StubException:
@@ -77,9 +77,9 @@ class StubTest (unittest.TestCase):
         
         # When...
         try:
-            @Stub(Real)
             class Fake (object):
                 x = 'hello'
+            Fake = Stub(Real)(Fake)
         
         # Then...
         except StubException:
@@ -95,9 +95,9 @@ class StubTest (unittest.TestCase):
         
         # When...
         try:
-            @Stub(Real)
             class Fake (object):
                 x = 'hello'
+            Fake = Stub(Real)(Fake)
         
         # Then...
         except StubException:
@@ -115,14 +115,14 @@ class StubTest (unittest.TestCase):
             x = Var()
         
         # When...
-        @Stub(Var)
         class StubVar (object):
             pass
+        StubVar = Stub(Var)(StubVar)
         
         try:
-            @Stub(Real)
             class Fake(object):
                 x = StubVar()
+            Fake = Stub(Real)(Fake)
         
         # Then...
         except StubException:

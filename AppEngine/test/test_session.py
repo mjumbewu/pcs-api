@@ -77,13 +77,13 @@ class SessionScreenscrapeSourceTest (unittest.TestCase):
     def testShouldReturnExpectedBodyTextFromConnectionWhenLoggingIn(self):
         """Logging in will get the expected response from the connection"""
         source = SessionScreenscrapeSource()
-        @Stub(PcsConnection)
         class StubConnection (object):
             def request(self, url, method, data, headers):
                 from StringIO import StringIO
                 response = StringIO('Body Text')
                 response.getheaders = lambda: {'h1':1,'h2':2}
                 return response
+        StubConnection = Stub(PcsConnection)(StubConnection)
         conn = StubConnection()
         
         body, headers = source.login_to_pcs(conn, 'uid', 'pass')
@@ -94,7 +94,6 @@ class SessionScreenscrapeSourceTest (unittest.TestCase):
     def testShouldSendCookiesToAndReturnExpectedBodyTextFromConnectionWhenReconnectingToSession(self):
         """Resuming session will get expected response from connection"""
         source = SessionScreenscrapeSource()
-        @Stub(PcsConnection)
         class StubConnection (object):
             def request(self, url, method, data, headers):
                 self.requestheaders = headers
@@ -103,6 +102,7 @@ class SessionScreenscrapeSourceTest (unittest.TestCase):
                 response = StringIO('Body Text')
                 response.getheaders = lambda: {'h1':1,'h2':2}
                 return response
+        StubConnection = Stub(PcsConnection)(StubConnection)
         conn = StubConnection()
         
         body, headers = source.reconnect_to_pcs(conn, '1234567')
@@ -114,7 +114,6 @@ class SessionScreenscrapeSourceTest (unittest.TestCase):
     def testShouldNotGetStuckOnTheCallToConnectionDotRequest(self):
         """Resuming session will get expected response from connection"""
         source = SessionScreenscrapeSource()
-        @Stub(PcsConnection)
         class StubConnection (object):
             def request(self, url, method, data, headers):
                 self.requestheaders = headers
@@ -123,13 +122,13 @@ class SessionScreenscrapeSourceTest (unittest.TestCase):
                 response = StringIO('Body Text')
                 response.getheaders = lambda: {'h1':1,'h2':2}
                 return response
+        StubConnection = Stub(PcsConnection)(StubConnection)
         conn = StubConnection()
         
         body, headers = source.reconnect_to_pcs(conn, '1234567')
     
     def testShouldCreateNewSessionWhenGivenValidUserIdAndPassword(self):
         # Given...
-        @Stub(PcsConnection)
         class StubConnection (object):
             def request(self, url, method, data, headers):
                 self.requestheaders = headers
@@ -138,6 +137,7 @@ class SessionScreenscrapeSourceTest (unittest.TestCase):
                 response = StringIO('<html><head><title>My Message Manager</title></head><body><p>Jalani Bakari, you are signed in (Residential)!</body></html>')
                 response.getheaders = lambda: {'set-cookie':'sid=12345abcde'}
                 return response
+        StubConnection = Stub(PcsConnection)(StubConnection)
         conn = StubConnection()
         
         source = SessionScreenscrapeSource()
@@ -155,7 +155,6 @@ class SessionScreenscrapeSourceTest (unittest.TestCase):
     
     def testShouldRetrieveCurrentSessionWhenGivenValidSessionId(self):
         # Given...
-        @Stub(PcsConnection)
         class StubConnection (object):
             def request(self, url, method, data, headers):
                 self.requestheaders = headers
@@ -164,6 +163,7 @@ class SessionScreenscrapeSourceTest (unittest.TestCase):
                 response = StringIO('<html><head><title>Reservation Manager</title></head><body><p>Jalani Bakari, you are signed in (Residential)!</body></html>')
                 response.getheaders = lambda: {}
                 return response
+        StubConnection = Stub(PcsConnection)(StubConnection)
         conn = StubConnection()
         
         source = SessionScreenscrapeSource()
@@ -216,15 +216,15 @@ class SessionHandlerTest (unittest.TestCase):
                 self.status = status
             headers = StubHeaders()
         
-        @Stub(_SessionSourceInterface)
         class StubSessionSource (object):
             pass
+        StubSessionSource = Stub(_SessionSourceInterface)(StubSessionSource)
         
-        @Stub(_SessionViewInterface)
         class StubSessionView (object):
             def render_session(self, session):
                 self.session = session
                 return 'Session'
+        StubSessionView = Stub(_SessionViewInterface)(StubSessionView)
         
         class StubErrorView (object):
             def render_error(self, error_code, error_msg):
