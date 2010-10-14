@@ -227,7 +227,7 @@ class SessionHandlerTest (unittest.TestCase):
         StubSessionView = Stub(_SessionViewInterface)(StubSessionView)
         
         class StubErrorView (object):
-            def render_error(self, error_code, error_msg):
+            def render_error(self, error_code, error_msg, error_detail):
                 return 'No Session'
         
         self.session_view = StubSessionView()
@@ -339,7 +339,7 @@ class SessionHandlerTest (unittest.TestCase):
             raise SessionExpiredError()
         
         @patch(self.error_view)
-        def render_error(self, error_code, error_msg):
+        def render_error(self, error_code, error_msg, error_detail):
             return error_msg
         
         # When...
@@ -413,7 +413,7 @@ class SessionHandlerTest (unittest.TestCase):
             raise SessionLoginError()
         
         @patch(self.error_view)
-        def render_error(self, error_code, error_msg):
+        def render_error(self, error_code, error_msg, error_detail):
             return error_msg
         
         # When...

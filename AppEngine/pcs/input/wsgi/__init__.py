@@ -59,8 +59,8 @@ class _SessionBasedHandler (webapp.RequestHandler):
         import traceback
         
         _,_,tb = sys.exc_info()
-        tb_str = traceback.format_tb(tb)
-        return self.error_view.render_error(None, type(error).__name__ + ': ' + str(error) + '\n'.join(tb_str))
+        tb_str = '\n'.join(traceback.format_tb(tb))
+        return self.error_view.render_error(None, type(error).__name__ + ': ' + str(error), tb_str)
 
 class _TimeRangeBasedHandler (webapp.RequestHandler):
     def __init__(self):

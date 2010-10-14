@@ -6,7 +6,7 @@ from util.abstract import override
 
 class ErrorHtmlView (_ErrorViewInterface):
     @override
-    def get_error(self, error_code, error_msg):
+    def get_error(self, error_code, error_msg, error_detail):
         """
         Return a response with overview information about the given session.
         """

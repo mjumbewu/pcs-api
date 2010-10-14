@@ -186,7 +186,7 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
             return 'my vehicle info body'
         
         @patch(self.error_view)
-        def render_error(self, error_code, error_msg):
+        def render_error(self, error_code, error_msg, error_detail):
             return str(error_msg)
         
         handler.get('veh1234')
@@ -248,7 +248,7 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
             return 'my vehicle info body'
         
         @patch(self.error_view)
-        def render_error(self, error_code, error_msg):
+        def render_error(self, error_code, error_msg, error_detail):
             return str(error_msg)
         
         handler.get('veh1234')
@@ -560,7 +560,7 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
             raise Exception("Failure")
         
         @patch(self.error_view)
-        def render_error(self, error_code, error_msg):
+        def render_error(self, error_code, error_msg, error_detail):
             return error_msg
         
         # When...
@@ -629,7 +629,7 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
             return 'Success'
         
         @patch(self.error_view)
-        def render_error(self, error_code, error_msg):
+        def render_error(self, error_code, error_msg, error_detail):
             return error_msg
         
         # When...
@@ -655,7 +655,7 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
         
         # Given...
         @patch(self.error_view)
-        def render_error(self, error_code, error_msg):
+        def render_error(self, error_code, error_msg, error_detail):
             return error_msg
         
         self.handler.request['start_time'] = 100

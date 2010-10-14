@@ -27,5 +27,5 @@ class _ReservationsViewInterface (object):
         raise NotImplementedError()
 
 class _ErrorViewInterface (object):
-    def render_error(self, error_code, error_msg):
+    def render_error(self, error_code, error_msg, error_detail):
         raise NotImplementedError()
