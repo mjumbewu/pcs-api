@@ -1,6 +1,11 @@
 import os
 from google.appengine.ext.webapp import template
 
+try:
+    import json
+except ImportError:
+    from django.utils import simplejson as json
+
 from pcs.view import _ErrorViewInterface
 from util.abstract import override
 
@@ -10,12 +15,13 @@ class ErrorJsonView (_ErrorViewInterface):
         """
         Return an error response.
         """
-        values = {
-            'error_code': error_code,
-            'error_msg': error_msg
+        data = {
+            'error' : {
+                'code' : error_code,
+                'msg' : error_msg,
+                'detail' : error_detail
+            }
         }
         
-        path = os.path.join(os.path.dirname(__file__), 'error.json')
-        response = template.render(path, values)
-        return response
-    
+        return json.dumps(data);
+
