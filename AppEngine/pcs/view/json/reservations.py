@@ -22,7 +22,14 @@ class ReservationsJsonView (_ReservationsViewInterface):
                 'start_time' : to_isostring(reservation.start_time),
                 'end_time' : to_isostring(reservation.end_time),
                 'vehicle' : {
-                    'id' : reservation.vehicle.id
+                    'id' : reservation.vehicle.id,
+                    'model' : {
+                        'name' : reservation.vehicle.model.name
+                    },
+                    'pod' : {
+                        'id' : reservation.vehicle.pod.id,
+                        'name' : reservation.vehicle.pod.name
+                    }
                 }
             }
             data['reservations'].append(res_data)

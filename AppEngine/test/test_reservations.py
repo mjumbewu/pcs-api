@@ -515,10 +515,11 @@ class ReservationsJsonViewTest (unittest.TestCase):
         res1.end_time = datetime.datetime(2010, 11, 15, 17, 15, tzinfo=Eastern)
         res1.vehicle = StubObject()
         res1.vehicle.id = 'v123'
-        res1.vehicle.type = StubObject()
-        res1.vehicle.type.id = 'vt123'
+        res1.vehicle.model = StubObject()
+        res1.vehicle.model.name = 'model 1'
         res1.vehicle.pod = StubObject()
         res1.vehicle.pod.id = 'pod123'
+        res1.vehicle.pod.name = 'pod 1'
         
         res2 = StubObject()
         res2.id = 'res2'
@@ -526,10 +527,11 @@ class ReservationsJsonViewTest (unittest.TestCase):
         res2.end_time = datetime.datetime(2010, 12, 31, 17, 15, tzinfo=Eastern)
         res2.vehicle = StubObject()
         res2.vehicle.id = 'v123'
-        res2.vehicle.type = StubObject()
-        res2.vehicle.type.id = 'vt123'
+        res2.vehicle.model = StubObject()
+        res2.vehicle.model.name = 'model 1'
         res2.vehicle.pod = StubObject()
         res2.vehicle.pod.id = 'pod123'
+        res2.vehicle.pod.name = 'pod 1'
         
         reservations = [res1, res2]
         
@@ -543,7 +545,14 @@ class ReservationsJsonViewTest (unittest.TestCase):
       "id": "res1", 
       "start_time": "2010-11-15T16:30", 
       "vehicle": {
-        "id": "v123"
+        "id": "v123", 
+        "model": {
+          "name": "model 1"
+        }, 
+        "pod": {
+          "id": "pod123", 
+          "name": "pod 1"
+        }
       }
     }, 
     {
@@ -551,7 +560,14 @@ class ReservationsJsonViewTest (unittest.TestCase):
       "id": "res2", 
       "start_time": "2010-12-30T16:30", 
       "vehicle": {
-        "id": "v123"
+        "id": "v123", 
+        "model": {
+          "name": "model 1"
+        }, 
+        "pod": {
+          "id": "pod123", 
+          "name": "pod 1"
+        }
       }
     }
   ]
