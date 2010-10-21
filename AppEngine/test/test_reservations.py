@@ -5,6 +5,7 @@ import new
 from pcs.input.wsgi import WsgiParameterError
 from pcs.input.wsgi.reservations import ReservationsHandler
 from pcs.input.wsgi.reservations import ReservationsHtmlHandler
+from pcs.input.wsgi.reservations import ReservationsJsonHandler
 from pcs.source import _ReservationsSourceInterface
 from pcs.source import _SessionSourceInterface
 from pcs.source.screenscrape import ScreenscrapeParseError
@@ -13,6 +14,7 @@ from pcs.source.screenscrape.pcsconnection import PcsConnection
 from pcs.view import _ReservationsViewInterface
 from pcs.view import _ErrorViewInterface
 from pcs.view.html.availability import AvailabilityHtmlView
+from pcs.view.json.reservations import ReservationsJsonView
 from util.BeautifulSoup import BeautifulSoup
 from util.testing import patch
 from util.testing import Stub
@@ -86,7 +88,7 @@ class ReservationsHandlerTest (unittest.TestCase):
             return 'my reservations'
         
         @patch(self.reservation_view)
-        def get_reservations(self, session, reservations):
+        def render_reservations(self, session, reservations):
             self.session = session
             self.reservations = reservations
             return 'my reservation response'
@@ -483,4 +485,76 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(reservation.start_time.timetuple()[:6], (2010,9,1,12,45,0))
         self.assertEqual(reservation.end_time.timetuple()[:6], (2010,9,1,16,45,0))
         self.assertEqual(reservation.status, ReservationStatus.PAST)
+
+class ReservationsJsonHandlerTest (unittest.TestCase):
+    def testShouldUseScreenscrapeFetchersAndJsonRenderers(self):
+        handler = ReservationsJsonHandler()
+        
+        self.assertEqual(handler.error_view.__class__.__name__, 
+            'ErrorJsonView')
+        self.assertEqual(handler.reservation_source.__class__.__name__,
+            'ReservationsScreenscrapeSource')
+        self.assertEqual(handler.reservation_view.__class__.__name__,
+            'ReservationsJsonView')
+
+class ReservationsJsonViewTest (unittest.TestCase):
+    def testShouldRenderReservationListJson(self):
+        renderer = ReservationsJsonView()
+        
+        class StubObject (object):
+            pass
+        
+        session = StubObject()
+        session.id = 'ses123'
+        session.user = 'user123'
+        session.name = 'user name'
+        
+        res1 = StubObject()
+        res1.id = 'res1'
+        res1.start_time = datetime.datetime(2010, 11, 15, 16, 30, tzinfo=Eastern)
+        res1.end_time = datetime.datetime(2010, 11, 15, 17, 15, tzinfo=Eastern)
+        res1.vehicle = StubObject()
+        res1.vehicle.id = 'v123'
+        res1.vehicle.type = StubObject()
+        res1.vehicle.type.id = 'vt123'
+        res1.vehicle.pod = StubObject()
+        res1.vehicle.pod.id = 'pod123'
+        
+        res2 = StubObject()
+        res2.id = 'res2'
+        res2.start_time = datetime.datetime(2010, 12, 30, 16, 30, tzinfo=Eastern)
+        res2.end_time = datetime.datetime(2010, 12, 31, 17, 15, tzinfo=Eastern)
+        res2.vehicle = StubObject()
+        res2.vehicle.id = 'v123'
+        res2.vehicle.type = StubObject()
+        res2.vehicle.type.id = 'vt123'
+        res2.vehicle.pod = StubObject()
+        res2.vehicle.pod.id = 'pod123'
+        
+        reservations = [res1, res2]
+        
+        result = renderer.render_reservations(None, reservations)
+        
+        expected = \
+"""{
+  "reservations": [
+    {
+      "end_time": "2010-11-15T17:15", 
+      "id": "res1", 
+      "start_time": "2010-11-15T16:30", 
+      "vehicle": {
+        "id": "v123"
+      }
+    }, 
+    {
+      "end_time": "2010-12-31T17:15", 
+      "id": "res2", 
+      "start_time": "2010-12-30T16:30", 
+      "vehicle": {
+        "id": "v123"
+      }
+    }
+  ]
+}"""
+        self.assertEqual(result, expected)
 

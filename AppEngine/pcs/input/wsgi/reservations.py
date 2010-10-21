@@ -8,6 +8,8 @@ from pcs.source.screenscrape.session import SessionScreenscrapeSource
 from pcs.source.screenscrape.reservations import ReservationsScreenscrapeSource
 from pcs.view.html.error import ErrorHtmlView
 from pcs.view.html.reservations import ReservationsHtmlView
+from pcs.view.json.error import ErrorJsonView
+from pcs.view.json.reservations import ReservationsJsonView
 from util.TimeZone import Eastern
 
 class ReservationsHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
@@ -44,7 +46,7 @@ class ReservationsHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
             
             session = self.session_source.get_existing_session(userid, sessionid)
             reservations = self.reservation_source.get_reservations(sessionid, year_month)
-            response_body = self.reservation_view.get_reservations(session, reservations)
+            response_body = self.reservation_view.render_reservations(session, reservations)
         
         except KeyError, e:
             response_body = self.generate_error(e)
@@ -159,9 +161,18 @@ class ReservationEditorHtmlHandler (_TimeRangeBasedHandler):
         response_body = template.render(path, values)
         self.response.out.write(response_body)
 
+class ReservationsJsonHandler (ReservationsHandler):
+    def __init__(self):
+        super(ReservationsJsonHandler, self).__init__(
+            SessionScreenscrapeSource(),
+            ReservationsScreenscrapeSource(),
+            ReservationsJsonView(),
+            ErrorJsonView())
+
 
 application = webapp.WSGIApplication(
         [('/reservations.html', ReservationsHtmlHandler),
+         ('/reservations.json', ReservationsJsonHandler),
          ('/reservations/([.^/]*).html', ReservationHtmlHandler),
          ('/reservations/(.*)/editor.html', ReservationEditorHtmlHandler)],
         debug=True)
