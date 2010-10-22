@@ -1,3 +1,5 @@
+import re
+
 from datetime import datetime
 from datetime import timedelta
 from datetime import tzinfo
@@ -190,4 +192,26 @@ def to_xchange_time(dt):
     be a time stamp or an ISO 8601 time string.
     """
     return to_timestamp(dt)
+
+def from_timestamp(stamp):
+    return datetime.fromtimestamp(int(start_time_str), Eastern)
+
+def from_isostring(iso):
+    time_match = re.match('(?P<year>[0-9]+)(-(?P<month>[0-9]+)(-(?P<day>[0-9]+)(T(?P<hour>[0-9]+):(?P<minute>[0-9]+))?)?)?', iso)
+    
+    if not time_match:
+        raise Exception("no match: %r" % iso)
+    
+    year_str = time_match.group('year')
+    month_str = time_match.group('month')
+    day_str = time_match.group('day')
+    hour_str = time_match.group('hour')
+    min_str = time_match.group('minute')
+    
+    return datetime(int(year_str),
+        int(month_str) if month_str else 1,
+        int(day_str) if day_str else 1,
+        int(hour_str) if hour_str else 0,
+        int(min_str) if min_str else 0, 
+        tzinfo=Eastern)
 
