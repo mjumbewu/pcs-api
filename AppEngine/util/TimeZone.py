@@ -171,6 +171,9 @@ Central  = USTimeZone(-6, "Central",  "CST", "CDT")
 Mountain = USTimeZone(-7, "Mountain", "MST", "MDT")
 Pacific  = USTimeZone(-8, "Pacific",  "PST", "PDT")
 
+def current_time():
+    return datetime.now(Eastern)
+
 def to_timestamp(dt):
     dt_utc = dt.astimezone(utc)
     tt = dt_utc.timetuple()
