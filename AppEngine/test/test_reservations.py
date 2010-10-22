@@ -76,12 +76,13 @@ class ReservationsHandlerTest (unittest.TestCase):
             pass
         
         @patch(self.reservation_view)
-        def render_reservations(self, session, reservations):
+        def render_reservations(self, session, reservations, page_num, total_pages):
             pass
         
         @patch(self.reservation_source)
         def get_reservations(self, sessionid, year_month=None):
             self.year_month = year_month
+            return (None,None,None)
         
         self.handler.get()
         self.assertEqual(type(self.reservation_source.year_month).__name__, datetime.datetime.__name__)
@@ -107,10 +108,10 @@ class ReservationsHandlerTest (unittest.TestCase):
         def get_reservations(self, sessionid, year_month=None):
             self.sessionid = sessionid
             self.year_month = year_month
-            return 'my reservations'
+            return 'my reservations', 2, 5
         
         @patch(self.reservation_view)
-        def render_reservations(self, session, reservations):
+        def render_reservations(self, session, reservations, page_num, total_pages):
             self.session = session
             self.reservations = reservations
             return 'my reservation response'
@@ -152,6 +153,33 @@ class ReservationsHtmlHandlerTest (unittest.TestCase):
 class ReservationsScreenscrapeSourceTest (unittest.TestCase):
     def setUp(self):
         self.source = ReservationsScreenscrapeSource()
+    
+    def testShouldInferCorrectPageNumberAndPageCount(self):
+        from strings_for_testing import \
+            PAST_RESERVATIONS_FIRST_OF_TWO_PAGES, \
+            PAST_RESERVATIONS_SECOND_OF_TWO_PAGES, \
+            PAST_RESERVATIONS_SECOND_OF_FIVE_PAGES, \
+            PAST_RESERVATIONS_SINGLE_PAGE
+        
+        first_page = BeautifulSoup(PAST_RESERVATIONS_FIRST_OF_TWO_PAGES)
+        cur_page, num_pages = self.source.get_page_data_from_html_data(first_page)
+        self.assertEqual(cur_page, 1)
+        self.assertEqual(num_pages, 2)
+        
+        second_page = BeautifulSoup(PAST_RESERVATIONS_SECOND_OF_TWO_PAGES)
+        cur_page, num_pages = self.source.get_page_data_from_html_data(second_page)
+        self.assertEqual(cur_page, 2)
+        self.assertEqual(num_pages, 2)
+        
+        second_page = BeautifulSoup(PAST_RESERVATIONS_SECOND_OF_FIVE_PAGES)
+        cur_page, num_pages = self.source.get_page_data_from_html_data(second_page)
+        self.assertEqual(cur_page, 2)
+        self.assertEqual(num_pages, 5)
+        
+        single_page = BeautifulSoup(PAST_RESERVATIONS_SINGLE_PAGE)
+        cur_page, num_pages = self.source.get_page_data_from_html_data(single_page)
+        self.assertEqual(cur_page, 1)
+        self.assertEqual(num_pages, 1)
     
     def testShouldCreateAPcsConnection(self):
         conn = self.source.get_pcs_connection()
@@ -284,10 +312,14 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
             self.html_doc = html_data
             return 'my reservations'
         
+        @patch(self.source)
+        def get_page_data_from_html_data(self, html_data):
+            return 3, 5
+        
         sessionid = 'ses1234'
         driverid = 'drv1234'
         
-        reservations = self.source.get_reservations(sessionid)
+        reservations, page, count = self.source.get_reservations(sessionid)
         
         self.assert_(self.source.pcs_conn_called)
         self.assert_(self.source.upcoming_res_called)
@@ -297,6 +329,8 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(self.source.html_body, 'my body')
         self.assertEqual(self.source.html_doc, 'my html doc')
         self.assertEqual(reservations, 'my reservations')
+        self.assertEqual(page, 3)
+        self.assertEqual(count, 5)
     
     def testShouldReturnPastReservationsResponseBodyAccordingToConnectionResponseIfNoExceptionsRaised(self):
         self.source.past_res_called = False
@@ -333,10 +367,14 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
             self.html_doc = html_data
             return 'my reservations'
         
+        @patch(self.source)
+        def get_page_data_from_html_data(self, html_data):
+            return 3, 5
+        
         sessionid = 'ses1234'
         driverid = 'drv1234'
         
-        reservations = self.source.get_reservations(sessionid, datetime.date(2010, 11, 1))
+        reservations, page, count = self.source.get_reservations(sessionid, datetime.date(2010, 11, 1))
         
         self.assert_(self.source.pcs_conn_called)
         self.assert_(not self.source.upcoming_res_called)
@@ -348,6 +386,8 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(self.source.html_body, 'my body')
         self.assertEqual(self.source.html_doc, 'my html doc')
         self.assertEqual(reservations, 'my reservations')
+        self.assertEqual(page, 3)
+        self.assertEqual(count, 5)
     
     def testShouldCreateReservationPastBasedOnContentsOfTableRow(self):
         tr_str = r"""<tr class="zebra"><td >2460589</td><td   width="25%"  align="center" valign="middle"  ><a class="text" href="my_fleet.php?mv_action=show&_r=6&pk=5736346"    >47th & Pine - Prius Liftback</a></td> 
@@ -414,42 +454,46 @@ class ReservationsJsonViewTest (unittest.TestCase):
         
         reservations = [res1, res2]
         
-        result = renderer.render_reservations(None, reservations)
+        result = renderer.render_reservations(None, reservations, 1, 2)
         
         expected = \
 """{
-  "reservations": [
-    {
-      "end_time": "2010-11-15T17:15", 
-      "id": "res1", 
-      "start_time": "2010-11-15T16:30", 
-      "vehicle": {
-        "id": "v123", 
-        "model": {
-          "name": "model 1"
-        }, 
-        "pod": {
-          "id": "pod123", 
-          "name": "pod 1"
+  "reservation_list": {
+    "num_pages": 2, 
+    "page": 1, 
+    "reservations": [
+      {
+        "end_time": "2010-11-15T17:15", 
+        "id": "res1", 
+        "start_time": "2010-11-15T16:30", 
+        "vehicle": {
+          "id": "v123", 
+          "model": {
+            "name": "model 1"
+          }, 
+          "pod": {
+            "id": "pod123", 
+            "name": "pod 1"
+          }
+        }
+      }, 
+      {
+        "end_time": "2010-12-31T17:15", 
+        "id": "res2", 
+        "start_time": "2010-12-30T16:30", 
+        "vehicle": {
+          "id": "v123", 
+          "model": {
+            "name": "model 1"
+          }, 
+          "pod": {
+            "id": "pod123", 
+            "name": "pod 1"
+          }
         }
       }
-    }, 
-    {
-      "end_time": "2010-12-31T17:15", 
-      "id": "res2", 
-      "start_time": "2010-12-30T16:30", 
-      "vehicle": {
-        "id": "v123", 
-        "model": {
-          "name": "model 1"
-        }, 
-        "pod": {
-          "id": "pod123", 
-          "name": "pod 1"
-        }
-      }
-    }
-  ]
+    ]
+  }
 }"""
         self.assertEqual(result, expected)
 

@@ -36,8 +36,8 @@ class ReservationsHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
             period = self.get_period()
             
             session = self.session_source.get_existing_session(userid, sessionid)
-            reservations = self.reservation_source.get_reservations(sessionid, period)
-            response_body = self.reservation_view.render_reservations(session, reservations)
+            reservations, page, page_count = self.reservation_source.get_reservations(sessionid, period)
+            response_body = self.reservation_view.render_reservations(session, reservations, page, page_count)
         
         except KeyError, e:
             response_body = self.generate_error(e)

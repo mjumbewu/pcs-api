@@ -12,10 +12,14 @@ from util.TimeZone import to_isostring
 
 class ReservationsJsonView (_ReservationsViewInterface):
     @override
-    def render_reservations(self, session, reservations):
+    def render_reservations(self, session, reservations, page_num, total_pages):
         reservations.sort(key=lambda res: res.start_time)
         
-        data = {'reservations':[]}
+        data = {'reservation_list':{
+            'page': page_num,
+            'num_pages': total_pages,
+            'reservations': []
+        }}
         for reservation in reservations:
             res_data = {
                 'id' : reservation.id,
@@ -32,7 +36,7 @@ class ReservationsJsonView (_ReservationsViewInterface):
                     }
                 }
             }
-            data['reservations'].append(res_data)
+            data['reservation_list']['reservations'].append(res_data)
         
         # Sort the keys, so that tests are repeatable.
         return json.dumps(data, sort_keys=True, indent=2)

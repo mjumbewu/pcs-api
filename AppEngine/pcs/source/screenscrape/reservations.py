@@ -230,6 +230,23 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
         
         return reservations
     
+    def get_page_data_from_html_data(self, html_data):
+        pages_table = html_data.find('table', {'id': 'dlist_pagination'})
+        
+        if not pages_table:
+            current_page = 1
+            last_page = 1
+        else:
+            current_page_font = pages_table.find('font', {'class': 'text'})
+            
+            all_page_anchors = pages_table.findAll('a', {'class': 'text'})
+            last_page_anchor = all_page_anchors[-1]
+            
+            current_page = int(current_page_font.text)
+            last_page = max(current_page, int(last_page_anchor.text))
+        
+        return current_page, last_page
+    
     @override
     def get_reservations(self, sessionid, year_month=None):
         conn = self.get_pcs_connection()
@@ -243,8 +260,9 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
         
         reservations_html_doc = self.get_html_data(pcs_body)
         reservations = self.get_reservation_data_from_html_data(reservations_html_doc)
+        current_page, page_count = self.get_page_data_from_html_data(reservations_html_doc)
         
-        return reservations
+        return reservations, current_page, page_count
     
     def get_time_query(self, start_time, end_time):
         sdate, stime = to_pcs_date_time(start_time)
