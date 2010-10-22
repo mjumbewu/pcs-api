@@ -10,6 +10,8 @@ except ImportError:
 from google.appengine.ext import webapp
 
 from util.TimeZone import Eastern
+from util.TimeZone import from_isostring
+from util.TimeZone import from_timestamp
 
 class WsgiParameterError (Exception):
     pass
@@ -76,12 +78,12 @@ class _TimeRangeBasedHandler (webapp.RequestHandler):
         
         now_time = datetime.datetime.now(Eastern) + datetime.timedelta(minutes=1)
         if start_time_str:
-            start_time = datetime.datetime.fromtimestamp(int(start_time_str), Eastern)
+            start_time = from_timestamp(start_time_str)
         else:
             start_time = now_time
         
         if end_time_str:
-            end_time = datetime.datetime.fromtimestamp(int(end_time_str), Eastern)
+            end_time = from_timestamp(end_time_str)
         else:
             end_time = now_time + datetime.timedelta(hours=3)
         
@@ -101,24 +103,14 @@ class _TimeRangeBasedHandler (webapp.RequestHandler):
         
         now_time = datetime.datetime.now(Eastern) + datetime.timedelta(minutes=1)
         if start_date_str and start_time_str:
-            date_match = re.match('(?P<year>[0-9]+)-(?P<month>[0-9]+)-(?P<day>[0-9]+)', start_date_str)
-            time_match = re.match('(?P<hour>[0-9]+):(?P<minute>[0-9]+)', start_time_str)
-            start_time = datetime.datetime(int(date_match.group('year')),
-                int(date_match.group('month')),
-                int(date_match.group('day')),
-                int(time_match.group('hour')),
-                int(time_match.group('minute')), tzinfo=Eastern)
+            start_dt_str = "%sT%s" % (start_date_str, start_time_str)
+            start_time = from_isostring(start_dt_str)
         else:
             start_time = now_time
         
         if end_date_str and end_time_str:
-            date_match = re.match('(?P<year>[0-9]+)-(?P<month>[0-9]+)-(?P<day>[0-9]+)', end_date_str)
-            time_match = re.match('(?P<hour>[0-9]+):(?P<minute>[0-9]+)', end_time_str)
-            end_time = datetime.datetime(int(date_match.group('year')),
-                int(date_match.group('month')),
-                int(date_match.group('day')),
-                int(time_match.group('hour')),
-                int(time_match.group('minute')), tzinfo=Eastern)
+            end_dt_str = "%sT%s" % (end_date_str, end_time_str)
+            end_time = from_isostring(end_dt_str)
         else:
             end_time = now_time + datetime.timedelta(hours=3)
         
@@ -135,22 +127,12 @@ class _TimeRangeBasedHandler (webapp.RequestHandler):
         
         now_time = datetime.datetime.now(Eastern) + datetime.timedelta(minutes=1)
         if start_time_str:
-            time_match = re.match('(?P<year>[0-9]+)-(?P<month>[0-9]+)-(?P<day>[0-9]+)T(?P<hour>[0-9]+):(?P<minute>[0-9]+)', start_time_str)
-            start_time = datetime.datetime(int(time_match.group('year')),
-                int(time_match.group('month')),
-                int(time_match.group('day')),
-                int(time_match.group('hour')),
-                int(time_match.group('minute')), tzinfo=Eastern)
+            start_time = from_isostring(start_time_str)
         else:
             start_time = now_time
         
         if end_time_str:
-            time_match = re.match('(?P<year>[0-9]+)-(?P<month>[0-9]+)-(?P<day>[0-9]+)T(?P<hour>[0-9]+):(?P<minute>[0-9]+)', end_time_str)
-            end_time = datetime.datetime(int(time_match.group('year')),
-                int(time_match.group('month')),
-                int(time_match.group('day')),
-                int(time_match.group('hour')),
-                int(time_match.group('minute')), tzinfo=Eastern)
+            end_time = from_isostring(end_time_str)
         else:
             end_time = now_time + datetime.timedelta(hours=3)
         
