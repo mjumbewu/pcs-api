@@ -11,6 +11,7 @@ from pcs.view.html.reservations import ReservationsHtmlView
 from pcs.view.json.error import ErrorJsonView
 from pcs.view.json.reservations import ReservationsJsonView
 from util.TimeZone import Eastern
+from util.TimeZone import from_isostring
 
 class ReservationsHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
     def __init__(self,
@@ -23,29 +24,19 @@ class ReservationsHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
         self.reservation_source = reservation_source
         self.reservation_view = reservation_view
     
-    def get_year(self):
-        year = self.request.get('year', None)
-        return int(year) if year else None
-    
-    def get_month(self):
-        month = self.request.get('month', None)
-        return int(month) if month else None
+    def get_period(self):
+        period = self.request.get('period', None)
+        return from_isostring(period) if period else None
     
     def handle_get_reservations(self):
         try:
             userid = self.get_user_id()
             sessionid = self.get_session_id()
             
-            year = self.get_year()
-            month = self.get_month()
-            
-            if year is None or month is None:
-                year_month = None
-            else:
-                year_month = (year, month)
+            period = self.get_period()
             
             session = self.session_source.get_existing_session(userid, sessionid)
-            reservations = self.reservation_source.get_reservations(sessionid, year_month)
+            reservations = self.reservation_source.get_reservations(sessionid, period)
             response_body = self.reservation_view.render_reservations(session, reservations)
         
         except KeyError, e:

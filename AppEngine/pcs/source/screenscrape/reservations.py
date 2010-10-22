@@ -239,7 +239,7 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
                 self.upcoming_reservations_from_pcs(conn, sessionid)
         else:
             pcs_body, pcs_head = \
-                self.past_reservations_from_pcs(conn, sessionid, *year_month)
+                self.past_reservations_from_pcs(conn, sessionid, year_month.year, year_month.month)
         
         reservations_html_doc = self.get_html_data(pcs_body)
         reservations = self.get_reservation_data_from_html_data(reservations_html_doc)

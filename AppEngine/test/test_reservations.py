@@ -64,6 +64,28 @@ class ReservationsHandlerTest (unittest.TestCase):
             self.error_view)
         self.handler.initialize(self.request, self.response)
     
+    def testShouldPassDateStructureToReservationSource(self):
+        self.request.cookies = {
+            'session':r'"{\"user\":\"123\",\"id\":\"456\"}"'
+        }
+        
+        self.request['period'] = '2010-09'
+        
+        @patch(self.session_source)
+        def get_existing_session(self, userid, sessionid):
+            pass
+        
+        @patch(self.reservation_view)
+        def render_reservations(self, session, reservations):
+            pass
+        
+        @patch(self.reservation_source)
+        def get_reservations(self, sessionid, year_month=None):
+            self.year_month = year_month
+        
+        self.handler.get()
+        self.assertEqual(type(self.reservation_source.year_month).__name__, datetime.datetime.__name__)
+        
     def testShouldRespondWithReservationsAccordingToTheReservationsView(self):
         @patch(self.handler)
         def get_user_id(self):
@@ -457,7 +479,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         sessionid = 'ses1234'
         driverid = 'drv1234'
         
-        reservations = self.source.get_reservations(sessionid, (2010, 11))
+        reservations = self.source.get_reservations(sessionid, datetime.date(2010, 11, 1))
         
         self.assert_(self.source.pcs_conn_called)
         self.assert_(not self.source.upcoming_res_called)
