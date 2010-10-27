@@ -199,7 +199,7 @@ class SessionScreenscrapeSourceTest (unittest.TestCase):
 
 from pcs.wsgi_handlers.appengine.session import SessionHandler
 from pcs.source import _SessionSourceInterface
-from pcs.view import _SessionViewInterface
+from pcs.renderers import _SessionViewInterface
 from pcs.source import SessionLoginError
 class SessionHandlerTest (unittest.TestCase):
     def setUp(self):
@@ -465,7 +465,7 @@ class SessionHandlerTest (unittest.TestCase):
           self.fail('Missing user id should raise error')
 
 from pcs.data.session import Session
-from pcs.view.json.session import SessionJsonView
+from pcs.renderers.json.session import SessionJsonView
 class SessionJsonViewTest (unittest.TestCase):
 		def testShouldReturnAppropriateBodyWhenSessionIsNone(self):
 				view = SessionJsonView()
@@ -492,8 +492,8 @@ class SessionJsonViewTest (unittest.TestCase):
 				
 				
 from pcs.wsgi_handlers.appengine.session import SessionHtmlHandler
-from pcs.view.html.session import SessionHtmlView
-from pcs.view.html.error import ErrorHtmlView
+from pcs.renderers.html.session import SessionHtmlView
+from pcs.renderers.html.error import ErrorHtmlView
 class SessionHtmlHandlerTest (unittest.TestCase):
     def testShouldBeInitializedWithASessionHtmlView(self):
         handler = SessionHtmlHandler()
@@ -503,8 +503,8 @@ class SessionHtmlHandlerTest (unittest.TestCase):
         self.assertEqual(handler.error_view.__class__.__name__, ErrorHtmlView.__name__)
 
 from pcs.wsgi_handlers.appengine.session import SessionJsonHandler
-from pcs.view.json.session import SessionJsonView
-from pcs.view.json.error import ErrorJsonView
+from pcs.renderers.json.session import SessionJsonView
+from pcs.renderers.json.error import ErrorJsonView
 class SessionJsonHandlerTest (unittest.TestCase):
     def testShouldBeInitializedWithASessionJsonView(self):
         handler = SessionJsonHandler()

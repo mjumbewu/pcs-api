@@ -1,7 +1,7 @@
 import os
 from google.appengine.ext.webapp import template
 
-from pcs.view import _SessionViewInterface
+from pcs.renderers import _SessionViewInterface
 from util.abstract import override
 
 class SessionHtmlView (_SessionViewInterface):

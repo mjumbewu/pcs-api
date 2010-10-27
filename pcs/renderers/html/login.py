@@ -1,7 +1,7 @@
 import os
 from google.appengine.ext.webapp import template
 
-from pcs.view import _LoginViewInterface
+from pcs.renderers import _LoginViewInterface
 from util.abstract import override
 
 class LoginHtmlView (_LoginViewInterface):

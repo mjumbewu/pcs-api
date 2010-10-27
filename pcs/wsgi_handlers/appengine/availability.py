@@ -13,10 +13,10 @@ from pcs.wsgi_handlers.appengine import WsgiParameterError
 from pcs.source.screenscrape.session import SessionScreenscrapeSource
 from pcs.source.screenscrape.availability import AvailabilityScreenscrapeSource
 from pcs.source.screenscrape.locations import LocationsScreenscrapeSource
-from pcs.view.html.availability import AvailabilityHtmlView
-from pcs.view.html.error import ErrorHtmlView
-from pcs.view.json.availability import AvailabilityJsonView
-from pcs.view.json.error import ErrorJsonView
+from pcs.renderers.html.availability import AvailabilityHtmlView
+from pcs.renderers.html.error import ErrorHtmlView
+from pcs.renderers.json.availability import AvailabilityJsonView
+from pcs.renderers.json.error import ErrorJsonView
 from util.abstract import override
 from util.TimeZone import Eastern
 

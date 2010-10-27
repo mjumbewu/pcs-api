@@ -3,7 +3,7 @@ import os
 
 from google.appengine.ext.webapp import template
 
-from pcs.view import _LocationsViewInterface
+from pcs.renderers import _LocationsViewInterface
 from util.abstract import override
 from util.TimeZone import Eastern
 

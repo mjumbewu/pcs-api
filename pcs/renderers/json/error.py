@@ -6,7 +6,7 @@ try:
 except ImportError:
     from django.utils import simplejson as json
 
-from pcs.view import _ErrorViewInterface
+from pcs.renderers import _ErrorViewInterface
 from util.abstract import override
 
 class ErrorJsonView (_ErrorViewInterface):

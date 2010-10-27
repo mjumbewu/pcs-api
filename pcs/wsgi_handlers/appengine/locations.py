@@ -8,10 +8,10 @@ from pcs.wsgi_handlers.appengine import _SessionBasedHandler
 from pcs.wsgi_handlers.appengine import WsgiParameterError
 from pcs.source.screenscrape.session import SessionScreenscrapeSource
 from pcs.source.screenscrape.locations import LocationsScreenscrapeSource
-from pcs.view.html.error import ErrorHtmlView
-from pcs.view.html.locations import LocationsHtmlView
-from pcs.view.json.error import ErrorJsonView
-from pcs.view.json.locations import LocationsJsonView
+from pcs.renderers.html.error import ErrorHtmlView
+from pcs.renderers.html.locations import LocationsHtmlView
+from pcs.renderers.json.error import ErrorJsonView
+from pcs.renderers.json.locations import LocationsJsonView
 
 class LocationsHandler (_SessionBasedHandler):
     """

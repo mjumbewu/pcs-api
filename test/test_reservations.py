@@ -11,10 +11,10 @@ from pcs.source import _SessionSourceInterface
 from pcs.source.screenscrape import ScreenscrapeParseError
 from pcs.source.screenscrape.reservations import ReservationsScreenscrapeSource
 from pcs.source.screenscrape.pcsconnection import PcsConnection
-from pcs.view import _ReservationsViewInterface
-from pcs.view import _ErrorViewInterface
-from pcs.view.html.availability import AvailabilityHtmlView
-from pcs.view.json.reservations import ReservationsJsonView
+from pcs.renderers import _ReservationsViewInterface
+from pcs.renderers import _ErrorViewInterface
+from pcs.renderers.html.availability import AvailabilityHtmlView
+from pcs.renderers.json.reservations import ReservationsJsonView
 from util.BeautifulSoup import BeautifulSoup
 from util.testing import patch
 from util.testing import Stub

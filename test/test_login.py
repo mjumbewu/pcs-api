@@ -4,7 +4,7 @@ import StringIO
 from util.testing import Stub
 
 from pcs.wsgi_handlers.appengine.login import LoginHandler
-from pcs.view import _LoginViewInterface
+from pcs.renderers import _LoginViewInterface
 class LoginHandlerTest (unittest.TestCase):
     def testShouldRespondWithLoginForm(self):
         # Given...
@@ -34,7 +34,7 @@ class LoginHandlerTest (unittest.TestCase):
         self.assertEqual(response_body, 'LoginForm')
 
 from pcs.wsgi_handlers.appengine.login import LoginHtmlHandler
-from pcs.view.html.login import LoginHtmlView
+from pcs.renderers.html.login import LoginHtmlView
 class LoginHtmlHandlerTest (unittest.TestCase):
     def setUp(self):
         class StubRequest (dict):
@@ -58,7 +58,7 @@ class LoginHtmlHandlerTest (unittest.TestCase):
         handler.request = self.request
         handler.response = self.response
 
-from pcs.view.html.login import LoginHtmlView
+from pcs.renderers.html.login import LoginHtmlView
 class LoginHtmlViewTest (unittest.TestCase):
     def testShouldReturnHtmlContentForSigningIn(self):
         """The HTML view returned should be a form for signing in."""

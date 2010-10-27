@@ -13,10 +13,10 @@ from pcs.source import _SessionSourceInterface
 from pcs.source.screenscrape import ScreenscrapeParseError
 from pcs.source.screenscrape.availability import AvailabilityScreenscrapeSource
 from pcs.source.screenscrape.pcsconnection import PcsConnection
-from pcs.view import _AvailabilityViewInterface
-from pcs.view import _ErrorViewInterface
-from pcs.view.html.availability import AvailabilityHtmlView
-from pcs.view.json.availability import AvailabilityJsonView
+from pcs.renderers import _AvailabilityViewInterface
+from pcs.renderers import _ErrorViewInterface
+from pcs.renderers.html.availability import AvailabilityHtmlView
+from pcs.renderers.json.availability import AvailabilityJsonView
 from util.testing import patch
 from util.testing import Stub
 from util.TimeZone import Eastern
@@ -1091,7 +1091,7 @@ class LocationAvailabilityHtmlHandlerTest (unittest.TestCase):
         from pcs.source.screenscrape.session import SessionScreenscrapeSource
         from pcs.source.screenscrape.locations import LocationsScreenscrapeSource
         from pcs.source.screenscrape.availability import AvailabilityScreenscrapeSource
-        from pcs.view.html.availability import AvailabilityHtmlView
+        from pcs.renderers.html.availability import AvailabilityHtmlView
         
         self.assertEqual(handler.vehicle_view.__class__.__name__,
                          AvailabilityHtmlView.__name__)
@@ -1110,7 +1110,7 @@ class LocationAvailabilityJsonHandlerTest (unittest.TestCase):
         from pcs.source.screenscrape.session import SessionScreenscrapeSource
         from pcs.source.screenscrape.locations import LocationsScreenscrapeSource
         from pcs.source.screenscrape.availability import AvailabilityScreenscrapeSource
-        from pcs.view.json.availability import AvailabilityJsonView
+        from pcs.renderers.json.availability import AvailabilityJsonView
         
         self.assertEqual(handler.vehicle_view.__class__.__name__,
                          AvailabilityJsonView.__name__)

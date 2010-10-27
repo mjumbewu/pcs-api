@@ -6,7 +6,7 @@ try:
 except ImportError:
     from django.utils import simplejson as json
 
-from pcs.view import _ReservationsViewInterface
+from pcs.renderers import _ReservationsViewInterface
 from util.abstract import override
 from util.TimeZone import to_isostring
 

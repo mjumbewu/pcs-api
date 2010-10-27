@@ -6,8 +6,8 @@ import HTMLParser as htmlparserlib
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 
-from pcs.view.html.login import LoginHtmlView
-from pcs.view.html.session import SessionHtmlView
+from pcs.renderers.html.login import LoginHtmlView
+from pcs.renderers.html.session import SessionHtmlView
 from pcs.source.screenscrape.session import SessionScreenscrapeSource
 
 class LoginHandler (webapp.RequestHandler):

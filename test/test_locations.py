@@ -10,9 +10,9 @@ from pcs.source import _SessionSourceInterface
 from pcs.source import SessionExpiredError
 from pcs.source.screenscrape import ScreenscrapeParseError
 from pcs.source.screenscrape.pcsconnection import PcsConnection
-from pcs.view import _ErrorViewInterface
-from pcs.view import _LocationsViewInterface
-from pcs.view.json.locations import LocationsJsonView
+from pcs.renderers import _ErrorViewInterface
+from pcs.renderers import _LocationsViewInterface
+from pcs.renderers.json.locations import LocationsJsonView
 from util.testing import patch
 from util.testing import Stub
 
@@ -262,8 +262,8 @@ class LocationsJsonHandlerTest (unittest.TestCase):
         
         from pcs.source.screenscrape.session import SessionScreenscrapeSource
         from pcs.source.screenscrape.locations import LocationsScreenscrapeSource
-        from pcs.view.json.error import ErrorJsonView
-        from pcs.view.json.locations import LocationsJsonView
+        from pcs.renderers.json.error import ErrorJsonView
+        from pcs.renderers.json.locations import LocationsJsonView
         
         self.assertEqual(handler.error_view.__class__.__name__,
                          ErrorJsonView.__name__)

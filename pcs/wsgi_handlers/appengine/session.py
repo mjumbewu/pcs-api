@@ -13,11 +13,11 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 
 from pcs.wsgi_handlers.appengine import _SessionBasedHandler
 from pcs.wsgi_handlers.appengine import WsgiParameterError
-from pcs.view.html.error import ErrorHtmlView
-from pcs.view.html.login import LoginHtmlView
-from pcs.view.html.session import SessionHtmlView
-from pcs.view.json.error import ErrorJsonView
-from pcs.view.json.session import SessionJsonView
+from pcs.renderers.html.error import ErrorHtmlView
+from pcs.renderers.html.login import LoginHtmlView
+from pcs.renderers.html.session import SessionHtmlView
+from pcs.renderers.json.error import ErrorJsonView
+from pcs.renderers.json.session import SessionJsonView
 from pcs.source.screenscrape.session import SessionScreenscrapeSource
 from util.abstract import override
 

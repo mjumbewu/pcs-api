@@ -3,7 +3,7 @@ import os
 
 from google.appengine.ext.webapp import template
 
-from pcs.view import _ReservationsViewInterface
+from pcs.renderers import _ReservationsViewInterface
 from util.abstract import override
 from util.TimeZone import to_xchange_time
 

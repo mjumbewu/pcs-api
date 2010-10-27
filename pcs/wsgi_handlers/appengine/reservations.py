@@ -6,10 +6,10 @@ from pcs.wsgi_handlers.appengine import _TimeRangeBasedHandler
 from pcs.wsgi_handlers.appengine import WsgiParameterError
 from pcs.source.screenscrape.session import SessionScreenscrapeSource
 from pcs.source.screenscrape.reservations import ReservationsScreenscrapeSource
-from pcs.view.html.error import ErrorHtmlView
-from pcs.view.html.reservations import ReservationsHtmlView
-from pcs.view.json.error import ErrorJsonView
-from pcs.view.json.reservations import ReservationsJsonView
+from pcs.renderers.html.error import ErrorHtmlView
+from pcs.renderers.html.reservations import ReservationsHtmlView
+from pcs.renderers.json.error import ErrorJsonView
+from pcs.renderers.json.reservations import ReservationsJsonView
 from util.TimeZone import Eastern
 from util.TimeZone import from_isostring
 
