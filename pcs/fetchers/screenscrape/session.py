@@ -4,11 +4,11 @@ import Cookie as cookielib
 import HTMLParser as htmlparserlib
 
 from pcs.data.session import Session
-from pcs.source import _SessionSourceInterface
-from pcs.source import SessionExpiredError
-from pcs.source import SessionLoginError
-from pcs.source.screenscrape import ScreenscrapeParseError
-from pcs.source.screenscrape.pcsconnection import PcsConnection
+from pcs.fetchers import _SessionSourceInterface
+from pcs.fetchers import SessionExpiredError
+from pcs.fetchers import SessionLoginError
+from pcs.fetchers.screenscrape import ScreenscrapeParseError
+from pcs.fetchers.screenscrape.pcsconnection import PcsConnection
 from util.abstract import override
 
 class SessionScreenscrapeSource (_SessionSourceInterface):

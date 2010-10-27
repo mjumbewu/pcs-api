@@ -18,7 +18,7 @@ from pcs.renderers.html.login import LoginHtmlView
 from pcs.renderers.html.session import SessionHtmlView
 from pcs.renderers.json.error import ErrorJsonView
 from pcs.renderers.json.session import SessionJsonView
-from pcs.source.screenscrape.session import SessionScreenscrapeSource
+from pcs.fetchers.screenscrape.session import SessionScreenscrapeSource
 from util.abstract import override
 
 class SessionHandler (_SessionBasedHandler):

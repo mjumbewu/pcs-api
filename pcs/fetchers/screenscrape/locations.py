@@ -10,9 +10,9 @@ except ImportError:
 
 from pcs.data.location import LocationProfile
 from pcs.data.location import LocationCoordinate
-from pcs.source import _LocationsSourceInterface
-from pcs.source.screenscrape import ScreenscrapeParseError
-from pcs.source.screenscrape.pcsconnection import PcsConnection
+from pcs.fetchers import _LocationsSourceInterface
+from pcs.fetchers.screenscrape import ScreenscrapeParseError
+from pcs.fetchers.screenscrape.pcsconnection import PcsConnection
 from util.abstract import override
 from util.BeautifulSoup import BeautifulSoup
 

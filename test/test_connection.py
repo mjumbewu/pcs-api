@@ -4,8 +4,8 @@ import StringIO
 from util.testing import Stub
 from util.testing import patch
 
-from pcs.source.screenscrape.pcsconnection import PcsConnection
-from pcs.source.screenscrape.pcsconnection import PcsConnectionError
+from pcs.fetchers.screenscrape.pcsconnection import PcsConnection
+from pcs.fetchers.screenscrape.pcsconnection import PcsConnectionError
 class PcsConnectionTest (unittest.TestCase):
     def testShouldParseUrlCorrectly1(self):
         conn = PcsConnection()

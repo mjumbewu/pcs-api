@@ -16,9 +16,9 @@ from pcs.data.vehicle import PriceEstimate
 from pcs.data.vehicle import Vehicle
 from pcs.data.vehicle import VehicleModel
 from pcs.data.vehicle import AvailableVehicle
-from pcs.source import _AvailabilitySourceInterface
-from pcs.source.screenscrape import ScreenscrapeParseError
-from pcs.source.screenscrape.pcsconnection import PcsConnection
+from pcs.fetchers import _AvailabilitySourceInterface
+from pcs.fetchers.screenscrape import ScreenscrapeParseError
+from pcs.fetchers.screenscrape.pcsconnection import PcsConnection
 from util.abstract import override
 from util.BeautifulSoup import BeautifulSoup
 from util.TimeZone import Eastern

@@ -6,11 +6,11 @@ from pcs.wsgi_handlers.appengine import WsgiParameterError
 from pcs.wsgi_handlers.appengine.reservations import ReservationsHandler
 from pcs.wsgi_handlers.appengine.reservations import ReservationsHtmlHandler
 from pcs.wsgi_handlers.appengine.reservations import ReservationsJsonHandler
-from pcs.source import _ReservationsSourceInterface
-from pcs.source import _SessionSourceInterface
-from pcs.source.screenscrape import ScreenscrapeParseError
-from pcs.source.screenscrape.reservations import ReservationsScreenscrapeSource
-from pcs.source.screenscrape.pcsconnection import PcsConnection
+from pcs.fetchers import _ReservationsSourceInterface
+from pcs.fetchers import _SessionSourceInterface
+from pcs.fetchers.screenscrape import ScreenscrapeParseError
+from pcs.fetchers.screenscrape.reservations import ReservationsScreenscrapeSource
+from pcs.fetchers.screenscrape.pcsconnection import PcsConnection
 from pcs.renderers import _ReservationsViewInterface
 from pcs.renderers import _ErrorViewInterface
 from pcs.renderers.html.availability import AvailabilityHtmlView

@@ -7,12 +7,12 @@ from pcs.wsgi_handlers.appengine.availability import VehicleAvailabilityHandler
 from pcs.wsgi_handlers.appengine.availability import LocationAvailabilityHandler
 from pcs.wsgi_handlers.appengine.availability import LocationAvailabilityHtmlHandler
 from pcs.wsgi_handlers.appengine.availability import LocationAvailabilityJsonHandler
-from pcs.source import _AvailabilitySourceInterface
-from pcs.source import _LocationsSourceInterface
-from pcs.source import _SessionSourceInterface
-from pcs.source.screenscrape import ScreenscrapeParseError
-from pcs.source.screenscrape.availability import AvailabilityScreenscrapeSource
-from pcs.source.screenscrape.pcsconnection import PcsConnection
+from pcs.fetchers import _AvailabilitySourceInterface
+from pcs.fetchers import _LocationsSourceInterface
+from pcs.fetchers import _SessionSourceInterface
+from pcs.fetchers.screenscrape import ScreenscrapeParseError
+from pcs.fetchers.screenscrape.availability import AvailabilityScreenscrapeSource
+from pcs.fetchers.screenscrape.pcsconnection import PcsConnection
 from pcs.renderers import _AvailabilityViewInterface
 from pcs.renderers import _ErrorViewInterface
 from pcs.renderers.html.availability import AvailabilityHtmlView
@@ -1088,9 +1088,9 @@ class LocationAvailabilityHtmlHandlerTest (unittest.TestCase):
     def testShouldBeInitializedWithHtmlViewsAndScreenscrapeSources(self):
         handler = LocationAvailabilityHtmlHandler()
         
-        from pcs.source.screenscrape.session import SessionScreenscrapeSource
-        from pcs.source.screenscrape.locations import LocationsScreenscrapeSource
-        from pcs.source.screenscrape.availability import AvailabilityScreenscrapeSource
+        from pcs.fetchers.screenscrape.session import SessionScreenscrapeSource
+        from pcs.fetchers.screenscrape.locations import LocationsScreenscrapeSource
+        from pcs.fetchers.screenscrape.availability import AvailabilityScreenscrapeSource
         from pcs.renderers.html.availability import AvailabilityHtmlView
         
         self.assertEqual(handler.vehicle_view.__class__.__name__,
@@ -1107,9 +1107,9 @@ class LocationAvailabilityJsonHandlerTest (unittest.TestCase):
     def testShouldBeInitializedWithJsonViewsAndScreenscrapeSources(self):
         handler = LocationAvailabilityJsonHandler()
         
-        from pcs.source.screenscrape.session import SessionScreenscrapeSource
-        from pcs.source.screenscrape.locations import LocationsScreenscrapeSource
-        from pcs.source.screenscrape.availability import AvailabilityScreenscrapeSource
+        from pcs.fetchers.screenscrape.session import SessionScreenscrapeSource
+        from pcs.fetchers.screenscrape.locations import LocationsScreenscrapeSource
+        from pcs.fetchers.screenscrape.availability import AvailabilityScreenscrapeSource
         from pcs.renderers.json.availability import AvailabilityJsonView
         
         self.assertEqual(handler.vehicle_view.__class__.__name__,

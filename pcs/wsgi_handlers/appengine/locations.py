@@ -6,8 +6,8 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 
 from pcs.wsgi_handlers.appengine import _SessionBasedHandler
 from pcs.wsgi_handlers.appengine import WsgiParameterError
-from pcs.source.screenscrape.session import SessionScreenscrapeSource
-from pcs.source.screenscrape.locations import LocationsScreenscrapeSource
+from pcs.fetchers.screenscrape.session import SessionScreenscrapeSource
+from pcs.fetchers.screenscrape.locations import LocationsScreenscrapeSource
 from pcs.renderers.html.error import ErrorHtmlView
 from pcs.renderers.html.locations import LocationsHtmlView
 from pcs.renderers.json.error import ErrorJsonView

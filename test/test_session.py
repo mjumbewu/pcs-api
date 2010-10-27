@@ -5,11 +5,11 @@ from util.testing import Stub
 from util.testing import patch
 
 from pcs.wsgi_handlers.appengine import WsgiParameterError
-from pcs.source import SessionLoginError
-from pcs.source import SessionExpiredError
+from pcs.fetchers import SessionLoginError
+from pcs.fetchers import SessionExpiredError
 
-from pcs.source.screenscrape.pcsconnection import PcsConnection
-from pcs.source.screenscrape.session import SessionScreenscrapeSource
+from pcs.fetchers.screenscrape.pcsconnection import PcsConnection
+from pcs.fetchers.screenscrape.session import SessionScreenscrapeSource
 class SessionScreenscrapeSourceTest (unittest.TestCase):
     def testShouldThinkSessionDocumentIsValidIfTitleIsCorrect(self):
         """Login is successful if the response document has the correct title."""
@@ -198,9 +198,9 @@ class SessionScreenscrapeSourceTest (unittest.TestCase):
         self.fail('Should have raised SessionExpiredError')
 
 from pcs.wsgi_handlers.appengine.session import SessionHandler
-from pcs.source import _SessionSourceInterface
+from pcs.fetchers import _SessionSourceInterface
 from pcs.renderers import _SessionViewInterface
-from pcs.source import SessionLoginError
+from pcs.fetchers import SessionLoginError
 class SessionHandlerTest (unittest.TestCase):
     def setUp(self):
         class StubRequest (dict):

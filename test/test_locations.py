@@ -5,11 +5,11 @@ import new
 from pcs.data.session import Session
 from pcs.wsgi_handlers.appengine.locations import LocationsHandler
 from pcs.wsgi_handlers.appengine.locations import LocationsJsonHandler
-from pcs.source import _LocationsSourceInterface
-from pcs.source import _SessionSourceInterface
-from pcs.source import SessionExpiredError
-from pcs.source.screenscrape import ScreenscrapeParseError
-from pcs.source.screenscrape.pcsconnection import PcsConnection
+from pcs.fetchers import _LocationsSourceInterface
+from pcs.fetchers import _SessionSourceInterface
+from pcs.fetchers import SessionExpiredError
+from pcs.fetchers.screenscrape import ScreenscrapeParseError
+from pcs.fetchers.screenscrape.pcsconnection import PcsConnection
 from pcs.renderers import _ErrorViewInterface
 from pcs.renderers import _LocationsViewInterface
 from pcs.renderers.json.locations import LocationsJsonView
@@ -148,7 +148,7 @@ class LocationHandlerTest (unittest.TestCase):
         self.assert_(response_body.startswith('SessionExpiredError'), 'Should start with SessionExpiredError: %r' % response_body)
     
 
-from pcs.source.screenscrape.locations import LocationsScreenscrapeSource
+from pcs.fetchers.screenscrape.locations import LocationsScreenscrapeSource
 class LocationsScreenscrapeSourceTest (unittest.TestCase):
     def testShouldConstructExpectedLocationProfilesFromPcsConnectionContent(self):
         # Given...
@@ -260,8 +260,8 @@ class LocationsJsonHandlerTest (unittest.TestCase):
     def testShouldBeInitializedWithJsonViewsAndScreenscrapeSources(self):
         handler = LocationsJsonHandler()
         
-        from pcs.source.screenscrape.session import SessionScreenscrapeSource
-        from pcs.source.screenscrape.locations import LocationsScreenscrapeSource
+        from pcs.fetchers.screenscrape.session import SessionScreenscrapeSource
+        from pcs.fetchers.screenscrape.locations import LocationsScreenscrapeSource
         from pcs.renderers.json.error import ErrorJsonView
         from pcs.renderers.json.locations import LocationsJsonView
         
