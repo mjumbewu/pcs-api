@@ -4,5 +4,5 @@ from pcs.wsgi_handlers.locations import LocationsHandler
 from pcs.wsgi_handlers.locations import LocationsHtmlHandler
 from pcs.wsgi_handlers.locations import LocationsJsonHandler as _BaseLocationsJsonHandler
 
-class LocationsJsonHandler (_AppEngineBasedHandler, _BaseLocationsJsonHandler):
+class LocationsJsonHandler (_BaseLocationsJsonHandler, _AppEngineBasedHandler):
     pass

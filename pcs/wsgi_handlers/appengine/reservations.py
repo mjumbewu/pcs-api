@@ -7,5 +7,5 @@ from pcs.wsgi_handlers.reservations import ReservationHtmlHandler
 from pcs.wsgi_handlers.reservations import ReservationEditorHtmlHandler
 from pcs.wsgi_handlers.reservations import ReservationsJsonHandler as _BaseReservationsJsonHandler
 
-class ReservationsJsonHandler (_AppEngineBasedHandler, _BaseReservationsJsonHandler):
+class ReservationsJsonHandler (_BaseReservationsJsonHandler, _AppEngineBasedHandler):
     pass

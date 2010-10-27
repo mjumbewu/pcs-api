@@ -10,32 +10,20 @@ handlers:
   script: gaeunit.py
 
 - url: /login.*
-  script: pcs/input/wsgi/login.py
+  script: pcs/appengine_app.py
   secure: always
 
 - url: /session.*
-  script: pcs/input/wsgi/session.py
+  script: pcs/appengine_app.py
   secure: optional
-
-- url: /reservations.*
-  script: pcs/input/wsgi/reservations.py
-  secure: never
-
-- url: /locations/.*/availability.*
-  script: pcs/input/wsgi/availability.py
-  secure: never
-
-- url: /vehicles/.*/availability.*
-  script: pcs/input/wsgi/availability.py
-  secure: never
-
-- url: /locations.*
-  script: pcs/input/wsgi/locations.py
-  secure: never
 
 - url: /styles
   static_dir: styles
 
 - url: /cookies
   script: pcs/input/wsgi/login.py
+
+- url: /*
+  script: pcs/appengine_app.py
+  secure: never
 
