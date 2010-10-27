@@ -2,34 +2,46 @@ All files in this project are Copyright (C) 2010 Mjumbe Poe
 
 This is an attempt at an API over HTTP for the PhillyCarShare reservation 
 system.  It is built to run on Google App Engine, though there is very little
-App Engine-specific code.  It should be easily adaptable to a Django install
-(the view templates are in the Django template style).
+App Engine-specific code.  It should be easily adaptable to a Django install,
+or some other Python web framework.
 
-The AppEngine/pcs directory is where most of the work happens.  It is arranged 
-into four sub-directories:
+
+STRUCTURE
+~~~~~~~~~
+The pcs package is where most of the work happens. It is arranged into four
+sub-directories:
 
  * data: The general data model for the API.  These are simple classes that 
    don'treally do anything aside from hold data.
    
- * input: This contains modules for input handlers.  The only input handlers
-   being implemented right now (and probably ever to be implemented) are WSGI
-   handlers.
+ * wsgi_handlers: This contains modules for input handlers. The only input
+   handlers being implemented right now (and probably ever to be implemented)
+   are WSGI handlers.
    
- * source: This contains modules for communicating with the reservation system
-   on PCS's servers.  The only sources implemented now are screenscraped, as
-   PCS doesn't have a public API that I know of (hence this project).
+ * fetchers: This contains modules for constructing various objects in the data
+   model from the information at some source. For example, these modules may
+   communicate with the reservation system on PCS's servers. The only sources
+   implemented now are screenscraped, as PCS doesn't have a public API that I
+   know of (hence this project).
    
- * view: This contains modules for representing the API data model.  One 
-   possible view is HTML data, but there are definitely others in the pipeline
-   (e.g., JSON).
+ * renderers: This contains modules for representing the API data model. One
+   view is JSON data, but there are definitely other possibilities (e.g., XML).
 
+
+TESTING
+~~~~~~~
 Most of the code is well tested, and the tests are an important part of the 
 package, especially since the only source for now is screenscraping.  The tests
-reside in the AppEngine/test directory.  To run the tests, start the appengine
+reside in the 'test' directory.  To run the tests, start the appengine
 server, and browse to http://localhost:8080/test.  Make sure to sign in as 
 administrator.  
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+API OVERVIEW
+~~~~~~~~~~~~
 
 /login.[format]
 GET
@@ -42,12 +54,12 @@ POST
     done through a secure connection, since credentials are submitted.
     
   - Params:
-    userid
+    user
     password
     
   - Response:
-    Response will contain a session identifier that should be sent in a cookie
-    named sid with any subsequent calls to the API.
+    Response will contain a session identifier in a cookie. This cookie should
+    be sent with any subsequent calls to the API.
 
 /locations/[id]/availability.[format]
 GET
@@ -58,6 +70,11 @@ GET
     end_time (ISO8601 string - defaults to 3 hours later than start_time)
     flexible (True/False - defaults to True)
     show_all (True/False - defaults to True)
+  
+  - Note:
+    The [id] variable may be a saved location profile id, a set of GPS
+    coordinates in a tuple (e.g., '([long],[lat])'), or '.default' to use the
+    user's default location profile.
 
 /vehicles/[id]/availability.[format]
 GET
@@ -76,8 +93,14 @@ GET
 PUT
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-So, a little background...
+
+ADDITIONAL NOTES
+~~~~~~~~~~~~~~~~
+
+Background
+----------
 
 I'm using this project to overcome the following situations:
 - PhillyCarShare does not appear to have a public API for their reservation
@@ -86,6 +109,10 @@ I'm using this project to overcome the following situations:
   and iPhone, but far from ideal.
 - There are little features that would be nice to have that are not available 
   through the main PCS site, that I'd like the option of building.
+
+
+Testing Guidelines
+------------------
 
 Here are my testing guidelines:
 - Tests are important.  That's pretty much always true, but especially so for
@@ -127,7 +154,6 @@ Here are my testing guidelines:
   the test directory.  Copy private_info.py.template to private_info.py, and 
   enter your credentials there.  Changes to this file will not be checked in.
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Reservation Identifiers
 -----------------------
