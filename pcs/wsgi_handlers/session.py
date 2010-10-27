@@ -1,21 +1,10 @@
-import httplib
-import urllib
-import Cookie as cookielib
-import HTMLParser as htmlparserlib
-
 try:
     import json
 except ImportError:
     from django.utils import simplejson as json
 
-from google.appengine.ext import webapp
-from google.appengine.ext.webapp.util import run_wsgi_app
-
 from pcs.wsgi_handlers.base import _SessionBasedHandler
 from pcs.wsgi_handlers.base import WsgiParameterError
-from pcs.renderers.html.error import ErrorHtmlView
-from pcs.renderers.html.login import LoginHtmlView
-from pcs.renderers.html.session import SessionHtmlView
 from pcs.renderers.json.error import ErrorJsonView
 from pcs.renderers.json.session import SessionJsonView
 from pcs.fetchers.screenscrape.session import SessionScreenscrapeSource
@@ -93,27 +82,9 @@ class SessionHandler (_SessionBasedHandler):
         self.response.out.write(response_body);
         self.response.set_status(200);
 
-class SessionHtmlHandler (SessionHandler):
-    def __init__(self):
-        super(SessionHtmlHandler, self).__init__(SessionScreenscrapeSource(), 
-                                                 SessionHtmlView(),
-                                                 ErrorHtmlView())
-
 class SessionJsonHandler (SessionHandler):
     def __init__(self):
         super(SessionJsonHandler, self).__init__(SessionScreenscrapeSource(), 
                                                  SessionJsonView(),
                                                  ErrorJsonView())
 
-
-
-application = webapp.WSGIApplication(
-        [('/session.html', SessionHtmlHandler),
-         ('/session.json', SessionJsonHandler)],
-        debug=True)
-
-def main():
-    run_wsgi_app(application)
-
-if __name__ == '__main__':
-    main()

@@ -2,7 +2,6 @@ from pcs.wsgi_handlers.appengine import _AppEngineBasedHandler
 
 from pcs.wsgi_handlers.availability import LocationAvailabilityJsonHandler as _BaseLocationAvailabilityJsonHandler
 from pcs.wsgi_handlers.availability import LocationAvailabilityHandler
-from pcs.wsgi_handlers.availability import LocationAvailabilityHtmlHandler
 from pcs.wsgi_handlers.availability import VehicleAvailabilityHandler
 
 class LocationAvailabilityJsonHandler (_BaseLocationAvailabilityJsonHandler, _AppEngineBasedHandler):

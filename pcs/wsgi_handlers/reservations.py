@@ -1,13 +1,8 @@
-from google.appengine.ext import webapp
-from google.appengine.ext.webapp.util import run_wsgi_app
-
 from pcs.wsgi_handlers.base import _SessionBasedHandler
 from pcs.wsgi_handlers.base import _TimeRangeBasedHandler
 from pcs.wsgi_handlers.base import WsgiParameterError
 from pcs.fetchers.screenscrape.session import SessionScreenscrapeSource
 from pcs.fetchers.screenscrape.reservations import ReservationsScreenscrapeSource
-from pcs.renderers.html.error import ErrorHtmlView
-from pcs.renderers.html.reservations import ReservationsHtmlView
 from pcs.renderers.json.error import ErrorJsonView
 from pcs.renderers.json.reservations import ReservationsJsonView
 from util.TimeZone import Eastern
@@ -113,45 +108,6 @@ class ReservationHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
         self.handle_cancel_reservation(reservationid)
 
 
-class ReservationsHtmlHandler (ReservationsHandler):
-    def __init__(self):
-        super(ReservationsHtmlHandler, self).__init__(
-            SessionScreenscrapeSource(),
-            ReservationsScreenscrapeSource(),
-            ReservationsHtmlView(),
-            ErrorHtmlView())
-
-class ReservationHtmlHandler (ReservationHandler):
-    def __init__(self):
-        super(ReservationHtmlHandler, self).__init__(
-            SessionScreenscrapeSource(),
-            ReservationsScreenscrapeSource(),
-            ReservationsHtmlView(),
-            ErrorHtmlView())
-
-class ReservationEditorHtmlHandler (_TimeRangeBasedHandler):
-    def get(self, reservationid):
-        import os
-        from google.appengine.ext.webapp import template
-        from util.TimeZone import to_xchange_time
-        
-        start_time, end_time = self.get_time_range()
-        status = self.request.get('status')
-        
-        values = {
-            'session': 'valid',
-            'reservationid': reservationid,
-            'start_time': start_time,
-            'start_stamp': to_xchange_time(start_time),
-            'end_time': end_time,
-            'end_stamp': to_xchange_time(end_time),
-            'status': status
-        }
-        
-        path = os.path.join(os.path.dirname(__file__), '../../view/html/reservation-editor.html')
-        response_body = template.render(path, values)
-        self.response.out.write(response_body)
-
 class ReservationsJsonHandler (ReservationsHandler):
     def __init__(self):
         super(ReservationsJsonHandler, self).__init__(
@@ -160,16 +116,3 @@ class ReservationsJsonHandler (ReservationsHandler):
             ReservationsJsonView(),
             ErrorJsonView())
 
-
-application = webapp.WSGIApplication(
-        [('/reservations.html', ReservationsHtmlHandler),
-         ('/reservations.json', ReservationsJsonHandler),
-         ('/reservations/([.^/]*).html', ReservationHtmlHandler),
-         ('/reservations/(.*)/editor.html', ReservationEditorHtmlHandler)],
-        debug=True)
-
-def main():
-    run_wsgi_app(application)
-
-if __name__ == '__main__':
-    main()

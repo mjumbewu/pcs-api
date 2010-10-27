@@ -123,19 +123,6 @@ class VehicleAvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
         self.response.out.write(response_body);
         self.response.set_status(200);
 
-class LocationAvailabilityHtmlHandler (LocationAvailabilityHandler):
-    def __init__(self):
-        super(LocationAvailabilityHtmlHandler, self).__init__(
-            SessionScreenscrapeSource(),
-            AvailabilityScreenscrapeSource(),
-            LocationsScreenscrapeSource(),
-            AvailabilityHtmlView(),
-            ErrorHtmlView())
-    
-    @override
-    def get_time_range(self):
-        return self.get_separate_iso_date_and_time_range()
-    
 class LocationAvailabilityJsonHandler (LocationAvailabilityHandler):
     def __init__(self):
         super(LocationAvailabilityJsonHandler, self).__init__(
@@ -145,12 +132,4 @@ class LocationAvailabilityJsonHandler (LocationAvailabilityHandler):
             AvailabilityJsonView(),
             ErrorJsonView())
     
-class VehicleAvailabilityHtmlHandler (VehicleAvailabilityHandler):
-    def __init__(self):
-        super(VehicleAvailabilityHtmlHandler, self).__init__(
-            SessionScreenscrapeSource(),
-            AvailabilityScreenscrapeSource(),
-            AvailabilityHtmlView(),
-            ErrorHtmlView())
-
 

@@ -5,7 +5,6 @@ import new
 from pcs.wsgi_handlers.base import WsgiParameterError
 from pcs.wsgi_handlers.appengine.availability import VehicleAvailabilityHandler
 from pcs.wsgi_handlers.appengine.availability import LocationAvailabilityHandler
-from pcs.wsgi_handlers.appengine.availability import LocationAvailabilityHtmlHandler
 from pcs.wsgi_handlers.appengine.availability import LocationAvailabilityJsonHandler
 from pcs.fetchers import _AvailabilitySourceInterface
 from pcs.fetchers import _LocationsSourceInterface
@@ -15,7 +14,6 @@ from pcs.fetchers.screenscrape.availability import AvailabilityScreenscrapeSourc
 from pcs.fetchers.screenscrape.pcsconnection import PcsConnection
 from pcs.renderers import _AvailabilityViewInterface
 from pcs.renderers import _ErrorViewInterface
-from pcs.renderers.html.availability import AvailabilityHtmlView
 from pcs.renderers.json.availability import AvailabilityJsonView
 from util.testing import patch
 from util.testing import Stub
@@ -1089,25 +1087,6 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(price, 'my price')
     
     
-class LocationAvailabilityHtmlHandlerTest (unittest.TestCase):
-    def testShouldBeInitializedWithHtmlViewsAndScreenscrapeSources(self):
-        handler = LocationAvailabilityHtmlHandler()
-        
-        from pcs.fetchers.screenscrape.session import SessionScreenscrapeSource
-        from pcs.fetchers.screenscrape.locations import LocationsScreenscrapeSource
-        from pcs.fetchers.screenscrape.availability import AvailabilityScreenscrapeSource
-        from pcs.renderers.html.availability import AvailabilityHtmlView
-        
-        self.assertEqual(handler.vehicle_view.__class__.__name__,
-                         AvailabilityHtmlView.__name__)
-        self.assertEqual(handler.vehicle_source.__class__.__name__,
-                         AvailabilityScreenscrapeSource.__name__)
-        self.assertEqual(handler.location_source.__class__.__name__,
-                         LocationsScreenscrapeSource.__name__)
-        self.assertEqual(handler.session_source.__class__.__name__,
-                         SessionScreenscrapeSource.__name__)
-    
-    
 class LocationAvailabilityJsonHandlerTest (unittest.TestCase):
     def testShouldBeInitializedWithJsonViewsAndScreenscrapeSources(self):
         handler = LocationAvailabilityJsonHandler()
@@ -1125,29 +1104,6 @@ class LocationAvailabilityJsonHandlerTest (unittest.TestCase):
                          LocationsScreenscrapeSource.__name__)
         self.assertEqual(handler.session_source.__class__.__name__,
                          SessionScreenscrapeSource.__name__)
-
-
-class AvailabilityHtmlViewTest (unittest.TestCase):
-    def testShouldPassVariablesToTheTemplateCorrectly(self):
-        self.path = None
-        self.values = None
-        
-        def stub_render_method(stub_path, stub_values):
-            self.path = stub_path
-            self.values = stub_values
-            return 'the rendering'
-        
-        session = 'my session'
-        location = 'my location'
-        start_time = datetime.datetime(2010,11,1,tzinfo=Eastern)
-        end_time = datetime.datetime(2011,1,1,tzinfo=Eastern)
-        vehicle_availabilities = ['v1','v2']
-        view = AvailabilityHtmlView(stub_render_method)
-        
-        rendering = view.render_location_availability(session, location, start_time, end_time, vehicle_availabilities)
-        
-        self.assertEqual(self.values, {'session':'my session', 'location':'my location', 'start_time':datetime.datetime(2010,11,1,tzinfo=Eastern), 'end_time':datetime.datetime(2011,1,1,tzinfo=Eastern), 'start_stamp': 1288584000, 'end_stamp': 1293858000, 'vehicle_availabilities':['v1','v2']})
-        self.assertEqual(rendering, 'the rendering')
 
 
 class AvailabilityJsonViewTest (unittest.TestCase):

@@ -4,7 +4,6 @@ import new
 
 from pcs.wsgi_handlers.base import WsgiParameterError
 from pcs.wsgi_handlers.appengine.reservations import ReservationsHandler
-from pcs.wsgi_handlers.appengine.reservations import ReservationsHtmlHandler
 from pcs.wsgi_handlers.appengine.reservations import ReservationsJsonHandler
 from pcs.fetchers import _ReservationsSourceInterface
 from pcs.fetchers import _SessionSourceInterface
@@ -13,7 +12,6 @@ from pcs.fetchers.screenscrape.reservations import ReservationsScreenscrapeSourc
 from pcs.fetchers.screenscrape.pcsconnection import PcsConnection
 from pcs.renderers import _ReservationsViewInterface
 from pcs.renderers import _ErrorViewInterface
-from pcs.renderers.html.availability import AvailabilityHtmlView
 from pcs.renderers.json.reservations import ReservationsJsonView
 from util.BeautifulSoup import BeautifulSoup
 from util.testing import patch
@@ -138,18 +136,6 @@ class ReservationsHandlerTest (unittest.TestCase):
         self.handler.get()
         
         self.assert_(self.handler.get_handler_called)
-
-class ReservationsHtmlHandlerTest (unittest.TestCase):
-    def testShouldBeIntializedWithScreenscrapeSourcesAndHtmlViews(self):
-        handler = ReservationsHtmlHandler()
-        self.assertEqual(handler.session_source.__class__.__name__,
-                         'SessionScreenscrapeSource')
-        self.assertEqual(handler.reservation_source.__class__.__name__,
-                         'ReservationsScreenscrapeSource')
-        self.assertEqual(handler.reservation_view.__class__.__name__,
-                         'ReservationsHtmlView')
-        self.assertEqual(handler.error_view.__class__.__name__,
-                         'ErrorHtmlView')
 
 class ReservationsScreenscrapeSourceTest (unittest.TestCase):
     def setUp(self):

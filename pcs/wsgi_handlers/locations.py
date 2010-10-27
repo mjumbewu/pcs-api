@@ -2,8 +2,6 @@ from pcs.wsgi_handlers.base import _SessionBasedHandler
 from pcs.wsgi_handlers.base import WsgiParameterError
 from pcs.fetchers.screenscrape.session import SessionScreenscrapeSource
 from pcs.fetchers.screenscrape.locations import LocationsScreenscrapeSource
-from pcs.renderers.html.error import ErrorHtmlView
-from pcs.renderers.html.locations import LocationsHtmlView
 from pcs.renderers.json.error import ErrorJsonView
 from pcs.renderers.json.locations import LocationsJsonView
 
@@ -34,14 +32,6 @@ class LocationsHandler (_SessionBasedHandler):
         
         self.response.out.write(response_body);
         self.response.set_status(200);
-
-class LocationsHtmlHandler (LocationsHandler):
-    def __init__(self):
-        super(LocationsHtmlHandler, self).__init__(
-            SessionScreenscrapeSource(),
-            LocationsScreenscrapeSource(),
-            LocationsHtmlView(),
-            ErrorHtmlView())
 
 class LocationsJsonHandler (LocationsHandler):
     def __init__(self):

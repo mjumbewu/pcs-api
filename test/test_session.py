@@ -491,17 +491,6 @@ class SessionJsonViewTest (unittest.TestCase):
 				self.assertEqual(result, expected)
 				
 				
-from pcs.wsgi_handlers.appengine.session import SessionHtmlHandler
-from pcs.renderers.html.session import SessionHtmlView
-from pcs.renderers.html.error import ErrorHtmlView
-class SessionHtmlHandlerTest (unittest.TestCase):
-    def testShouldBeInitializedWithASessionHtmlView(self):
-        handler = SessionHtmlHandler()
-        
-        self.assertEqual(handler.session_view.__class__.__name__, SessionHtmlView.__name__)
-        self.assertEqual(handler.session_source.__class__.__name__, SessionScreenscrapeSource.__name__)
-        self.assertEqual(handler.error_view.__class__.__name__, ErrorHtmlView.__name__)
-
 from pcs.wsgi_handlers.appengine.session import SessionJsonHandler
 from pcs.renderers.json.session import SessionJsonView
 from pcs.renderers.json.error import ErrorJsonView
