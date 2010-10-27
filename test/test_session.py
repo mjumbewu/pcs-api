@@ -4,7 +4,7 @@ import StringIO
 from util.testing import Stub
 from util.testing import patch
 
-from pcs.wsgi_handlers.wsgi import WsgiParameterError
+from pcs.wsgi_handlers.appengine import WsgiParameterError
 from pcs.source import SessionLoginError
 from pcs.source import SessionExpiredError
 
@@ -197,7 +197,7 @@ class SessionScreenscrapeSourceTest (unittest.TestCase):
         
         self.fail('Should have raised SessionExpiredError')
 
-from pcs.wsgi_handlers.wsgi.session import SessionHandler
+from pcs.wsgi_handlers.appengine.session import SessionHandler
 from pcs.source import _SessionSourceInterface
 from pcs.view import _SessionViewInterface
 from pcs.source import SessionLoginError
@@ -491,7 +491,7 @@ class SessionJsonViewTest (unittest.TestCase):
 				self.assertEqual(result, expected)
 				
 				
-from pcs.wsgi_handlers.wsgi.session import SessionHtmlHandler
+from pcs.wsgi_handlers.appengine.session import SessionHtmlHandler
 from pcs.view.html.session import SessionHtmlView
 from pcs.view.html.error import ErrorHtmlView
 class SessionHtmlHandlerTest (unittest.TestCase):
@@ -502,7 +502,7 @@ class SessionHtmlHandlerTest (unittest.TestCase):
         self.assertEqual(handler.session_source.__class__.__name__, SessionScreenscrapeSource.__name__)
         self.assertEqual(handler.error_view.__class__.__name__, ErrorHtmlView.__name__)
 
-from pcs.wsgi_handlers.wsgi.session import SessionJsonHandler
+from pcs.wsgi_handlers.appengine.session import SessionJsonHandler
 from pcs.view.json.session import SessionJsonView
 from pcs.view.json.error import ErrorJsonView
 class SessionJsonHandlerTest (unittest.TestCase):

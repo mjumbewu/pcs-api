@@ -11,8 +11,8 @@ except ImportError:
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 
-from pcs.wsgi_handlers.wsgi import _SessionBasedHandler
-from pcs.wsgi_handlers.wsgi import WsgiParameterError
+from pcs.wsgi_handlers.appengine import _SessionBasedHandler
+from pcs.wsgi_handlers.appengine import WsgiParameterError
 from pcs.view.html.error import ErrorHtmlView
 from pcs.view.html.login import LoginHtmlView
 from pcs.view.html.session import SessionHtmlView

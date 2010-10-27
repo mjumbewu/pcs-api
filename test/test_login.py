@@ -3,7 +3,7 @@ import StringIO
 
 from util.testing import Stub
 
-from pcs.wsgi_handlers.wsgi.login import LoginHandler
+from pcs.wsgi_handlers.appengine.login import LoginHandler
 from pcs.view import _LoginViewInterface
 class LoginHandlerTest (unittest.TestCase):
     def testShouldRespondWithLoginForm(self):
@@ -33,7 +33,7 @@ class LoginHandlerTest (unittest.TestCase):
         response_body = handler.response.out.getvalue()
         self.assertEqual(response_body, 'LoginForm')
 
-from pcs.wsgi_handlers.wsgi.login import LoginHtmlHandler
+from pcs.wsgi_handlers.appengine.login import LoginHtmlHandler
 from pcs.view.html.login import LoginHtmlView
 class LoginHtmlHandlerTest (unittest.TestCase):
     def setUp(self):

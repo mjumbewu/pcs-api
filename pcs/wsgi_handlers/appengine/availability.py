@@ -7,9 +7,9 @@ import re
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 
-from pcs.wsgi_handlers.wsgi import _SessionBasedHandler
-from pcs.wsgi_handlers.wsgi import _TimeRangeBasedHandler
-from pcs.wsgi_handlers.wsgi import WsgiParameterError
+from pcs.wsgi_handlers.appengine import _SessionBasedHandler
+from pcs.wsgi_handlers.appengine import _TimeRangeBasedHandler
+from pcs.wsgi_handlers.appengine import WsgiParameterError
 from pcs.source.screenscrape.session import SessionScreenscrapeSource
 from pcs.source.screenscrape.availability import AvailabilityScreenscrapeSource
 from pcs.source.screenscrape.locations import LocationsScreenscrapeSource

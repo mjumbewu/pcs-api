@@ -3,8 +3,8 @@ import datetime
 import new
 
 from pcs.data.session import Session
-from pcs.wsgi_handlers.wsgi.locations import LocationsHandler
-from pcs.wsgi_handlers.wsgi.locations import LocationsJsonHandler
+from pcs.wsgi_handlers.appengine.locations import LocationsHandler
+from pcs.wsgi_handlers.appengine.locations import LocationsJsonHandler
 from pcs.source import _LocationsSourceInterface
 from pcs.source import _SessionSourceInterface
 from pcs.source import SessionExpiredError
