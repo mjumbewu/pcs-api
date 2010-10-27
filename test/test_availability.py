@@ -2,7 +2,7 @@ import unittest
 import datetime
 import new
 
-from pcs.wsgi_handlers.appengine import WsgiParameterError
+from pcs.wsgi_handlers.base import WsgiParameterError
 from pcs.wsgi_handlers.appengine.availability import VehicleAvailabilityHandler
 from pcs.wsgi_handlers.appengine.availability import LocationAvailabilityHandler
 from pcs.wsgi_handlers.appengine.availability import LocationAvailabilityHtmlHandler
@@ -62,7 +62,8 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
         # Given...
         handler = VehicleAvailabilityHandler(self.session_source, self.vehicle_source, 
                                  self.vehicle_view, self.error_view)
-        handler.initialize(self.request, self.response)
+        handler.request = self.request
+        handler.response = self.response
         
         # When...
         start_time, end_time = handler.get_time_range()
@@ -94,7 +95,8 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
         
         handler = VehicleAvailabilityHandler(self.session_source, self.vehicle_source, 
                                  self.vehicle_view, self.error_view)
-        handler.initialize(self.request, self.response)
+        handler.request = self.request
+        handler.response = self.response
         
         # When...
         vehicleid = 'vid1234'
@@ -125,7 +127,8 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
         
         handler = VehicleAvailabilityHandler(self.session_source, self.vehicle_source, 
                                  self.vehicle_view, self.error_view)
-        handler.initialize(self.request, self.response)
+        handler.request = self.request
+        handler.response = self.response
         
         # When...
         sessionid = 'sid1234'
@@ -143,7 +146,8 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
     def testShouldRespondWithVehicleAvailabilityInformationBasedOnTheAvailabilitySource(self):
         handler = VehicleAvailabilityHandler(self.session_source, self.vehicle_source, 
                                  self.vehicle_view, self.error_view)
-        handler.initialize(self.request, self.response)
+        handler.request = self.request
+        handler.response = self.response
         
         @patch(handler)
         def get_user_id(self):
@@ -206,7 +210,8 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
     def testReturnContentFromErrorViewWhenAnExceptionIsRaised(self):
         handler = VehicleAvailabilityHandler(self.session_source, self.vehicle_source, 
                                  self.vehicle_view, self.error_view)
-        handler.initialize(self.request, self.response)
+        handler.request = self.request
+        handler.response = self.response
         
         @patch(handler)
         def get_user_id(self):

@@ -4,7 +4,7 @@ import StringIO
 from util.testing import Stub
 from util.testing import patch
 
-from pcs.wsgi_handlers.appengine import WsgiParameterError
+from pcs.wsgi_handlers.base import WsgiParameterError
 from pcs.fetchers import SessionLoginError
 from pcs.fetchers import SessionExpiredError
 

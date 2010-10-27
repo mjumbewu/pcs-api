@@ -2,7 +2,7 @@ import unittest
 import datetime
 import new
 
-from pcs.wsgi_handlers.appengine import WsgiParameterError
+from pcs.wsgi_handlers.base import WsgiParameterError
 from pcs.wsgi_handlers.appengine.reservations import ReservationsHandler
 from pcs.wsgi_handlers.appengine.reservations import ReservationsHtmlHandler
 from pcs.wsgi_handlers.appengine.reservations import ReservationsJsonHandler
@@ -62,7 +62,8 @@ class ReservationsHandlerTest (unittest.TestCase):
             self.reservation_source,
             self.reservation_view, 
             self.error_view)
-        self.handler.initialize(self.request, self.response)
+        self.handler.request = self.request
+        self.handler.response = self.response
     
     def testShouldPassDateStructureToReservationSource(self):
         self.request.cookies = {
