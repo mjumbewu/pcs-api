@@ -2,11 +2,11 @@ import unittest
 import datetime
 import new
 
-from pcs.input.wsgi import WsgiParameterError
-from pcs.input.wsgi.availability import VehicleAvailabilityHandler
-from pcs.input.wsgi.availability import LocationAvailabilityHandler
-from pcs.input.wsgi.availability import LocationAvailabilityHtmlHandler
-from pcs.input.wsgi.availability import LocationAvailabilityJsonHandler
+from pcs.wsgi_handlers.wsgi import WsgiParameterError
+from pcs.wsgi_handlers.wsgi.availability import VehicleAvailabilityHandler
+from pcs.wsgi_handlers.wsgi.availability import LocationAvailabilityHandler
+from pcs.wsgi_handlers.wsgi.availability import LocationAvailabilityHtmlHandler
+from pcs.wsgi_handlers.wsgi.availability import LocationAvailabilityJsonHandler
 from pcs.source import _AvailabilitySourceInterface
 from pcs.source import _LocationsSourceInterface
 from pcs.source import _SessionSourceInterface

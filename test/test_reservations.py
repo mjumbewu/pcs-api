@@ -2,10 +2,10 @@ import unittest
 import datetime
 import new
 
-from pcs.input.wsgi import WsgiParameterError
-from pcs.input.wsgi.reservations import ReservationsHandler
-from pcs.input.wsgi.reservations import ReservationsHtmlHandler
-from pcs.input.wsgi.reservations import ReservationsJsonHandler
+from pcs.wsgi_handlers.wsgi import WsgiParameterError
+from pcs.wsgi_handlers.wsgi.reservations import ReservationsHandler
+from pcs.wsgi_handlers.wsgi.reservations import ReservationsHtmlHandler
+from pcs.wsgi_handlers.wsgi.reservations import ReservationsJsonHandler
 from pcs.source import _ReservationsSourceInterface
 from pcs.source import _SessionSourceInterface
 from pcs.source.screenscrape import ScreenscrapeParseError
