@@ -23,23 +23,6 @@ class ReservationsHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
         period = self.request.get('period', None)
         return from_isostring(period) if period else None
     
-    def handle_get_reservations(self):
-        try:
-            userid = self.get_user_id()
-            sessionid = self.get_session_id()
-            
-            period = self.get_period()
-            
-            session = self.session_source.get_existing_session(userid, sessionid)
-            reservations, page, page_count = self.reservation_source.get_reservations(sessionid, period)
-            response_body = self.reservation_view.render_reservations(session, reservations, page, page_count)
-        
-        except KeyError, e:
-            response_body = self.generate_error(e)
-            
-        self.response.out.write(response_body);
-        self.response.set_status(200);
-    
     def get_vehicle_id(self):
         vehicle_id = self.request.get('vehicle', None)
         if vehicle_id is None:
@@ -55,7 +38,24 @@ class ReservationsHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
             raise WsgiParameterError('Could not find transaction id.')
         return transaction_id
     
-    def handle_create_reservation(self):
+    def get(self):
+        try:
+            userid = self.get_user_id()
+            sessionid = self.get_session_id()
+            
+            period = self.get_period()
+            
+            session = self.session_source.fetch_session(userid, sessionid)
+            reservations, page, page_count = self.reservation_source.fetch_reservations(sessionid, period)
+            response_body = self.reservation_view.render_reservations(session, reservations, page, page_count)
+        
+        except KeyError, e:
+            response_body = self.generate_error(e)
+            
+        self.response.out.write(response_body);
+        self.response.set_status(200);
+    
+    def post(self):
         try:
             userid =  self.get_user_id()
             sessionid = self.get_session_id()
@@ -64,8 +64,8 @@ class ReservationsHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
             start_time, end_time = self.get_time_range()
             memo = self.get_reservation_memo()
             
-            session = self.session_source.get_existing_session(userid, sessionid)
-            reservation = self.reservation_source.get_new_reservation(sessionid, vehicleid, transactionid, start_time, end_time, memo)
+            session = self.session_source.fetch_session(userid, sessionid)
+            reservation = self.reservation_source.create_reservation(sessionid, vehicleid, transactionid, start_time, end_time, memo)
             if reservation:
                 response_body = \
                     self.reservation_view.get_successful_new_reservation(
@@ -80,12 +80,6 @@ class ReservationsHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
         
         self.response.out.write(response_body);
         self.response.set_status(200)
-    
-    def get(self):
-        self.handle_get_reservations()
-    
-    def post(self):
-        self.handle_create_reservation()
 
 class ReservationHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
     def __init__(self,

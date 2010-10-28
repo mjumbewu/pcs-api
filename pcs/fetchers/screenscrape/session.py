@@ -136,7 +136,7 @@ class SessionScreenscrapeSource (_SessionSourceInterface):
             raise SessionLoginError('Incorrect user id/password combinantion.')
     
     @override
-    def get_existing_session(self, userid, sessionid):
+    def fetch_session(self, userid, sessionid):
         conn = self.create_host_connection()
         
         pcs_reconnect_body, pcs_reconnect_headers = \

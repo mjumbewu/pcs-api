@@ -7,37 +7,37 @@ class _SessionSourceInterface (object):
     def create_session(self, userid, password):
         raise NotImplementedError()
     
-    def get_existing_session(self, userid, sessionid):
+    def fetch_session(self, userid, sessionid):
         raise NotImplementedError()
 
 class _AvailabilitySourceInterface (object):
-    def get_available_vehicles_near(self, sessionid, locationid, start_time, end_time):
+    def fetch_available_vehicles_near(self, sessionid, locationid, start_time, end_time):
         raise NotImplementedError()
     
-    def get_vehicle(self, sessionid, vehicleid, start_time, end_time):
+    def fetch_vehicle(self, sessionid, vehicleid, start_time, end_time):
         raise NotImplementedError()
     
-    def get_vehicle_price_estimate(self, sessionid, vehicleid, start_time, end_time):
+    def fetch_vehicle_price_estimate(self, sessionid, vehicleid, start_time, end_time):
         raise NotImplementedError()
     
-    def get_updated_transaction(self, sessionid, vehicleid, start_time, end_time):
+    def fetch_updated_transaction(self, sessionid, vehicleid, start_time, end_time):
         raise NotImplementedError()
 
 class _ReservationsSourceInterface (object):
-    def get_reservations(self, sessionid, year_month=None):
+    def fetch_reservations(self, sessionid, year_month=None):
         raise NotImplementedError()
     
-    def get_new_reservation(self, sessionid, vehicleid, transactionid, start_time, end_time, reservation_memo):
+    def create_reservation(self, sessionid, vehicleid, transactionid, start_time, end_time, reservation_memo):
         raise NotImplementedError()
 
 class _LocationsSourceInterface (object):
-    def get_location_profiles(self, sessionid):
+    def fetch_location_profiles(self, sessionid):
         raise NotImplementedError()
     
-    def get_location_profile(self, sessionid, locationid):
+    def fetch_location_profile(self, sessionid, locationid):
         raise NotImplementedError()
     
-    def get_custom_location(self, location_name, location_key):
+    def fetch_custom_location(self, location_name, location_key):
         raise NotImplementedError()
 
 class SessionLoginError (Exception):

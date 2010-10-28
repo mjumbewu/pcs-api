@@ -28,7 +28,7 @@ class LocationAvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler)
         self.vehicle_view = vehicle_view
     
     def get_available_vehicles(self, sessionid, locationid, start_time, end_time):
-        vehicles = self.vehicle_source.get_available_vehicles_near(sessionid, locationid, start_time, end_time)
+        vehicles = self.vehicle_source.fetch_available_vehicles_near(sessionid, locationid, start_time, end_time)
         return vehicles
     
     def get_location_id(self):
@@ -45,9 +45,9 @@ class LocationAvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler)
     
     def get_location(self, sessionid, locationid):
         if locationid is None or isinstance(locationid, (basestring, int)):
-            location = self.location_source.get_location_profile(sessionid, locationid)
+            location = self.location_source.fetch_location_profile(sessionid, locationid)
         else:
-            location = self.location_source.get_custom_location('My Current Location', locationid)
+            location = self.location_source.fetch_custom_location('My Current Location', locationid)
         
         return location
     
@@ -89,18 +89,6 @@ class VehicleAvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
         self.vehicle_source = vehicle_source
         self.vehicle_view = vehicle_view
     
-    def get_vehicle(self, sessionid, vehicleid, start_time, end_time):
-        vehicle = self.vehicle_source.get_vehicle(sessionid, vehicleid, start_time, end_time)
-        return vehicle
-    
-    def get_price_estimate(self, sessionid, vehicleid, start_time, end_time):
-        price = self.vehicle_source.get_vehicle_price_estimate(sessionid, vehicleid, start_time, end_time)
-        return price
-    
-    def get_updated_transaction(self, sessionid, vehicleid, start_time, end_time):
-        transaction = self.vehicle_source.get_updated_transaction(sessionid, vehicleid, start_time, end_time)
-        return transaction
-    
     def get(self, vehicleid):
         try:
             userid = self.get_user_id()
@@ -108,9 +96,9 @@ class VehicleAvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
             session = self.get_session(userid, sessionid)
             start_time, end_time = self.get_time_range()
             
-            vehicle = self.get_vehicle(sessionid, vehicleid, start_time, end_time)
-            price = self.get_price_estimate(sessionid, vehicleid, start_time, end_time)
-#            transaction = self.get_updated_transaction(sessionid, vehicleid, start_time, end_time)
+            vehicle = self.vehicle_source.fetch_vehicle(sessionid, vehicleid, start_time, end_time)
+            price = self.vehicle_source.fetch_vehicle_price_estimate(sessionid, vehicleid, start_time, end_time)
+#            transaction = self.vehicle_source.fetch_updated_transaction(sessionid, vehicleid, start_time, end_time)
             
 #            session.transaction = transaction
             

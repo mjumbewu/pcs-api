@@ -270,7 +270,7 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
         return PcsConnection()
     
     @override
-    def get_available_vehicles_near(self, sessionid, locationid, start_time, end_time):
+    def fetch_available_vehicles_near(self, sessionid, locationid, start_time, end_time):
         conn = self.create_host_connection()
         
         pcs_available_body, pcs_available_headers = \
@@ -334,7 +334,7 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
         return vehicle
     
     @override
-    def get_vehicle(self, sessionid, vehicleid, start_time, end_time):
+    def fetch_vehicle(self, sessionid, vehicleid, start_time, end_time):
         conn = self.create_host_connection()
         
         pcs_vehicle_body, pcs_vehicle_headers = \
@@ -349,7 +349,7 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
         return tid_field['value']
     
     @override
-    def get_updated_transaction(self, sessionid, vehicleid, start_time, end_time):
+    def fetch_updated_transaction(self, sessionid, vehicleid, start_time, end_time):
         conn = self.create_host_connection()
         
         pcs_vehicle_body, pcs_vehicle_headers = \
@@ -397,7 +397,7 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
         return price
     
     @override
-    def get_vehicle_price_estimate(self, sessionid, vehicleid, start_time, end_time):
+    def fetch_vehicle_price_estimate(self, sessionid, vehicleid, start_time, end_time):
         conn = self.create_host_connection()
         
         pcs_price_body, pcs_price_headers = \

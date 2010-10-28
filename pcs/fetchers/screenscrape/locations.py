@@ -67,7 +67,7 @@ class LocationsScreenscrapeSource (_LocationsSourceInterface):
         return location_profiles
     
     @override
-    def get_location_profiles(self, sessionid):
+    def fetch_location_profiles(self, sessionid):
         conn = self.create_connection()
         locations = None
         prefs_body, prefs_headers = \
@@ -77,9 +77,9 @@ class LocationsScreenscrapeSource (_LocationsSourceInterface):
         return locations
     
     @override
-    def get_location_profile(self, sessionid, locationid):
+    def fetch_location_profile(self, sessionid, locationid):
         conn = self.create_connection()
-        locations = self.get_location_profiles(sessionid)
+        locations = self.fetch_location_profiles(sessionid)
         
         for location in locations:
             if locationid is None and location.is_default:
@@ -90,7 +90,7 @@ class LocationsScreenscrapeSource (_LocationsSourceInterface):
         raise ScreenscrapeParseError('No location with id %r found' % locationid)
     
     @override
-    def get_custom_location(self, location_name, location_key):
+    def fetch_custom_location(self, location_name, location_key):
         if not isinstance(location_key, (list, tuple)) or len(location_key) != 2:
             raise ScreenscrapeParseError('Invalid location key: %r' % location_key)
         

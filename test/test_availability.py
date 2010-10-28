@@ -79,68 +79,6 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
         self.assert_(-threshold < later_time - end_time < threshold,
             "Time between (%s) and (%s) should be less than %s" % (later_time, end_time, threshold))
     
-    def testShouldPassCorrectVehicleIdToAvailabilitySourceForVehicleAvailability(self):
-        # Given...
-        self.request.cookies = { 'sid':'sid1234' }
-        
-        @patch(self.vehicle_source)
-        def get_vehicle(self, sessionid, vehicleid, start_time, end_time):
-            self.sessionid = sessionid
-            self.vehicleid = vehicleid
-            self.start_time = start_time
-            self.end_time = end_time
-            return 'My Availability'
-        
-        handler = VehicleAvailabilityHandler(self.session_source, self.vehicle_source, 
-                                 self.vehicle_view, self.error_view)
-        handler.request = self.request
-        handler.response = self.response
-        
-        # When...
-        vehicleid = 'vid1234'
-        sessionid = 'sid1234'
-        start_time = 0
-        end_time = 100
-        vehicle = handler.get_vehicle(sessionid, vehicleid, start_time, end_time)
-        
-        # Then...
-        self.assertEqual(self.vehicle_source.vehicleid, 'vid1234')
-        self.assertEqual(self.vehicle_source.sessionid, 'sid1234')
-        self.assertEqual(self.vehicle_source.start_time, 0)
-        self.assertEqual(self.vehicle_source.end_time, 100)
-        self.assertEqual(vehicle, 'My Availability')
-    
-    def testShouldPassCorrectVehicleIdAndTimeRangeToAvailabilitySourceForPriceEstimate(self):
-        # Given...
-        self.request['start_time'] = '2010-12-30T12:45'
-        self.request['end_time'] = '2011-01-30T12:45'
-        
-        @patch(self.vehicle_source)
-        def get_vehicle_price_estimate(self, sessionid, vehicleid, start_time, end_time):
-            self.sessionid = sessionid
-            self.vehicleid = vehicleid
-            self.start_time = start_time
-            self.end_time = end_time
-            return 'My Availability'
-        
-        handler = VehicleAvailabilityHandler(self.session_source, self.vehicle_source, 
-                                 self.vehicle_view, self.error_view)
-        handler.request = self.request
-        handler.response = self.response
-        
-        # When...
-        sessionid = 'sid1234'
-        vehicleid = 'vid1234'
-        start_time, end_time = handler.get_time_range()
-        availability = handler.get_price_estimate(sessionid, vehicleid, start_time, end_time)
-        
-        # Then...
-        self.assertEqual(self.vehicle_source.sessionid, 'sid1234')
-        self.assertEqual(self.vehicle_source.vehicleid, 'vid1234')
-        self.assertEqual(self.vehicle_source.start_time, datetime.datetime(2010, 12, 30, 12, 45, tzinfo=Eastern))
-        self.assertEqual(self.vehicle_source.end_time, datetime.datetime(2011, 01, 30, 12, 45, tzinfo=Eastern))
-        self.assertEqual(availability, 'My Availability')
-        
     def testShouldRespondWithVehicleAvailabilityInformationBasedOnTheAvailabilitySource(self):
         handler = VehicleAvailabilityHandler(self.session_source, self.vehicle_source, 
                                  self.vehicle_view, self.error_view)
@@ -163,16 +101,16 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
             self.sessionid = sessionid
             return 'my session'
         
-        @patch(handler)
-        def get_vehicle(self, sessionid, vehicleid, start_time, end_time):
+        @patch(self.vehicle_source)
+        def fetch_vehicle(self, sessionid, vehicleid, start_time, end_time):
             self.vehicle_sessionid = sessionid
             self.vehicle_vehicleid = vehicleid
             self.vehicle_start_time = start_time
             self.vehicle_end_time = end_time
             return 'my vehicle'
         
-        @patch(handler)
-        def get_price_estimate(self, sessionid, vehicleid, start_time, end_time):
+        @patch(self.vehicle_source)
+        def fetch_vehicle_price_estimate(self, sessionid, vehicleid, start_time, end_time):
             self.price_sessionid = sessionid
             self.price_vehicleid = vehicleid
             self.price_start_time = start_time
@@ -197,10 +135,10 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
         self.assert_(handler.sessionid_called)
         self.assertEqual(handler.userid, 'user1234')
         self.assertEqual(handler.sessionid, 'ses1234')
-        self.assertEqual(handler.vehicle_sessionid, 'ses1234')
-        self.assertEqual(handler.vehicle_vehicleid, 'veh1234')
-        self.assertEqual(handler.price_sessionid, 'ses1234')
-        self.assertEqual(handler.price_vehicleid, 'veh1234')
+        self.assertEqual(self.vehicle_source.vehicle_sessionid, 'ses1234')
+        self.assertEqual(self.vehicle_source.vehicle_vehicleid, 'veh1234')
+        self.assertEqual(self.vehicle_source.price_sessionid, 'ses1234')
+        self.assertEqual(self.vehicle_source.price_vehicleid, 'veh1234')
 #        self.assertEqual(self.vehicle_view.session, 'my session')
 #        self.assertEqual(self.vehicle_view.vehicle, 'my vehicle')
         self.assertEqual(self.response.out.getvalue(), 'my vehicle info body')
@@ -226,16 +164,16 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
             self.sessionid = sessionid
             return 'my session'
         
-        @patch(handler)
-        def get_vehicle(self, sessionid, vehicleid, start_time, end_time):
+        @patch(self.vehicle_source)
+        def fetch_vehicle(self, sessionid, vehicleid, start_time, end_time):
             self.vehicle_sessionid = sessionid
             self.vehicle_vehicleid = vehicleid
             self.vehicle_start_time = start_time
             self.vehicle_end_time = end_time
             return 'my vehicle'
         
-        @patch(handler)
-        def get_price_estimate(self, sessionid, vehicleid, start_time, end_time):
+        @patch(self.vehicle_source)
+        def fetch_vehicle_price_estimate(self, sessionid, vehicleid, start_time, end_time):
             self.price_sessionid = sessionid
             self.price_vehicleid = vehicleid
             self.price_start_time = start_time
@@ -363,7 +301,7 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
     def testShouldReturnSessionBasedOnTheSessionSource(self):
         # Given...
         @patch(self.session_source)
-        def get_existing_session(self, userid, sessionid):
+        def fetch_session(self, userid, sessionid):
             self.userid = userid
             self.sessionid = sessionid
             return 'my session'
@@ -458,7 +396,7 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
     def testShouldReturnAvailableVehiclesNearLocationBasedOnTheAvailabilitySource(self):
         # Given...
         @patch(self.vehicle_source)
-        def get_available_vehicles_near(self, sessionid, locationid, start_time, end_time):
+        def fetch_available_vehicles_near(self, sessionid, locationid, start_time, end_time):
             self.sessionid = sessionid
             self.locationid = locationid
             self.start_time = start_time
@@ -517,7 +455,7 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
     def testShouldReturnLocationAccordingToLocationSourceWhenGivenALocationId(self):
         # Given...
         @patch(self.location_source)
-        def get_location_profile(self, sessionid, locationid):
+        def fetch_location_profile(self, sessionid, locationid):
             self.sessionid = sessionid
             self.locationid = locationid
             return 'my location'
@@ -535,7 +473,7 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
     def testShouldReturnLocationAccordingToLocationSourceWhenGivenALatitudeAndLongitude(self):
         # Given...
         @patch(self.location_source)
-        def get_custom_location(self, location_name, location_key):
+        def fetch_custom_location(self, location_name, location_key):
             self.location_name = location_name
             self.location_key = location_key
             return 'my location'
@@ -671,7 +609,7 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
         
         # ...and the session source recognizes the cookies:
         @patch(self.session_source)
-        def get_existing_session(self, userid, sessionid):
+        def fetch_session(self, userid, sessionid):
             class StubSession (object):
                 id = 5
                 user = '4600'
@@ -679,7 +617,7 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
             return StubSession()
         
         @patch(self.location_source)
-        def get_location_profile(self, sessionid, locationid):
+        def fetch_location_profile(self, sessionid, locationid):
             class StubLocation (object):
                 id = locationid
             return StubLocation()
@@ -857,7 +795,7 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
             return StubConnection()
         
         # When...
-        vehicle_availabilities = self.source.get_available_vehicles_near(sessionid,locationid,stime,etime)
+        vehicle_availabilities = self.source.fetch_available_vehicles_near(sessionid,locationid,stime,etime)
         
         # Then...
         self.assertEqual([va.vehicle.model.name for va in vehicle_availabilities], ['Tacoma Pickup','Prius Liftback','Honda Element','Prius Liftback'])
@@ -1075,7 +1013,7 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
         start_time = 100
         end_time = 1000
         
-        price = self.source.get_vehicle_price_estimate(sessionid, vehicleid, start_time, end_time)
+        price = self.source.fetch_vehicle_price_estimate(sessionid, vehicleid, start_time, end_time)
         
         self.assertEqual(self.source.gpe_conn, 'my connection')
         self.assertEqual(self.source.gpe_sessionid, 'ses1234')

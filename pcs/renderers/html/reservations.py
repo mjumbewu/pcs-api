@@ -12,7 +12,7 @@ class ReservationsHtmlView (_ReservationsViewInterface):
         self.render_method = render_method
     
     @override
-    def get_reservations(self, session, reservations):
+    def fetch_reservations(self, session, reservations):
         reservations.sort(key=lambda res: res.start_time)
         reservations.reverse()
         reservations.sort(key=lambda res: res.status)

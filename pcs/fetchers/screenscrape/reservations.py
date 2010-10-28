@@ -248,7 +248,7 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
         return current_page, last_page
     
     @override
-    def get_reservations(self, sessionid, year_month=None):
+    def fetch_reservations(self, sessionid, year_month=None):
         conn = self.get_pcs_connection()
         
         if year_month is None:
@@ -388,7 +388,7 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
         return reservationid, confirmid
     
     @override 
-    def get_new_reservation(self, sessionid, vehicleid, transactionid, start_time, end_time, reservation_memo):
+    def create_reservation(self, sessionid, vehicleid, transactionid, start_time, end_time, reservation_memo):
         conn = self.get_pcs_connection()
         
         pcs_body, pcs_head = \
@@ -399,7 +399,7 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
             conn, sessionid, reservation_html_doc)
         
         reservation = Reservation(reservationid, confirmid)
-        reservation.vehicle = self.vehicle_source.get_vehicle(sessionid, vehicleid, start_time, end_time)
+        reservation.vehicle = self.vehicle_source.fetch_vehicle(sessionid, vehicleid, start_time, end_time)
         reservation.start_time = start_time
         reservation.end_time = end_time
         

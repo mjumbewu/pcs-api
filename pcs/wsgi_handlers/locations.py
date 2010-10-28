@@ -25,7 +25,7 @@ class LocationsHandler (_SessionBasedHandler):
             sessionid = self.get_session_id()
             
             session = self.get_session(userid, sessionid)
-            locations = self.locations_source.get_location_profiles(sessionid)
+            locations = self.locations_source.fetch_location_profiles(sessionid)
             response_body = self.locations_view.render_locations(session, locations)
         except Exception, e:
             response_body = self.generate_error(e)

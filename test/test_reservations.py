@@ -71,7 +71,7 @@ class ReservationsHandlerTest (unittest.TestCase):
         self.request['period'] = '2010-09'
         
         @patch(self.session_source)
-        def get_existing_session(self, userid, sessionid):
+        def fetch_session(self, userid, sessionid):
             pass
         
         @patch(self.reservation_view)
@@ -79,7 +79,7 @@ class ReservationsHandlerTest (unittest.TestCase):
             pass
         
         @patch(self.reservation_source)
-        def get_reservations(self, sessionid, year_month=None):
+        def fetch_reservations(self, sessionid, year_month=None):
             self.year_month = year_month
             return (None,None,None)
         
@@ -98,13 +98,13 @@ class ReservationsHandlerTest (unittest.TestCase):
             return 'ses1234'
         
         @patch(self.session_source)
-        def get_existing_session(self, userid, sessionid):
+        def fetch_session(self, userid, sessionid):
             self.userid = userid
             self.sessionid = sessionid
             return 'my session'
          
         @patch(self.reservation_source)
-        def get_reservations(self, sessionid, year_month=None):
+        def fetch_reservations(self, sessionid, year_month=None):
             self.sessionid = sessionid
             self.year_month = year_month
             return 'my reservations', 2, 5
@@ -115,7 +115,7 @@ class ReservationsHandlerTest (unittest.TestCase):
             self.reservations = reservations
             return 'my reservation response'
         
-        self.handler.handle_get_reservations()
+        self.handler.get()
         
         response = self.handler.response.out.getvalue()
         self.assert_(self.handler.userid_called)
@@ -127,15 +127,6 @@ class ReservationsHandlerTest (unittest.TestCase):
         self.assertEqual(self.reservation_view.session, 'my session')
         self.assertEqual(self.reservation_view.reservations, 'my reservations')
         self.assertEqual(response, 'my reservation response')
-    
-    def testShouldCallGetReservationsHandler(self):
-        @patch(self.handler)
-        def handle_get_reservations(self):
-            self.get_handler_called = True
-        
-        self.handler.get()
-        
-        self.assert_(self.handler.get_handler_called)
 
 class ReservationsScreenscrapeSourceTest (unittest.TestCase):
     def setUp(self):
@@ -306,7 +297,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         sessionid = 'ses1234'
         driverid = 'drv1234'
         
-        reservations, page, count = self.source.get_reservations(sessionid)
+        reservations, page, count = self.source.fetch_reservations(sessionid)
         
         self.assert_(self.source.pcs_conn_called)
         self.assert_(self.source.upcoming_res_called)
@@ -361,7 +352,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         sessionid = 'ses1234'
         driverid = 'drv1234'
         
-        reservations, page, count = self.source.get_reservations(sessionid, datetime.date(2010, 11, 1))
+        reservations, page, count = self.source.fetch_reservations(sessionid, datetime.date(2010, 11, 1))
         
         self.assert_(self.source.pcs_conn_called)
         self.assert_(not self.source.upcoming_res_called)

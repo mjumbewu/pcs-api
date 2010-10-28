@@ -37,7 +37,7 @@ class LocationHandlerTest (unittest.TestCase):
         
         # A source for vehicle availability information
         class StubLocationsSource (object):
-            def get_location_profiles(self, sessionid):
+            def fetch_location_profiles(self, sessionid):
                 pass
         StubLocationsSource = Stub(_LocationsSourceInterface)(StubLocationsSource)
         
@@ -86,7 +86,7 @@ class LocationHandlerTest (unittest.TestCase):
             return 'my session'
         
         @patch(self.locations_source)
-        def get_location_profiles(self, sessionid):
+        def fetch_location_profiles(self, sessionid):
             self.sessionid = sessionid
             return 'my locations'
         
@@ -166,7 +166,7 @@ class LocationsScreenscrapeSourceTest (unittest.TestCase):
             return StubConnection()
         
         # When...
-        locations = source.get_location_profiles(sessionid='123abc')
+        locations = source.fetch_location_profiles(sessionid='123abc')
         
         # Then...
         self.assertEqual(locations[0].name, 'My House')
@@ -237,7 +237,7 @@ class LocationsScreenscrapeSourceTest (unittest.TestCase):
             return StubConnection()
         
         # When...
-        location = source.get_location_profile('123abc', '25782103')
+        location = source.fetch_location_profile('123abc', '25782103')
         
         # Then...
         self.assertEqual(location.name, 'My Job')
@@ -249,7 +249,7 @@ class LocationsScreenscrapeSourceTest (unittest.TestCase):
         source = LocationsScreenscrapeSource()
         
         # When...
-        location = source.get_custom_location('Custom Location', (123,456))
+        location = source.fetch_custom_location('Custom Location', (123,456))
         
         # Then...
         self.assertEqual(location.name, 'Custom Location')

@@ -173,7 +173,7 @@ class SessionScreenscrapeSourceTest (unittest.TestCase):
             return conn
         
         # When...
-        session = source.get_existing_session('valid_user', '12345abcde')
+        session = source.fetch_session('valid_user', '12345abcde')
         
         # Then...
         self.assertEqual(session.user, 'valid_user')
@@ -189,7 +189,7 @@ class SessionScreenscrapeSourceTest (unittest.TestCase):
         
         # When...
         try:
-            session = source.get_existing_session('valid_user', 'expiredsession12345abcde')
+            session = source.fetch_session('valid_user', 'expiredsession12345abcde')
         
         # Then...
         except SessionExpiredError:

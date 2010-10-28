@@ -52,7 +52,7 @@ class _SessionBasedHandler (object):
         password is available, attempt to find an existing session id to use.
         @return: A valid session or None
         """
-        session = self.session_source.get_existing_session(userid, sessionid)
+        session = self.session_source.fetch_session(userid, sessionid)
         return session
 
     def generate_error(self, error):
