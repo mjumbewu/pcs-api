@@ -166,7 +166,7 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
         
         confirm_pattern = r"\&pk=(?P<confirmid>[0-9]+)'"
         confirm_match = re.search(confirm_pattern, confirm_script)
-        confirmid = confirm_match.groups('confirmid')
+        confirmid = confirm_match.group('confirmid')
         
         return confirmid
     

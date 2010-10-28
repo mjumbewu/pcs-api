@@ -36,6 +36,10 @@ class ReservationsJsonView (_ReservationsViewInterface):
                     }
                 }
             }
+            
+            if hasattr(reservation, 'confirmid'):
+                res_data['confirmid'] = reservation.confirmid
+            
             data['reservation_list']['reservations'].append(res_data)
         
         # Sort the keys, so that tests are repeatable.

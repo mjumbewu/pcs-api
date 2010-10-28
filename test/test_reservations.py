@@ -394,6 +394,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(res_data[0].status, ReservationStatus.PAST)
         self.assertEqual(res_data[-1].id, '2514083')
         self.assertEqual(res_data[-1].status, ReservationStatus.UPCOMING)
+        self.assertEqual(res_data[-1].confirmid, '149337407')
 
 class ReservationsJsonHandlerTest (unittest.TestCase):
     def testShouldUseScreenscrapeFetchersAndJsonRenderers(self):
@@ -432,6 +433,7 @@ class ReservationsJsonViewTest (unittest.TestCase):
         
         res2 = StubObject()
         res2.id = 'res2'
+        res2.confirmid = 'confid2'
         res2.start_time = datetime.datetime(2010, 12, 30, 16, 30, tzinfo=Eastern)
         res2.end_time = datetime.datetime(2010, 12, 31, 17, 15, tzinfo=Eastern)
         res2.vehicle = StubObject()
@@ -468,6 +470,7 @@ class ReservationsJsonViewTest (unittest.TestCase):
         }
       }, 
       {
+        "confirmid": "confid2", 
         "end_time": "2010-12-31T17:15", 
         "id": "res2", 
         "start_time": "2010-12-30T16:30", 
