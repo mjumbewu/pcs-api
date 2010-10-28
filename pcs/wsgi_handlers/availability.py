@@ -4,8 +4,6 @@ from pcs.wsgi_handlers.base import WsgiParameterError
 from pcs.fetchers.screenscrape.session import SessionScreenscrapeSource
 from pcs.fetchers.screenscrape.availability import AvailabilityScreenscrapeSource
 from pcs.fetchers.screenscrape.locations import LocationsScreenscrapeSource
-from pcs.renderers.html.availability import AvailabilityHtmlView
-from pcs.renderers.html.error import ErrorHtmlView
 from pcs.renderers.json.availability import AvailabilityJsonView
 from pcs.renderers.json.error import ErrorJsonView
 from util.abstract import override
