@@ -23,7 +23,7 @@ handlers:
 - url: /cookies
   script: pcs/input/wsgi/login.py
 
-- url: /*
+- url: /.*
   script: pcs/appengine_app.py
   secure: never
 
