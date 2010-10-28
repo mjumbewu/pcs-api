@@ -115,7 +115,7 @@ class SessionScreenscrapeSource (_SessionSourceInterface):
         return conn
     
     @override
-    def get_new_session(self, userid, password):
+    def create_session(self, userid, password):
         """
         @todo: Creating the connection here introduces a dependency for testing.
                It should be passed in as a parameter.  However, in practice, 

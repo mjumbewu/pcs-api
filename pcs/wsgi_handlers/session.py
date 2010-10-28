@@ -31,15 +31,6 @@ class SessionHandler (_SessionBasedHandler):
         
         return username, password
     
-    def get_new_session(self, userid, password):
-        """
-        Attempt to get a session using username and password credentials. If no
-        password is available, attempt to find an existing session id to use.
-        @return: A valid session or None
-        """
-        session = self.session_source.get_new_session(userid, password)
-        return session
-    
     def save_session(self, session):
         """
         Attempt to save the given login session to a cookie on the user's 
@@ -71,7 +62,7 @@ class SessionHandler (_SessionBasedHandler):
     def post(self):
         try:
             userid, password = self.get_credentials()
-            session = self.get_new_session(userid, password)
+            session = self.session_source.create_session(userid, password)
             
             response_body = self.session_view.render_session(session)
             self.save_session(session)

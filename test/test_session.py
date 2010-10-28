@@ -37,7 +37,7 @@ class SessionScreenscrapeSourceTest (unittest.TestCase):
             return ("<html><head><title>Please Login</title></head><body></body></html>", {})
         
         try:
-            session = source.get_new_session('uid', 'pass')
+            session = source.create_session('uid', 'pass')
         
         except SessionLoginError:
             return
@@ -60,7 +60,7 @@ class SessionScreenscrapeSourceTest (unittest.TestCase):
              """,
              {'set-cookie':'sid=abcde'})
              
-        session = source.get_new_session('uid', 'pass')
+        session = source.create_session('uid', 'pass')
         
         self.assertEqual(session.id, 'abcde')
         self.assertEqual(session.user, 'uid')
@@ -147,7 +147,7 @@ class SessionScreenscrapeSourceTest (unittest.TestCase):
             return conn
         
         # When...
-        session = source.get_new_session('valid_user', 'valid_pass')
+        session = source.create_session('valid_user', 'valid_pass')
         
         # Then...
         self.assertEqual(session.user, 'valid_user')
@@ -252,40 +252,6 @@ class SessionHandlerTest (unittest.TestCase):
         self.assertEqual(uid, 'userid')
         self.assertEqual(pword, 'pword')
     
-    def testShouldCreateNewSessionFromValidUseridAndPassword(self):
-        @patch(self.session_source)
-        def get_new_session(self, userid, password):
-            if userid == 'uid' and password == 'pword':
-                return 'my session'
-            else:
-                raise SessionLoginError()
-        
-        uid = 'uid'
-        pword = 'pword'
-        
-        session = self.handler.get_new_session(uid, pword)
-        
-        self.assertEqual(session, 'my session')
-    
-    def testShouldRaiseErrorWhenGivenInvalidUseridPasswordCombination(self):
-        @patch(self.session_source)
-        def get_new_session(self, userid, password):
-            if userid == 'uid' and password == 'pword':
-                return 'my session'
-            else:
-                raise SessionLoginError()
-        
-        uid = 'uid'
-        pword = 'wrong_pword'
-        
-        try:
-            session = self.handler.get_new_session(uid, pword)
-        
-        except SessionLoginError:
-            return
-        
-        self.fail('Should have raised error for user %r and pass %r' % (uname, pword))
-    
     def testShouldRespondWithSuccessContentWhenSessionIdIsRecognized(self):
         # Given...
         @patch(self.handler)
@@ -373,8 +339,8 @@ class SessionHandlerTest (unittest.TestCase):
             self.credentials_called = True
             return 'user1234', 'pass1234'
         
-        @patch(self.handler)
-        def get_new_session(self, userid, password):
+        @patch(self.session_source)
+        def create_session(self, userid, password):
             self.userid = userid
             self.password = password
             return 'my session'
@@ -394,8 +360,8 @@ class SessionHandlerTest (unittest.TestCase):
         # Then...
         response_body = self.handler.response.out.getvalue()
         self.assert_(self.handler.credentials_called)
-        self.assertEqual(self.handler.userid, 'user1234')
-        self.assertEqual(self.handler.password, 'pass1234')
+        self.assertEqual(self.session_source.userid, 'user1234')
+        self.assertEqual(self.session_source.password, 'pass1234')
         self.assertEqual(self.session_view.session, 'my session')
         self.assertEqual(self.handler.session, 'my session')
         self.assertEqual(response_body, 'session overview body')
@@ -407,8 +373,8 @@ class SessionHandlerTest (unittest.TestCase):
             self.credentials_called = True
             return 'user1234', 'pass1234'
         
-        @patch(self.handler)
-        def get_new_session(self, userid, password):
+        @patch(self.session_source)
+        def create_session(self, userid, password):
             self.userid = userid
             self.password = password
             raise SessionLoginError()
@@ -423,8 +389,8 @@ class SessionHandlerTest (unittest.TestCase):
         # Then...
         response_body = self.handler.response.out.getvalue()
         self.assert_(self.handler.credentials_called)
-        self.assertEqual(self.handler.userid, 'user1234')
-        self.assertEqual(self.handler.password, 'pass1234')
+        self.assertEqual(self.session_source.userid, 'user1234')
+        self.assertEqual(self.session_source.password, 'pass1234')
         self.assert_(response_body.startswith('SessionLoginError'), 'Response does not start with SessionLoginError: %r' % response_body)
     
     def testShouldRaiseWsgiParameterErrorWhenUseridOrPasswordIsEmpty(self):

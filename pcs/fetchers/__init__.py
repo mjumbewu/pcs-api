@@ -4,7 +4,7 @@ class _SourceBase (object):
     pass
 
 class _SessionSourceInterface (object):
-    def get_new_session(self, userid, password):
+    def create_session(self, userid, password):
         raise NotImplementedError()
     
     def get_existing_session(self, userid, sessionid):
