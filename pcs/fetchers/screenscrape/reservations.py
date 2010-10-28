@@ -161,6 +161,8 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
             confirm_script = edit_button['onclick']
         elif early_button:
             confirm_script = early_button['onclick']
+        else:
+            return None
         
         confirm_pattern = r"\&pk=(?P<confirmid>[0-9]+)'"
         confirm_match = re.search(confirm_pattern, confirm_script)
@@ -205,8 +207,9 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
                     self.get_text_from_td_data(td)
             
             elif td_count == 7:
-                reservation.confirmid = \
-                    self.get_confirm_id_from_td_data(td)
+                confirmid = self.get_confirm_id_from_td_data(td)
+                if confirmid is not None:
+                    reservation.confirmid = confirmid
             
             td_count += 1
         

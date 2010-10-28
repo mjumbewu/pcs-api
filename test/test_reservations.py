@@ -382,6 +382,18 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(reservation.start_time.timetuple()[:6], (2010,9,1,12,45,0))
         self.assertEqual(reservation.end_time.timetuple()[:6], (2010,9,1,16,45,0))
         self.assertEqual(reservation.status, ReservationStatus.PAST)
+    
+    def testShouldCreateReservationsWithOneUpcomingInGivenMonth(self):
+        from strings_for_testing import ONE_UPCOMING_RESERVATION_IN_OCTOBER
+        html_data = BeautifulSoup(ONE_UPCOMING_RESERVATION_IN_OCTOBER)
+        
+        res_data = self.source.get_reservation_data_from_html_data(html_data)
+        
+        from pcs.data.reservation import ReservationStatus
+        self.assertEqual(res_data[0].id, '2491921')
+        self.assertEqual(res_data[0].status, ReservationStatus.PAST)
+        self.assertEqual(res_data[-1].id, '2514083')
+        self.assertEqual(res_data[-1].status, ReservationStatus.UPCOMING)
 
 class ReservationsJsonHandlerTest (unittest.TestCase):
     def testShouldUseScreenscrapeFetchersAndJsonRenderers(self):
