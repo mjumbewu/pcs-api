@@ -480,12 +480,12 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
         
         # When...
         sessionid = 'ses1234'
-        locationid = (123,456)
+        locationid = '123,456'
         location = self.handler.get_location(sessionid, locationid)
         
         # Then...
         self.assertEqual(self.location_source.location_name, 'My Current Location')
-        self.assertEqual(self.location_source.location_key, (123,456))
+        self.assertEqual(self.location_source.location_key, ('123','456'))
         self.assertEqual(location, 'my location')
     
     def testShouldRespondWithFailureContentWhenSessionSourceCannotFindSessionWithGivenId(self):
@@ -695,7 +695,8 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
         query = self.source.get_location_query(location_coord)
         
         # Then...
-        self.assertEqual(query, 'location_latitude=123.4&location_longitude=567.8')
+        self.assertEqual(query, 
+            'location=&location_latitude=123.4&location_longitude=567.8')
     
     def testTimeQueryShouldUseStartAndEndTimeGiven(self):
         # Given...
@@ -706,7 +707,8 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
         query = self.source.get_time_query(start_time, end_time)
         
         # Then...
-        self.assertEqual(query, 'start_date=10/4/2010&start_time=40500&end_date=9/5/2012&end_time=49500')
+        self.assertEqual(query, 
+            'start_date=10/4/2010&start_time=40500&end_date=9/5/2012&end_time=49500')
     
     def testShouldLoadAppropriateJsonObjectFromString(self):
         # Given...
@@ -1024,7 +1026,7 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(self.source.cp_price_obj, 'my json data')
         self.assertEqual(price, 'my price')
     
-    
+
 class LocationAvailabilityJsonHandlerTest (unittest.TestCase):
     def testShouldBeInitializedWithJsonViewsAndScreenscrapeSources(self):
         handler = LocationAvailabilityJsonHandler()

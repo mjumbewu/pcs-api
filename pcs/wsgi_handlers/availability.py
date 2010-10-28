@@ -42,10 +42,13 @@ class LocationAvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler)
         raise WsgiParameterError('No valid location given')
     
     def get_location(self, sessionid, locationid):
-        if locationid is None or isinstance(locationid, (basestring, int)):
-            location = self.location_source.fetch_location_profile(sessionid, locationid)
+        if ',' in locationid:
+            comma = locationid.find(',')
+            lat = locationid[:comma]
+            lon = locationid[comma+1:]
+            location = self.location_source.fetch_custom_location('My Current Location', (lat, lon))
         else:
-            location = self.location_source.fetch_custom_location('My Current Location', locationid)
+            location = self.location_source.fetch_location_profile(sessionid, locationid)
         
         return location
     

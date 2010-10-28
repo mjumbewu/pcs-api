@@ -95,5 +95,6 @@ class LocationsScreenscrapeSource (_LocationsSourceInterface):
             raise ScreenscrapeParseError('Invalid location key: %r' % location_key)
         
         location = LocationCoordinate(location_name, *location_key)
+        location.id = location_key
         return location
 

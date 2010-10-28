@@ -51,7 +51,10 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
         if isinstance(locationid, (list, tuple)) and len(locationid) == 2:
             latitude = locationid[0]
             longitude = locationid[1]
-            query = 'location_latitude=%s&location_longitude=%s' % \
+            # Note: The initial empty 'location=' parameter must be there, or 
+            #       PCS will just use the default location profile.  Not fun
+            #       figuring that one out.
+            query = 'location=&location_latitude=%s&location_longitude=%s' % \
                 (latitude, longitude)
             return query
         
