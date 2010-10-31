@@ -11,6 +11,24 @@ from util.abstract import override
 from util.TimeZone import to_isostring
 
 class ReservationsJsonView (_ReservationsViewInterface):
+    def format_res_data(self, reservation):
+        res_data = {
+            'logid' : reservation.logid,
+            'start_time' : to_isostring(reservation.start_time),
+            'end_time' : to_isostring(reservation.end_time),
+            'vehicle' : {
+                'id' : reservation.vehicle.id,
+                'model' : {
+                    'name' : reservation.vehicle.model.name
+                },
+                'pod' : {
+                    'id' : reservation.vehicle.pod.id,
+                    'name' : reservation.vehicle.pod.name
+                }
+            }
+        }
+        return res_data
+    
     @override
     def render_reservations(self, session, reservations, page_num, total_pages):
         reservations.sort(key=lambda res: res.start_time)
@@ -21,24 +39,9 @@ class ReservationsJsonView (_ReservationsViewInterface):
             'reservations': []
         }}
         for reservation in reservations:
-            res_data = {
-                'id' : reservation.id,
-                'start_time' : to_isostring(reservation.start_time),
-                'end_time' : to_isostring(reservation.end_time),
-                'vehicle' : {
-                    'id' : reservation.vehicle.id,
-                    'model' : {
-                        'name' : reservation.vehicle.model.name
-                    },
-                    'pod' : {
-                        'id' : reservation.vehicle.pod.id,
-                        'name' : reservation.vehicle.pod.name
-                    }
-                }
-            }
-            
-            if hasattr(reservation, 'confirmid'):
-                res_data['confirmid'] = reservation.confirmid
+            res_data = self.format_res_data(reservation)
+            if hasattr(reservation, 'liveid'):
+                res_data['liveid'] = reservation.liveid
             
             data['reservation_list']['reservations'].append(res_data)
         
@@ -46,13 +49,11 @@ class ReservationsJsonView (_ReservationsViewInterface):
         return json.dumps(data, sort_keys=True, indent=2)
     
     @override
-    def render_successful_new_reservation(self, session, reservation):
-        values = {
-            'session' : session,
-            'reservation' : reservation
-        }
+    def render_confirmation(self, session, reservation, event):
+        data = {'confirmation':{
+            'reservation' : self.format_res_data(reservation),
+            'event' : event
+        }}
         
-        path = os.path.join(os.path.dirname(__file__), 'reservation-confirmation.html')
-        response = self.render_method(path, values)
-        return response
+        return json.dumps(data, sort_keys=True, indent=2)
 

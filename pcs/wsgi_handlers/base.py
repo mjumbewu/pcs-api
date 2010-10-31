@@ -24,7 +24,7 @@ class _SessionBasedHandler (object):
     def get_session_data(self):
         session_string = self.request.cookies.get('session', None)
         if session_string is None:
-            raise WsgiParameterError('Cound not find session cookie')
+            raise WsgiParameterError('Could not find session cookie')
         
         session_string = session_string.replace(r'\"',r'"')[1:-1]
         try:

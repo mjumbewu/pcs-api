@@ -4,6 +4,7 @@ import new
 
 from pcs.wsgi_handlers.base import WsgiParameterError
 from pcs.wsgi_handlers.appengine.reservations import ReservationsHandler
+from pcs.wsgi_handlers.appengine.reservations import ReservationJsonHandler
 from pcs.wsgi_handlers.appengine.reservations import ReservationsJsonHandler
 from pcs.fetchers import _ReservationsSourceInterface
 from pcs.fetchers import _SessionSourceInterface
@@ -127,6 +128,57 @@ class ReservationsHandlerTest (unittest.TestCase):
         self.assertEqual(self.reservation_view.session, 'my session')
         self.assertEqual(self.reservation_view.reservations, 'my reservations')
         self.assertEqual(response, 'my reservation response')
+    
+    def testShouldConfirmValidReservation(self):
+        @patch(self.handler)
+        def get_user_id(self):
+            return 'user1234'
+        
+        @patch(self.handler)
+        def get_session_id(self):
+            return 'ses1234'
+        
+        @patch(self.handler)
+        def get_vehicle_id(self):
+            return 'vid1234'
+        
+        @patch(self.handler)
+        def get_transaction_id(self):
+            return 'tid1234'
+        
+        @patch(self.session_source)
+        def fetch_session(self, userid, sessionid):
+            self.userid = userid
+            self.sessionid = sessionid
+            return 'my session'
+        
+        @patch(self.reservation_source)
+        def create_reservation(self, sessionid, vehicleid, transactionid, start_time, end_time, reservation_memo):
+            self.sessionid = sessionid
+            self.vehicleid = vehicleid
+            self.transid = transactionid
+            self.start = start_time
+            self.end = end_time
+            self.memo = reservation_memo
+            return 'my reservation'
+        
+        @patch(self.reservation_view)
+        def render_confirmation(self, session, confirmation):
+            self.session = session
+            self.confirmation = confirmation
+            return 'my confirmation'
+        
+        self.error_view.render_called = False
+        @patch(self.error_view)
+        def render_error(self, error_code, error_msg, error_detail):
+            self.render_called = True
+            return str('\n' + error_detail + '\n' + error_msg)
+        
+        self.handler.post()
+        
+        response = self.handler.response.out.getvalue()
+        self.assert_(not self.error_view.render_called, response)
+        self.assertEqual(response, 'my confirmation')
 
 class ReservationsScreenscrapeSourceTest (unittest.TestCase):
     def setUp(self):
@@ -140,22 +192,22 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
             PAST_RESERVATIONS_SINGLE_PAGE
         
         first_page = BeautifulSoup(PAST_RESERVATIONS_FIRST_OF_TWO_PAGES)
-        cur_page, num_pages = self.source.get_page_data_from_html_data(first_page)
+        cur_page, num_pages = self.source.decoder.decode_page_info_from_log_doc(first_page)
         self.assertEqual(cur_page, 1)
         self.assertEqual(num_pages, 2)
         
         second_page = BeautifulSoup(PAST_RESERVATIONS_SECOND_OF_TWO_PAGES)
-        cur_page, num_pages = self.source.get_page_data_from_html_data(second_page)
+        cur_page, num_pages = self.source.decoder.decode_page_info_from_log_doc(second_page)
         self.assertEqual(cur_page, 2)
         self.assertEqual(num_pages, 2)
         
         second_page = BeautifulSoup(PAST_RESERVATIONS_SECOND_OF_FIVE_PAGES)
-        cur_page, num_pages = self.source.get_page_data_from_html_data(second_page)
+        cur_page, num_pages = self.source.decoder.decode_page_info_from_log_doc(second_page)
         self.assertEqual(cur_page, 2)
         self.assertEqual(num_pages, 5)
         
         single_page = BeautifulSoup(PAST_RESERVATIONS_SINGLE_PAGE)
-        cur_page, num_pages = self.source.get_page_data_from_html_data(single_page)
+        cur_page, num_pages = self.source.decoder.decode_page_info_from_log_doc(single_page)
         self.assertEqual(cur_page, 1)
         self.assertEqual(num_pages, 1)
     
@@ -179,14 +231,14 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         conn = StubConnection()
         sessionid = 'ses1234'
         
-        body, head = self.source.upcoming_reservations_from_pcs(conn, sessionid)
+        body, head = self.source.requester.request_upcoming_reservations_from_pcs(conn, sessionid)
         
+        self.assertEqual(body, 'my body')
+        self.assertEqual(head, 'my headers')
         self.assertEqual(conn.url, 'http://reservations.phillycarshare.org/my_reservations.php?mv_action=main')
         self.assertEqual(conn.method, 'GET')
         self.assertEqual(conn.data, {})
         self.assertEqual(conn.headers, {'Cookie':'sid=ses1234'})
-        self.assertEqual(body, 'my body')
-        self.assertEqual(head, 'my headers')
     
     def testShouldReturnPastBodyAndHeadFromPcsConnection(self):
         class StubConnection (object):
@@ -204,7 +256,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         conn = StubConnection()
         sessionid = 'ses1234'
         
-        body, head = self.source.past_reservations_from_pcs(conn, sessionid, 2010, 10)
+        body, head = self.source.requester.request_past_reservations_from_pcs(conn, sessionid, 2010, 10)
         
         self.assertEqual(conn.url, 'http://reservations.phillycarshare.org/my_reservations.php?mv_action=main&main[multi_filter][history][yearmonth]=201010')
         self.assertEqual(conn.method, 'GET')
@@ -216,20 +268,20 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
     def testShouldReturnEmptyReservationsListWhenNoUpcomingReservationsBodyReturnedFromPcs(self):
         from strings_for_testing import NO_UPCOMING_RESERVATIONS_BODY
         
-        html_data = BeautifulSoup(NO_UPCOMING_RESERVATIONS_BODY)
-        reservations = self.source.get_reservation_data_from_html_data(html_data)
+        html_document = BeautifulSoup(NO_UPCOMING_RESERVATIONS_BODY)
+        reservations = self.source.decoder.build_reservation_log_from_log_doc(html_document)
         
         self.assertEqual(len(reservations), 0)
     
     def testShouldReturnOneUpcomingReservationInAppropriateSituation(self):
         from strings_for_testing import ONE_UPCOMING_RESERVATION
         
-        html_data = BeautifulSoup(ONE_UPCOMING_RESERVATION)
-        reservations = self.source.get_reservation_data_from_html_data(html_data)
+        html_document = BeautifulSoup(ONE_UPCOMING_RESERVATION)
+        reservations = self.source.decoder.build_reservation_log_from_log_doc(html_document)
         
         self.assertEqual(len(reservations), 1)
         reservation = reservations[0]
-        self.assertEqual(reservation.id, '2472498')
+        self.assertEqual(reservation.logid, '2472498')
         self.assertEqual(reservation.start_time, datetime.datetime(2010,9,15,6,0,tzinfo=Eastern))
         self.assertEqual(reservation.price.total_amount, 3.24)
         self.assertEqual(reservation.vehicle.model.name, 'Prius Liftback')
@@ -238,60 +290,60 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
     def testShouldtTwoReservationsInAppropriateSituation(self):
         from strings_for_testing import ONE_CURRENT_ONE_UPCOMING_RESERVATIONS
         
-        html_data = BeautifulSoup(ONE_CURRENT_ONE_UPCOMING_RESERVATIONS)
-        reservations = self.source.get_reservation_data_from_html_data(html_data)
+        html_document = BeautifulSoup(ONE_CURRENT_ONE_UPCOMING_RESERVATIONS)
+        reservations = self.source.decoder.build_reservation_log_from_log_doc(html_document)
         
         self.assertEqual(len(reservations), 2)
         
         reservation = reservations[0]
-        self.assertEqual(reservation.id, '2472500')
+        self.assertEqual(reservation.logid, '2472500')
         self.assertEqual(reservation.start_time, datetime.datetime(2010,9,15,0,45,tzinfo=Eastern))
         self.assertEqual(reservation.price.total_amount, 3.24)
         self.assertEqual(reservation.vehicle.model.name, 'Prius Liftback')
         self.assertEqual(reservation.vehicle.pod.name, '47th & Baltimore')
         
         reservation = reservations[1]
-        self.assertEqual(reservation.id, '2472498')
+        self.assertEqual(reservation.logid, '2472498')
         self.assertEqual(reservation.start_time, datetime.datetime(2010,9,15,6,0,tzinfo=Eastern))
         self.assertEqual(reservation.price.total_amount, 3.24)
         self.assertEqual(reservation.vehicle.model.name, 'Prius Liftback')
         self.assertEqual(reservation.vehicle.pod.name, '47th & Baltimore')
     
     def testShouldReturnUpcomingReservationsResponseBodyAccordingToConnectionResponseIfNoExceptionsRaised(self):
-        self.source.past_res_called = False
-        self.source.upcoming_res_called = False
+        self.source.requester.past_res_called = False
+        self.source.requester.upcoming_res_called = False
         
         @patch(self.source)
         def get_pcs_connection(self):
             self.pcs_conn_called = True
             return 'my connection'
         
-        @patch(self.source)
-        def upcoming_reservations_from_pcs(self, conn, sessionid):
+        @patch(self.source.requester)
+        def request_upcoming_reservations_from_pcs(self, conn, sessionid):
             self.upcoming_res_called = True
             self.conn = conn
             self.sessionid = sessionid
             return 'my body', 'my head'
         
-        @patch(self.source)
-        def past_reservations_from_pcs(self, conn, sessionid, year, month):
+        @patch(self.source.requester)
+        def request_past_reservations_from_pcs(self, conn, sessionid, year, month):
             self.past_res_called = True
             self.conn = conn
             self.sessionid = sessionid
             return 'my body', 'my head'
         
         @patch(self.source)
-        def get_html_data(self, response_body):
+        def get_html_document(self, response_body):
             self.html_body = response_body
             return 'my html doc'
         
-        @patch(self.source)
-        def get_reservation_data_from_html_data(self, html_data):
-            self.html_doc = html_data
+        @patch(self.source.decoder)
+        def build_reservation_log_from_log_doc(self, html_document):
+            self.html_doc = html_document
             return 'my reservations'
         
-        @patch(self.source)
-        def get_page_data_from_html_data(self, html_data):
+        @patch(self.source.decoder)
+        def decode_page_info_from_log_doc(self, html_document):
             return 3, 5
         
         sessionid = 'ses1234'
@@ -300,34 +352,34 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         reservations, page, count = self.source.fetch_reservations(sessionid)
         
         self.assert_(self.source.pcs_conn_called)
-        self.assert_(self.source.upcoming_res_called)
-        self.assert_(not self.source.past_res_called)
-        self.assertEqual(self.source.conn, 'my connection')
-        self.assertEqual(self.source.sessionid, 'ses1234')
+        self.assert_(self.source.requester.upcoming_res_called)
+        self.assert_(not self.source.requester.past_res_called)
+        self.assertEqual(self.source.requester.conn, 'my connection')
+        self.assertEqual(self.source.requester.sessionid, 'ses1234')
         self.assertEqual(self.source.html_body, 'my body')
-        self.assertEqual(self.source.html_doc, 'my html doc')
+        self.assertEqual(self.source.decoder.html_doc, 'my html doc')
         self.assertEqual(reservations, 'my reservations')
         self.assertEqual(page, 3)
         self.assertEqual(count, 5)
     
     def testShouldReturnPastReservationsResponseBodyAccordingToConnectionResponseIfNoExceptionsRaised(self):
-        self.source.past_res_called = False
-        self.source.upcoming_res_called = False
+        self.source.requester.past_res_called = False
+        self.source.requester.upcoming_res_called = False
         
         @patch(self.source)
         def get_pcs_connection(self):
             self.pcs_conn_called = True
             return 'my connection'
         
-        @patch(self.source)
-        def upcoming_reservations_from_pcs(self, conn, sessionid):
+        @patch(self.source.requester)
+        def request_upcoming_reservations_from_pcs(self, conn, sessionid):
             self.upcoming_res_called = True
             self.conn = conn
             self.sessionid = sessionid
             return 'my body', 'my head'
         
-        @patch(self.source)
-        def past_reservations_from_pcs(self, conn, sessionid, year, month):
+        @patch(self.source.requester)
+        def request_past_reservations_from_pcs(self, conn, sessionid, year, month):
             self.past_res_called = True
             self.conn = conn
             self.sessionid = sessionid
@@ -336,17 +388,17 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
             return 'my body', 'my head'
         
         @patch(self.source)
-        def get_html_data(self, response_body):
+        def get_html_document(self, response_body):
             self.html_body = response_body
             return 'my html doc'
         
-        @patch(self.source)
-        def get_reservation_data_from_html_data(self, html_data):
-            self.html_doc = html_data
+        @patch(self.source.decoder)
+        def build_reservation_log_from_log_doc(self, html_document):
+            self.html_doc = html_document
             return 'my reservations'
         
-        @patch(self.source)
-        def get_page_data_from_html_data(self, html_data):
+        @patch(self.source.decoder)
+        def decode_page_info_from_log_doc(self, html_document):
             return 3, 5
         
         sessionid = 'ses1234'
@@ -355,27 +407,27 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         reservations, page, count = self.source.fetch_reservations(sessionid, datetime.date(2010, 11, 1))
         
         self.assert_(self.source.pcs_conn_called)
-        self.assert_(not self.source.upcoming_res_called)
-        self.assert_(self.source.past_res_called)
-        self.assertEqual(self.source.conn, 'my connection')
-        self.assertEqual(self.source.year, 2010)
-        self.assertEqual(self.source.month, 11)
-        self.assertEqual(self.source.sessionid, 'ses1234')
+        self.assert_(not self.source.requester.upcoming_res_called)
+        self.assert_(self.source.requester.past_res_called)
+        self.assertEqual(self.source.requester.conn, 'my connection')
+        self.assertEqual(self.source.requester.year, 2010)
+        self.assertEqual(self.source.requester.month, 11)
+        self.assertEqual(self.source.requester.sessionid, 'ses1234')
         self.assertEqual(self.source.html_body, 'my body')
-        self.assertEqual(self.source.html_doc, 'my html doc')
+        self.assertEqual(self.source.decoder.html_doc, 'my html doc')
         self.assertEqual(reservations, 'my reservations')
         self.assertEqual(page, 3)
         self.assertEqual(count, 5)
     
-    def testShouldCreateReservationPastBasedOnContentsOfTableRow(self):
+    def testShouldFetchReservationPastBasedOnContentsOfTableRow(self):
         tr_str = r"""<tr class="zebra"><td >2460589</td><td   width="25%"  align="center" valign="middle"  ><a class="text" href="my_fleet.php?mv_action=show&_r=6&pk=5736346"    >47th & Pine - Prius Liftback</a></td> 
 <td >12:45 pm Wednesday, September 1, 2010</td><td >4:45 pm Wednesday, September 1, 2010</td><td ><a href="#" class="tooltip_target" style="cursor: help;">$29.28</a> 
                 <span class="tooltip" style="position: absolute; z-index: 1000; display: none;">$17.80&nbsp;(Time)&nbsp;+<br/>$7.00&nbsp;(Distance&nbsp;@&nbsp;28&nbsp;mile(s))&nbsp;+<br/>$0.00&nbsp;(Fees)&nbsp;+<br/>$4.48&nbsp;(Tax)</span></td><td >Normal</td><td >rasheed</td></tr>"""
         tr = BeautifulSoup(tr_str)
         
-        reservation = self.source.get_reservation_from_table_row_data(tr)
+        reservation = self.source.decoder.build_reservation_from_table_row_element(tr)
         from pcs.data.reservation import ReservationStatus
-        self.assertEqual(reservation.id, '2460589')
+        self.assertEqual(reservation.logid, '2460589')
         self.assertEqual(reservation.vehicle.pod.id, '5736346')
         self.assertEqual(reservation.vehicle.pod.name, '47th & Pine')
         self.assertEqual(reservation.vehicle.model.name, 'Prius Liftback')
@@ -383,24 +435,148 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(reservation.end_time.timetuple()[:6], (2010,9,1,16,45,0))
         self.assertEqual(reservation.status, ReservationStatus.PAST)
     
-    def testShouldCreateReservationsWithOneUpcomingInGivenMonth(self):
+    def testShouldFetchReservationsWithOneUpcomingInGivenMonth(self):
         from strings_for_testing import ONE_UPCOMING_RESERVATION_IN_OCTOBER
-        html_data = BeautifulSoup(ONE_UPCOMING_RESERVATION_IN_OCTOBER)
+        html_document = BeautifulSoup(ONE_UPCOMING_RESERVATION_IN_OCTOBER)
         
-        res_data = self.source.get_reservation_data_from_html_data(html_data)
+        res_data = self.source.decoder.build_reservation_log_from_log_doc(html_document)
         
         from pcs.data.reservation import ReservationStatus
-        self.assertEqual(res_data[0].id, '2491921')
+        self.assertEqual(res_data[0].logid, '2491921')
         self.assertEqual(res_data[0].status, ReservationStatus.PAST)
-        self.assertEqual(res_data[-1].id, '2514083')
+        self.assertEqual(res_data[-1].logid, '2514083')
         self.assertEqual(res_data[-1].status, ReservationStatus.UPCOMING)
-        self.assertEqual(res_data[-1].confirmid, '149337407')
+        self.assertEqual(res_data[-1].liveid, '149337407')
+    
+    def testShouldCreateReservationConfirmation(self):
+        from strings_for_testing import NEW_RESERVATION_CONFIRMATION
+        from strings_for_testing import NEW_RESERVATION_REDIRECT_SCRIPT
+        from strings_for_testing import RESERVATION_LIGHTBOX_WITH_NO_VEHICLE_INFO
+        
+        class StubResponse (object):
+            def read(self):
+                return NEW_RESERVATION_CONFIRMATION
+            def getheaders(self):
+                return {}
+            
+        class StubConnection (object):
+            def request(self, *params):
+                return StubResponse()
+        
+        @patch(self.source)
+        def get_pcs_connection(self):
+            return StubConnection()
+        
+        @patch(self.source.requester)
+        def request_create_reservation_from_pcs(self, conn, sessionid, vehicleid, transactionid, start_time, end_time, reservation_memo):
+            return NEW_RESERVATION_REDIRECT_SCRIPT, None
+        
+        @patch(self.source.requester)
+        def request_empty_create_reservation_box_from_pcs(self, conn, sessionid):
+            return RESERVATION_LIGHTBOX_WITH_NO_VEHICLE_INFO, None
+        
+        confirmation = self.source.create_reservation(None,None,None,None,None)
+    
+    def testShouldPassCorrectParametersToPcsForEmptyCreateResBox(self):
+        class StubConnection (object):
+            def request(self, url, method, data, headers):
+                self.url = url
+                self.method = method
+                self.data = data
+                self.headers = headers
+                class StubResponse (object):
+                    def getheaders(self): return 'my headers'
+                    def read(self): return 'my body'
+                return StubResponse()
+        StubConnection = Stub(PcsConnection)(StubConnection)
+        
+        conn = StubConnection()
+        
+        sessionid = 'ses1234'
+        body, head = \
+            self.source.requester.request_empty_create_reservation_box_from_pcs(conn, sessionid)
+        
+        self.assertEqual(conn.url, 'http://reservations.phillycarshare.org/lightbox.php?mv_action=add')
+        self.assertEqual(conn.method, 'POST')
+        self.assertEqual(conn.data, '')
+        self.assertEqual(conn.headers, {'Cookie':'sid=ses1234'})
+        self.assertEqual(body, 'my body')
+        self.assertEqual(head, 'my headers')
+    
+    def testShouldExtractCorrectTransactionIdFromLightboxBlock(self):
+        from strings_for_testing import RESERVATION_LIGHTBOX_WITH_NO_VEHICLE_INFO
+        
+        lgtbox_block = BeautifulSoup(RESERVATION_LIGHTBOX_WITH_NO_VEHICLE_INFO)
+        transactionid = \
+            self.source.decoder.decode_transaction_id_from_lightbox_block(lgtbox_block)
+        
+        self.assertEqual(transactionid, '5')
+    
+    def testShouldExtractCorrectReservationLiveIdFromRedirectScript(self):
+        from strings_for_testing import NEW_RESERVATION_REDIRECT_SCRIPT
+        
+        redir_elem = BeautifulSoup(NEW_RESERVATION_REDIRECT_SCRIPT)
+        liveid = \
+            self.source.decoder.decode_reservation_liveid_from_redirect_script_element(redir_elem)
+        
+        self.assertEqual(liveid, '149385106')
+    
+    def testShouldExtractCorrectReservationInfoFromConfirmationDocument(self):
+        from strings_for_testing import NEW_RESERVATION_CONFIRMATION
+        
+        conf_doc = BeautifulSoup(NEW_RESERVATION_CONFIRMATION)
+        logid, modelname, podname = \
+            self.source.decoder.decode_reservation_info_from_confirmation_doc(conf_doc)
+        
+        self.assertEqual(logid, '2516709')
+        self.assertEqual(modelname, 'Prius Liftback')
+        self.assertEqual(podname, '47th & Baltimore')
+    
+    def testShouldBuildCorrectReservationFromGivenInformation(self):
+        logid = 'logid1234'
+        liveid = 'liveid5678'
+        start_time = 100
+        end_time = 1000
+        vehicleid = '0987'
+        modelname = 'fancy'
+        podid = 'pod0987'
+        podname = 'closeby'
+        
+        reservation = self.source.build_reservation(logid, liveid, start_time, end_time, vehicleid, modelname, podid, podname)
+        
+        self.assertEqual(reservation.logid, logid)
+        self.assertEqual(reservation.liveid, liveid)
+        self.assertEqual(reservation.start_time, start_time)
+        self.assertEqual(reservation.end_time, end_time)
+        self.assertEqual(reservation.vehicle.id, vehicleid)
+        self.assertEqual(reservation.vehicle.model.name, modelname)
+        self.assertEqual(reservation.vehicle.pod.id, podid)
+        self.assertEqual(reservation.vehicle.pod.name, podname)
+    
+    def testShouldBuildCorrectVehicleFromGivenInformation(self):
+        vehicleid = 'vid1234'
+        modelname = 'Prius'
+        podid = 'pod5678'
+        podname = '47th & Baltimore'
+        
+        vehicle = self.source.build_vehicle(vehicleid, modelname, podid, podname)
 
 class ReservationsJsonHandlerTest (unittest.TestCase):
     def testShouldUseScreenscrapeFetchersAndJsonRenderers(self):
         handler = ReservationsJsonHandler()
         
         self.assertEqual(handler.error_view.__class__.__name__, 
+            'ErrorJsonView')
+        self.assertEqual(handler.reservation_source.__class__.__name__,
+            'ReservationsScreenscrapeSource')
+        self.assertEqual(handler.reservation_view.__class__.__name__,
+            'ReservationsJsonView')
+
+class ReservationJsonHandlerTest (unittest.TestCase):
+    def testShouldUseScreenscrapeFetchersAndJsonRenderers(self):
+        handler = ReservationJsonHandler()
+        
+        self.assertEqual(handler.error_view.__class__.__name__,
             'ErrorJsonView')
         self.assertEqual(handler.reservation_source.__class__.__name__,
             'ReservationsScreenscrapeSource')
@@ -420,7 +596,7 @@ class ReservationsJsonViewTest (unittest.TestCase):
         session.name = 'user name'
         
         res1 = StubObject()
-        res1.id = 'res1'
+        res1.logid = 'res1'
         res1.start_time = datetime.datetime(2010, 11, 15, 16, 30, tzinfo=Eastern)
         res1.end_time = datetime.datetime(2010, 11, 15, 17, 15, tzinfo=Eastern)
         res1.vehicle = StubObject()
@@ -432,8 +608,8 @@ class ReservationsJsonViewTest (unittest.TestCase):
         res1.vehicle.pod.name = 'pod 1'
         
         res2 = StubObject()
-        res2.id = 'res2'
-        res2.confirmid = 'confid2'
+        res2.logid = 'res2'
+        res2.liveid = 'confid2'
         res2.start_time = datetime.datetime(2010, 12, 30, 16, 30, tzinfo=Eastern)
         res2.end_time = datetime.datetime(2010, 12, 31, 17, 15, tzinfo=Eastern)
         res2.vehicle = StubObject()
@@ -456,7 +632,7 @@ class ReservationsJsonViewTest (unittest.TestCase):
     "reservations": [
       {
         "end_time": "2010-11-15T17:15", 
-        "id": "res1", 
+        "logid": "res1", 
         "start_time": "2010-11-15T16:30", 
         "vehicle": {
           "id": "v123", 
@@ -470,9 +646,9 @@ class ReservationsJsonViewTest (unittest.TestCase):
         }
       }, 
       {
-        "confirmid": "confid2", 
         "end_time": "2010-12-31T17:15", 
-        "id": "res2", 
+        "liveid": "confid2", 
+        "logid": "res2", 
         "start_time": "2010-12-30T16:30", 
         "vehicle": {
           "id": "v123", 
@@ -486,6 +662,83 @@ class ReservationsJsonViewTest (unittest.TestCase):
         }
       }
     ]
+  }
+}"""
+        self.assertEqual(result, expected)
+    
+    def testShouldPrepareReservationForJsonDump(self):
+        renderer = ReservationsJsonView()
+        
+        class StubObject (object):
+            pass
+        
+        res1 = StubObject()
+        res1.logid = 'res1'
+        res1.start_time = datetime.datetime(2010, 11, 15, 16, 30, tzinfo=Eastern)
+        res1.end_time = datetime.datetime(2010, 11, 15, 17, 15, tzinfo=Eastern)
+        res1.vehicle = StubObject()
+        res1.vehicle.id = 'v123'
+        res1.vehicle.model = StubObject()
+        res1.vehicle.model.name = 'model 1'
+        res1.vehicle.pod = StubObject()
+        res1.vehicle.pod.id = 'pod123'
+        res1.vehicle.pod.name = 'pod 1'
+        
+        res_data = renderer.format_res_data(res1)
+        self.assertEqual(res_data, {
+            'logid' : 'res1',
+            'start_time' : '2010-11-15T16:30',
+            'end_time' : '2010-11-15T17:15',
+            'vehicle' : {
+                'id' : 'v123',
+                'model' : {
+                    'name' : 'model 1',
+                },
+                'pod' : {
+                    'id' : 'pod123',
+                    'name' : 'pod 1'
+                }
+            }
+        })
+    
+    def testShouldRenderConfirmationJson(self):
+        renderer = ReservationsJsonView()
+        
+        class StubObject (object):
+            pass
+        
+        res1 = StubObject()
+        res1.logid = 'res1'
+        res1.start_time = datetime.datetime(2010, 11, 15, 16, 30, tzinfo=Eastern)
+        res1.end_time = datetime.datetime(2010, 11, 15, 17, 15, tzinfo=Eastern)
+        res1.vehicle = StubObject()
+        res1.vehicle.id = 'v123'
+        res1.vehicle.model = StubObject()
+        res1.vehicle.model.name = 'model 1'
+        res1.vehicle.pod = StubObject()
+        res1.vehicle.pod.id = 'pod123'
+        res1.vehicle.pod.name = 'pod 1'
+        
+        result = renderer.render_confirmation(None, res1, 'create')
+        expected = \
+"""{
+  "confirmation": {
+    "event": "create", 
+    "reservation": {
+      "end_time": "2010-11-15T17:15", 
+      "logid": "res1", 
+      "start_time": "2010-11-15T16:30", 
+      "vehicle": {
+        "id": "v123", 
+        "model": {
+          "name": "model 1"
+        }, 
+        "pod": {
+          "id": "pod123", 
+          "name": "pod 1"
+        }
+      }
+    }
   }
 }"""
         self.assertEqual(result, expected)

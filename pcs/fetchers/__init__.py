@@ -27,7 +27,7 @@ class _ReservationsSourceInterface (object):
     def fetch_reservations(self, sessionid, year_month=None):
         raise NotImplementedError()
     
-    def create_reservation(self, sessionid, vehicleid, transactionid, start_time, end_time, reservation_memo):
+    def create_reservation(self, sessionid, vehicleid, start_time, end_time, reservation_memo):
         raise NotImplementedError()
 
 class _LocationsSourceInterface (object):

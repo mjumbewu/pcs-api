@@ -30,13 +30,8 @@ class ReservationsHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
         return vehicle_id
     
     def get_reservation_memo(self):
-        return 'new reservation'
-    
-    def get_transaction_id(self):
-        transaction_id = self.request.get('transaction', None)
-        if transaction_id is None:
-            raise WsgiParameterError('Could not find transaction id.')
-        return transaction_id
+        memo = self.request.get('memo', None)
+        return memo
     
     def get(self):
         try:
@@ -60,20 +55,16 @@ class ReservationsHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
             userid =  self.get_user_id()
             sessionid = self.get_session_id()
             vehicleid = self.get_vehicle_id()
-            transactionid = self.get_transaction_id()
             start_time, end_time = self.get_time_range()
             memo = self.get_reservation_memo()
             
             session = self.session_source.fetch_session(userid, sessionid)
-            reservation = self.reservation_source.create_reservation(sessionid, vehicleid, transactionid, start_time, end_time, memo)
-            if reservation:
-                response_body = \
-                    self.reservation_view.get_successful_new_reservation(
-                        session, reservation)
-            else:
-                response_body = \
-                    self.reservation_view.get_failed_new_reservation(
-                        session, start_time, end_time)
+            
+            reservation = self.reservation_source.create_reservation(
+                sessionid, vehicleid, start_time, end_time, memo)
+            
+            response_body = self.reservation_view.render_confirmation(
+                session, reservation, 'create')
             
         except Exception, e:
             response_body = self.generate_error(e)
@@ -93,18 +84,29 @@ class ReservationHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
         self.reservation_view = reservation_view
     
     def get(self, reservationid):
-        self.handle_get_reservation(reservationid)
+        # get
+        pass
     
     def put(self, reservationid):
-        self.handle_edit_reservation(reservationid)
+        # edit
+        pass
     
     def delete(self, reservationid):
-        self.handle_cancel_reservation(reservationid)
+        # cancel
+        pass
 
 
 class ReservationsJsonHandler (ReservationsHandler):
     def __init__(self):
         super(ReservationsJsonHandler, self).__init__(
+            SessionScreenscrapeSource(),
+            ReservationsScreenscrapeSource(),
+            ReservationsJsonView(),
+            ErrorJsonView())
+
+class ReservationJsonHandler (ReservationHandler):
+    def __init__(self):
+        super(ReservationJsonHandler, self).__init__(
             SessionScreenscrapeSource(),
             ReservationsScreenscrapeSource(),
             ReservationsJsonView(),
