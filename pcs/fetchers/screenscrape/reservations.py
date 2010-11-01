@@ -34,6 +34,7 @@ class PcsRequestMaker (object):
                  transid_path="/lightbox.php",
                  newres_path="/lightbox.php?mv_action=add",
                  editres_path="/lightbox.php",
+                 cancelres_path="/my_reservations.php",
                  detail_path="/my_reservations.php?mv_action=confirm",
                  confirm_path="/my_reservations.php?mv_action=confirm"):
         self.__host = host
@@ -43,6 +44,7 @@ class PcsRequestMaker (object):
         self.__transid_path = transid_path
         self.__newres_path = newres_path
         self.__editres_path = editres_path
+        self.__cancelres_path = cancelres_path
         self.__detail_path = detail_path
         self.__confirm_path = confirm_path
     
@@ -188,6 +190,26 @@ class PcsRequestMaker (object):
         data += '&' + self.get_restrans_memo_query('edit', memo)
         data += '&' + self.get_restrans_reservation_query('edit', liveid)
         data += '&' + self.get_transaction_query('edit', transactionid)
+        
+        query = ''
+        connector = ''
+        
+        url = "http://%s%s%s%s" % (host, path, connector, query)
+        
+        response = conn.request(url, "POST", data, headers)
+        return (response.read(), response.getheaders())
+    
+    def request_cancel_reservation_from_pcs(self, conn, sessionid, liveid, transactionid, vehicleid, start_time, end_time):
+        host = self.__host
+        path = self.__cancelres_path
+        
+        headers = {
+            'Cookie': 'sid=%s' % sessionid}
+        
+        data = self.get_restrans_time_query('do_cancel', start_time, end_time)
+        data += '&' + self.get_restrans_vehicle_query('do_cancel', vehicleid)
+        data += '&' + self.get_restrans_reservation_query('do_cancel', liveid)
+        data += '&' + self.get_transaction_query('do_cancel', transactionid)
         
         query = ''
         connector = ''
@@ -515,6 +537,18 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
         
         return liveid
     
+    def send_cancellation_info(self, conn, sessionid, liveid, transactionid, vehicleid, start_time, end_time):
+        pcs_body, pcs_head = \
+            self.requester.request_cancel_reservation_from_pcs(
+                conn, sessionid, liveid, transactionid, vehicleid, start_time, end_time)
+        
+        conf_html_doc = self.get_html_document(pcs_body)
+        logid, modelname, podname = \
+            self.decoder.decode_reservation_info_from_confirmation_doc(
+                conf_html_doc)
+        
+        return logid, modelname, podname
+    
     def get_reservation_information(self, conn, sessionid, liveid):
         # Get the other reservation info (Log ID, Model Name, Pod Name)
         pcs_body, pcs_head = \
@@ -586,6 +620,24 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
         logid, modelname, podname = res_info
 
         # We don't know the pod id or vehicle if from the confirmation.
+        podid = None
+        
+        reservation = self.build_reservation(logid, liveid, 
+            start_time, end_time, vehicleid, modelname, podid, podname)
+        
+        return reservation
+    
+    @override
+    def cancel_reservation(self, sessionid, liveid, vehicleid, start_time, end_time):
+        conn = self.get_pcs_connection()
+        
+        transactionid = \
+            self.get_a_transaction_id(conn, sessionid, 'do_cancel', liveid)
+        
+        res_info = \
+            self.send_cancellation_info(conn, sessionid, liveid, transactionid,
+                vehicleid, start_time, end_time)
+        logid, modelname, podname = res_info
         podid = None
         
         reservation = self.build_reservation(logid, liveid, 

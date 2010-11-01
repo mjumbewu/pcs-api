@@ -721,3 +721,134 @@ RESERVATION_LIGHTBOX_WITH_NO_VEHICLE_INFO=r'''<div class="lightbox" id="fakeLigh
 <span id="add_estimate__estimate__fee_amount">?</span>
 <label for="add_estimate__estimate__tax_amount" id="add_estimate__estimate__tax_summary_label"  class="bottom">Total&nbsp;Tax</label>
 <span id="add_estimate__estimate__tax_amount">?</span></div></div><div class="cost"><div id="add_available_credit__available_credit__div"><label for="add_available_credit__available_credit_">AVAILABLE CREDIT:</label><span id="add_available_credit__available_credit_" class=""></span></div><div id="add_credit__balance__div"><label for="add_credit__balance_">APPLIED CREDIT:</label><span id="add_credit__balance_" class=""></span></div><div id="add_amount_due__amount_due__div"><label for="add_amount_due__amount_due_">AMOUNT DUE:</label><span id="add_amount_due__amount_due_" class="amount_due"></span><div class="instruction">NOTE: By clicking the "reserve it" button, your card will be billed the "amount due" shown above.</div></div></div><div id="add_timeline__error" class="slider error_display"></div><div id='optional_rate_plan_adjustment' style='text-align:left;'><font class='text'></font></div><button id="lb_cancel_button" class="cancel"></button><button id="lb_reserve_button" class="reserve"></button></div></form><br style="clear: both;" /></div></div><script language="javascript" type="text/javascript">MV.globals.reserve.lightbox = new MV.controls.reserve.lightbox({"range_params":{"start_control":{"date_id":"add_start_stamp__start_date_","time_id":"add_start_stamp__start_time_"},"end_control":{"date_id":"add_end_stamp__end_date_","time_id":"add_end_stamp__end_time_"}},"estimate_params":{"price_id":"add_price__price_","available_balance_id":"add_balance__balance_","amount_due_id":"add_amount_due__amount_due_","credit_id":"add_credit__balance_","credit_box_id":"add_credit__balance__div","available_credit_box_id":"add_available_credit__available_credit__div","available_credit_id":"add_available_credit__available_credit_","cost_params":{"id":"add_estimate__estimate_","time_id":"add_estimate__estimate__time_amount","distance_id":"add_estimate__estimate__distance_amount","fees_id":"add_estimate__estimate__fee_amount","tax_id":"add_estimate__estimate__tax_amount","tax_pks":[],"labels":{"please_wait":"Please wait...","hourly":"Hourly","daily":"Daily"}},"hide_ab_shortfall":false},"accept_button_id":"lb_reserve_button","cancel_button_id":"lb_cancel_button","instruction_id":"lightbox_instruction","form_id":"add","attach_close_event":true,"attach_confirm_event":true,"use_dynamic_timeline":true,"initial_update":true,"preserve_instruction":true,"is_lightbox":true,"disabled_class":"reserve_disabled","slider_params":{"action":"add","stack_pk":null,"reservation_pk":0,"start_stamp":null,"start_stamp_min":1288506600,"start_stamp_max":1296450000,"end_stamp":null,"end_stamp_min":1288506600,"end_stamp_max":1296450000,"start_date_control":"add_start_stamp__start_date_","start_time_control":"add_start_stamp__start_time_","end_date_control":"add_end_stamp__end_date_","end_time_control":"add_end_stamp__end_time_","lower":null,"upper":null,"increment":900,"date_calibration":"10\/31\/10","control_ids":{"track_id":"reservation_bar_track","start_handle_id":"reservation_bar_start_handle","end_handle_id":"reservation_bar_end_handle","res_marker_id":"reservation_bar","error_id":"add_timeline__error"},"no_slider":true,"error_label":"Please adjust your times to an available period. Use the form above or click-and-drag your times."}});</script>'''
+
+CANCELLED_RESERVATION_CONFIRMATION=r'''<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+<meta http-equiv="pragma" content="no-cache" />
+<meta http-equiv="cache-control" content="no-cache" />
+<title >Reservation Manager</title><link rel="stylesheet" type="text/css" href="/skin/pcs_ui.css_3_47_0_10" title="pcs_skin" media="screen, print" /><link rel="stylesheet" type="text/css" href="/skin/pcs_layout.css_3_47_0_10" title="pcs_skin" media="screen, print" /><link rel="stylesheet" type="text/css" href="/skin/pcs_buttons.css_3_47_0_10" title="pcs_skin" media="screen, print" /><link rel="stylesheet" type="text/css" href="/skin/pcs_skin.css_3_47_0_10" title="pcs_skin" media="screen, print" /><link rel="stylesheet" type="text/css" href="/js/calendar.css_3_47_0_10" media="screen, print" /><script language="javascript" type="text/javascript">
+        function start_gmap(){
+            this.js_gmap = new MVgmap('google_map');
+            js_gmap.fav_lots = [];
+            js_gmap.marker_event = 'click';
+
+            js_gmap.icon_def = new GIcon(G_DEFAULT_ICON, '/images/client_images/gmarker_def.png');
+            js_gmap.icon_def.iconSize = new GSize(15, 26);
+            js_gmap.icon_def.iconAnchor = new GPoint(8, 26);
+            js_gmap.icon_def.shadowSize = new GSize(15, 26);
+
+            js_gmap.icon_fav = new GIcon(G_DEFAULT_ICON, '/images/client_images/gmarker_fav.png');
+            js_gmap.icon_fav.iconSize = new GSize(15, 26);
+            js_gmap.icon_fav.iconAnchor = new GPoint(8, 26);
+            js_gmap.icon_fav.shadowSize = new GSize(15, 26);
+
+            js_gmap.load(39.948429, -75.218014, 16);
+            js_gmap.addMarkers([[39.948429,-75.218014,'47th & Baltimore',[],0]]);
+        
+            js_gmap.map.disableDragging();
+            js_gmap.map.disableDoubleClickZoom();
+        }
+</script>
+<script language="javascript" type="text/javascript">function unload_gmap() {
+                            js_gmap.unload();
+                          }
+</script>
+</head>
+<body bgcolor="white" onload="start_gmap(); " onunload="unload_gmap(); "><script language="javascript" type="text/javascript" src="/js/helper.js_3_47_0_10"></script>
+<script language="javascript" type="text/javascript" src="/js/popup.js_3_47_0_10"></script>
+<script language="javascript" type="text/javascript" src="/js/browser.js_3_47_0_10"></script>
+<script language="javascript" type="text/javascript" src="/js/calendar.js_3_47_0_10"></script>
+<script language="javascript" type="text/javascript" src="/js/calendarDateInput.js_3_47_0_10"></script>
+<script language="javascript" type="text/javascript" src="/js/prototype.js_3_47_0_10"></script>
+<script language="javascript" type="text/javascript" src="/js/lowpro.js_3_47_0_10"></script>
+<script language="javascript" type="text/javascript" src="/js/mf_lightbox.js_3_47_0_10"></script>
+<script language="javascript" type="text/javascript" src="/js/mv_base.js_3_47_0_10"></script>
+<script language="javascript" type="text/javascript" src="/js/mv_location.js_3_47_0_10"></script>
+<script language="javascript" type="text/javascript" src="http://maps.google.com/maps?file=api&amp;v=2&amp;key=ABQIAAAANNQNgPHY7hmfMuDnzGRL8xRCiyh3L1O9lXHVi81tmDjTTZCYKBSsT-tdn3x62eoISpd9Z2wIbqPixQ"></script>
+<script language="javascript" type="text/javascript" src="/js/xmlhttp.js_3_47_0_10"></script>
+<script language="javascript" type="text/javascript" src="/js/gmap.js_3_47_0_10"></script>
+<script language="javascript" type="text/javascript" src="/js/slider.js_3_47_0_10"></script>
+<script language="javascript" type="text/javascript" src="/js/lightbox.js_3_47_0_10"></script>
+<script language="javascript" type="text/javascript" src="/js/mv_reserve.js_3_47_0_10"></script>
+<div class="mv_header">
+<img border="0" src="/images/client_images/pcs_web_logo.gif" alt="PhillyCarShare" title="PhillyCarShare" />
+</div>
+<div id="wrapper"><div id="page_header"><div id="lame_image"><span class="switch">
+<a class="text" href="/members/help.html?_r=31"  target="_blank"  >Help</a></span>
+<p >Mjumbe Poe, you are signed in. (Residential Account)</p><a href="my_reservations.php?_r=31&mv_action=logout">
+                            <img class="logbutton" alt = "Log Out" src="/skin/base_images/btn_logout.gif" />
+                   </a></div><img id="logo" src="/images/client_images/pcs_web_logo.gif" alt="PhillyCarShare" title="PhillyCarShare" />
+        <div id="nav_bar">
+        <div id="navcontainer">
+        <ul id="navlist"><li ><a class="text link_new_reservation" href="my_reservations.php?_r=31"    >New Reservation</a></li><li ><a class="link_my_reservations" href="my_reservations.php?mv_action=main&_r=31"    >My Reservations</a></li><li ><a class="text link_my_messages" href="my_messages.php?_r=31"    >My Messages</a></li><li ><a class="text link_my_info" href="my_info.php?_r=31"    >My Account</a></li><li ><a class="text link_my_problems" href="my_problems.php?_r=31"    >Member Feedback</a></li></ul></div></div></div><div class="midbox"><h3 >CANCELLED Reservation Confirmation</h3><h5 class="confirm_title"><img src="/skin/img/information.gif"/>Please <a class="largeo" href="javascript://" onclick="window.print(); return(false);">Print</a> or copy the following confirmation details. Please always have these details with you for reference.</h5><div id="left"><h4 >Your cancelled reservation details are:  </h4><table class="mi"><tr ><td align="right">Member&nbsp;Name</td><td align="left">Mjumbe Poe</td></tr><tr ><td align="right">Member&nbsp;ID:</td><td align="left">6489</td></tr><tr ><td width="23%"    align="right" valign="middle"  >
+<font class="text">Stack:</font>
+</td>
+<td  colspan="2" width="80%"  align="left" valign="middle"  ><a class="text" href="my_fleet.php?mv_action=stack_detail&_r=31&pk=30005&stack_pk=96692246"    >47th & Baltimore - Prius Liftback</a></td>
+</tr><tr ><tr ><td width=25% colspan=1   align="right" valign="middle"  >
+<font class="text">Start:</font>
+</td>
+<td colspan="2" width="80%" colspan=1   align="left" valign="middle"  >
+<font class="text">3:45 am Wednesday, November 3, 2010</font>
+</td>
+
+<script language="javascript" type="text/javascript">
+ new_date_control('confirm[start_stamp][date]', 'Show_Date', 20101031, 20110131, 20101031, 'm/d/y');</script>
+</tr><tr ><td width=25% colspan=1   align="right" valign="middle"  >
+<font class="text">End:</font>
+</td>
+<td colspan="2" width="80%" colspan=1   align="left" valign="middle"  >
+<font class="text">4:00 am Wednesday, November 3, 2010</font>
+</td>
+
+<script language="javascript" type="text/javascript">
+ new_date_control('confirm[end_stamp][date]', 'Show_Date', 20101031, 20110131, 20101031, 'm/d/y');</script>
+</tr><tr ><td width="25%"    align="right" valign="middle"  >
+<font class="text">Duration:</font>
+</td>
+<td colspan="2" width="75%"    align="left" valign="middle"  >
+<font class="text">0.25&nbsp;hour(s)</font>
+</td>
+</tr></tr><tr ><td width=20%    align="right" valign="middle"  >
+<font class="text">Memo:</font>
+</td>
+<td colspan="2" width="75%"    align="left" valign="middle"  >
+<font class="text">reservation modify test</font>
+</td>
+</tr><tr ><td ><label for="confirm_id_" id="confirm_id__label">Reservation&nbsp;ID:</label></td><td ><span id="confirm_id_">2517617</span></td><td ><span class="instruction">&nbsp;</span></td></tr></table><br  /><h4 >POD Information:</h4><div id="lot_descr"><p ><span id="stack_pk">47th & Baltimore - Prius Liftback</span><span class="instruction">&nbsp;</span></p><p ><span id="location_descr"><b>4720 Baltimore Avenue</b><br>Philadelphia Parking Authority lot<br><br>Vehicles are parked in this open PPA lot on the south side of Baltimore Avenue, mid-block between 47th & 48th Streets, and are parked in reserved spaces on the north side of the lot, adjacent to Baltimore Avenue.<br><br />
+<br />
+If you are picking up a vehicle and cannot locate it in one of the reserved spaces, please check around the rest of the lot before calling the emergency line.<br><br />
+<br><br />
+<b>SEPTA access:</b> via the Route 34 trolley or the Route 64 bus.<br />
+<br><br />
+<br />
+</span><span class="instruction">&nbsp;</span></p></div></div><div id="right"><div id="small_map"><td align="center" colspan="2"><script src='http://maps.google.com/maps?file=api&amp;v=2&amp;key=ABQIAAAANNQNgPHY7hmfMuDnzGRL8xRCiyh3L1O9lXHVi81tmDjTTZCYKBSsT-tdn3x62eoISpd9Z2wIbqPixQ' type='text/javascript'></script><div id="google_map" style="width: 300px; height: 300px; border: solid 1px; border-color:#00ad87;"></div></td></div><div class="buttons_box"><div style="color: #f50c0c; font-weight: bold;">Consider padding your time. <br>Returning after your reservation End Time will cost you $40 per half hour.</div><tr ><td ><table class="dlist ma" id="change_actions"><thead ><tr ></tr></thead><tbody ><tr class="zebra"></tr></tbody></table></td></tr><table ><tr ><td    align="left" valign="middle"  ><form id="print" name="print" action="my_reservations.php" method="post"  >
+<table  width="100%"   border="0" cellspacing="0" cellpadding="0">
+<tr ><td>&nbsp;</td>
+<td    align="left" valign="middle"  ><input type="hidden" name="mv_action" value="print"/>
+<input type="hidden" name="_r" value="31"/>
+<button  id="print" type="submit" class="button button_print" onclick="window.print(); return(false);">Print this Confirmation</button>
+</td>
+<td></td></tr>
+</table></form></td>
+</tr></table><table ><tr ><td    align="left" valign="middle"  ><form id="outlook" name="outlook" action="outlook.php" method="GET"  >
+<table  width="100%"   border="0" cellspacing="0" cellpadding="0">
+<tr ><td>&nbsp;</td>
+<td    align="left" valign="middle"  ><input type="hidden" name="mv_action" value="outlook"/>
+<input type="hidden" name="_r" value="31"/>
+<input type="hidden" name="pk" value="149396505"/>
+<button  id="outlook" type="submit" class="button button_outlook" >Save to Outlook</button>
+</td>
+<td></td></tr>
+</table></form></td>
+</tr></table><table ><tr ><td    align="left" valign="middle"  ><form id="email" name="email" action="confirmation.php" method="post"  >
+<table  width="100%"   border="0" cellspacing="0" cellpadding="0">
+<tr ><td>&nbsp;</td>
+<td    align="left" valign="middle"  ><table><tr><td><input type="hidden" name="mv_action" value="email"/>
+<input type="hidden" name="_r" value="31"/>
+<input type="hidden" name="pk" value="149396505"/>
+<button  id="email" type="submit" class="button_disabled" onclick="return(false);">Confirmation Email Sent</button>
+</td></tr><tr><td     align="center" valign="middle"  ><a class="text" href="my_info.php?mv_action=dpref&_r=31&pk=6285517"    >Edit&nbsp;Email&nbsp;Preferences</a></td>
+</tr></table></td>
+<td></td></tr>
+</table></form></td>
+</tr></table></div><div class="costs"><h4 >Prius Liftback</h4><img src="/images/client_images/toyota_prius_lift.jpg" /><br  /><div class="price"><p >$2.50 Hourly / $49.00 Daily</p></div><ul ><li ><img src="/skin/base_images/hybrid.gif" label="Hybrid" title="Hybrid" /><span style="padding-left: 0.5em;">Hybrid</span></li><li ><img src="/skin/base_images/folding_seat.gif" label="Folding Rear Seats" title="Folding Rear Seats" /><span style="padding-left: 0.5em;">Folding Rear Seats</span></li></ul></div></div><br style="clear: both;"><h5 class="confirm_title"><img src="/skin/img/information.gif"/>For easy reference to our online handbook, click <a href="http://www.phillycarshare.org/sites/default/files/member-handbook.pdf" target="_blank">here</a>.</h5><p class="note"><img src="/skin/img/exclamation.gif" />For time-sensitive matters during your reservation, please call the 24-hour emergency line at 215.730.0988 x1.</p></div><br style="clear: both" /><div id="mv_powered"><div id="mv_powered_left"><a href="http://www.metavera.com"><img src="/skin/base_images/mv_logo_small.gif" alt="Powered by Metavera"/></a></div><div id="mv_powered_right"><a href="http://www.metavera.com"><span>Powered by Metavera</span><br/>CarSharing Technology Leader</a></div></div></div></body></html>'''

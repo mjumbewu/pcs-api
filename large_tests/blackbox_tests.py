@@ -126,8 +126,6 @@ class RestInterfaceBlackBoxTest (unittest.TestCase):
         liveid = confirmation['reservation'].get('liveid', None)
         self.assert_(liveid is not None, response_body)
         
-        import time
-        time.sleep(5)
         #######################################################################
         # Now, use the liveid from above to change the reservation
         from pcs.wsgi_handlers.reservations import ReservationJsonHandler
@@ -143,6 +141,28 @@ class RestInterfaceBlackBoxTest (unittest.TestCase):
         handler.request['memo'] = 'reservation modify test'
         
         handler.put(liveid)
+        
+        response_body = handler.response.out.getvalue()
+        
+        # I should get a confirmation
+        response = json.loads(response_body)
+        self.check_for_error(response)
+        
+        confirmation = response.get('confirmation', None)
+        self.assert_(confirmation is not None)
+        self.assertEqual(confirmation['reservation']['liveid'], liveid)
+        self.assertEqual(confirmation['reservation']['vehicle']['id'], vehicleid)
+        
+        #######################################################################
+        # Now cancel the reservation
+        handler = ReservationJsonHandler()
+        self.initialize_handler_for_session(handler, session_cookie)
+        
+        handler.request['vehicle'] = vehicleid
+        handler.request['start_time'] = to_isostring(start_time)
+        handler.request['end_time'] = to_isostring(end_time)
+        
+        handler.delete(liveid)
         
         response_body = handler.response.out.getvalue()
         

@@ -40,7 +40,8 @@ class ReservationsHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
             
             period = self.get_period()
             
-            session = self.session_source.fetch_session(userid, sessionid)
+            #session = self.session_source.fetch_session(userid, sessionid)
+            session = None
             reservations, page, page_count = self.reservation_source.fetch_reservations(sessionid, period)
             response_body = self.reservation_view.render_reservations(session, reservations, page, page_count)
         
@@ -58,7 +59,8 @@ class ReservationsHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
             start_time, end_time = self.get_time_range()
             memo = self.get_reservation_memo()
             
-            session = self.session_source.fetch_session(userid, sessionid)
+            #session = self.session_source.fetch_session(userid, sessionid)
+            session = None
             
             reservation = self.reservation_source.create_reservation(
                 sessionid, vehicleid, start_time, end_time, memo)
@@ -105,11 +107,11 @@ class ReservationHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
             memo = self.get_reservation_memo()
             
             reservation = self.reservation_source.modify_reservation(
-                    sessionid, liveid, vehicleid, start_time, end_time, memo)
+                sessionid, liveid, vehicleid, start_time, end_time, memo)
             
             session = None
             response_body = self.reservation_view.render_confirmation(
-                    session, reservation, 'modify')
+                session, reservation, 'modify')
         
         except Exception, e:
             response_body = self.generate_error(e)
@@ -118,8 +120,23 @@ class ReservationHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
         self.response.set_status(200)
     
     def delete(self, liveid):
-        # cancel
-        pass
+        try:
+            sessionid = self.get_session_id()
+            vehicleid = self.get_vehicle_id()
+            start_time, end_time = self.get_time_range()
+            
+            reservation = self.reservation_source.cancel_reservation(
+                sessionid, liveid, vehicleid, start_time, end_time)
+            
+            session = None
+            response_body = self.reservation_view.render_confirmation(
+                session, reservation, 'cancel')
+            
+        except Exception, e:
+            response_body = self.generate_error(e)
+        
+        self.response.out.write(response_body)
+        self.response.set_status(200)
 
 
 class ReservationsJsonHandler (ReservationsHandler):
