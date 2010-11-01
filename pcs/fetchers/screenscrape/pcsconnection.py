@@ -1,6 +1,7 @@
 import httplib
 
 from google.appengine.api.urlfetch import DownloadError 
+from google.appengine.api.urlfetch import fetch as gaefetch
 
 class PcsConnectionError (Exception):
     pass
@@ -58,13 +59,46 @@ class PcsConnection (object):
             return self.__request_helper(location, method, data, headers, follow_count-1)
         return response
     
+    def request_with_httplib(self, url, method, data, headers):
+        scheme, host, path = self.parse_url(url)
+        conn = self.create_host_connection(scheme, host)
+        self.make_request(conn, method, path, data, headers)
+        
+        response = self.get_response(conn)
+        return response
+        
+    def request_with_gae(self, url, method, data, headers):
+        """Request the resource using GAE's fetch.
+        
+        I use this method so that I can be more sure that GAE is paying 
+        attention to my timeout deadline.  If I weren't using GAE, I'd use the
+        other request method (e.g., from a Django instance).
+        """
+        
+        response = gaefetch(url, data, method, headers, follow_redirects=False, deadline=10)
+        
+        # Wrap the response to make it look like an HTTPResponse object
+        class ResponseWrapper (object):
+            def __init__(self, gae_response):
+                self.gae_response = gae_response
+            
+            @property
+            def status(self):
+                return self.gae_response.status_code
+            
+            def read(self):
+                return self.gae_response.content
+            
+            def getheaders(self):
+                return self.gae_response.headers
+        
+        wrapped_response = ResponseWrapper(response)
+        return wrapped_response
+    
     def __request_helper(self, url, method, data, headers, follow_count=5, retry_count=3):
         try:
-            scheme, host, path = self.parse_url(url)
-            conn = self.create_host_connection(scheme, host)
-            self.make_request(conn, method, path, data, headers)
-            
-            initial_response = self.get_response(conn)
+            initial_response = self.request_with_gae(url, method, data, headers)
+#            initial_response = self.request_with_httplib(url, method, data, headers)
             final_response = self.follow_if_redirect(initial_response, method, 
                 data, headers, follow_count)
             return final_response

@@ -83,15 +83,41 @@ class ReservationHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
         self.reservation_source = reservation_source
         self.reservation_view = reservation_view
     
-    def get(self, reservationid):
+    def get_reservation_memo(self):
+        memo = self.request.get('memo', None)
+        return memo
+    
+    def get_vehicle_id(self):
+        vehicle_id = self.request.get('vehicle', None)
+        if vehicle_id is None:
+            raise WsgiParameterError('Could not find vehicle id.')
+        return vehicle_id
+    
+    def get(self, liveid):
         # get
         pass
     
-    def put(self, reservationid):
-        # edit
-        pass
+    def put(self, liveid):
+        try:
+            sessionid = self.get_session_id()
+            vehicleid = self.get_vehicle_id()
+            start_time, end_time = self.get_time_range()
+            memo = self.get_reservation_memo()
+            
+            reservation = self.reservation_source.modify_reservation(
+                    sessionid, liveid, vehicleid, start_time, end_time, memo)
+            
+            session = None
+            response_body = self.reservation_view.render_confirmation(
+                    session, reservation, 'modify')
+        
+        except Exception, e:
+            response_body = self.generate_error(e)
+        
+        self.response.out.write(response_body)
+        self.response.set_status(200)
     
-    def delete(self, reservationid):
+    def delete(self, liveid):
         # cancel
         pass
 

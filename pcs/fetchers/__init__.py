@@ -29,6 +29,9 @@ class _ReservationsSourceInterface (object):
     
     def create_reservation(self, sessionid, vehicleid, start_time, end_time, reservation_memo):
         raise NotImplementedError()
+    
+    def modify_reservation(self, sessionid, liveid, vehicleid, start_time, end_time, reservation_memo):
+        raise NotImplementedError()
 
 class _LocationsSourceInterface (object):
     def fetch_location_profiles(self, sessionid):

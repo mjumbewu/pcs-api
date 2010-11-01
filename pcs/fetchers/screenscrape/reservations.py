@@ -31,14 +31,18 @@ class PcsRequestMaker (object):
                  upcoming_path="/my_reservations.php?mv_action=main",
                  past_path="/my_reservations.php?mv_action=main",
                  price_path="/ajax_estimate.php?slider=true",
+                 transid_path="/lightbox.php",
                  newres_path="/lightbox.php?mv_action=add",
+                 editres_path="/lightbox.php",
                  detail_path="/my_reservations.php?mv_action=confirm",
                  confirm_path="/my_reservations.php?mv_action=confirm"):
         self.__host = host
         self.__upcoming_path = upcoming_path
         self.__past_path = past_path
         self.__price_path = price_path
+        self.__transid_path = transid_path
         self.__newres_path = newres_path
+        self.__editres_path = editres_path
         self.__detail_path = detail_path
         self.__confirm_path = confirm_path
     
@@ -79,33 +83,41 @@ class PcsRequestMaker (object):
         response = conn.request(url, "GET", {}, headers)
         return (response.read(), response.getheaders())
     
-    def get_time_query(self, start_time, end_time):
+    def get_restrans_time_query(self, transtype, start_time, end_time):
         sdate, stime = to_pcs_date_time(start_time)
         edate, etime = to_pcs_date_time(end_time)
         
         data = {
-            'add[start_stamp][start_date][date]' : sdate,
-            'add[start_stamp][start_time][time]' : stime,
-            'add[end_stamp][end_date][date]' : edate,
-            'add[end_stamp][end_time][time]' : etime}
+            transtype + '[start_stamp][start_date][date]' : sdate,
+            transtype + '[start_stamp][start_time][time]' : stime,
+            transtype + '[end_stamp][end_date][date]' : edate,
+            transtype + '[end_stamp][end_time][time]' : etime}
         query = urllib.urlencode(data)
         return query
     
-    def get_vehicle_query(self, vehicleid):
+    def get_restrans_vehicle_query(self, transtype, vehicleid):
         data = {
-            'add[stack_pk]' : (vehicleid)}
+            transtype + '[stack_pk]' : (vehicleid)}
         query = urllib.urlencode(data)
         return query
     
-    def get_memo_query(self, memo):
+    def get_restrans_memo_query(self, transtype, memo):
         data = {
-            'add[job_code]' : memo}
+            transtype + '[job_code]' : memo}
         query = urllib.urlencode(data)
         return query
     
-    def get_transaction_query(self, transactionid):
+    def get_transaction_query(self, transtype, transactionid):
         data = {
-            'add[tid]' : transactionid}
+            'mv_action' : transtype,
+            transtype + '[tid]' : transactionid}
+        query = urllib.urlencode(data)
+        return query
+    
+    def get_restrans_reservation_query(self, transtype, liveid):
+        data = {
+            transtype + '[pk]' : liveid,
+            'pk' : liveid}
         query = urllib.urlencode(data)
         return query
     
@@ -116,10 +128,10 @@ class PcsRequestMaker (object):
         headers = {
             'Cookie': 'sid=%s' % sessionid}
         
-        data = self.get_time_query(start_time, end_time)
-        data += '&' + self.get_vehicle_query(vehicleid)
-        data += '&' + self.get_memo_query(reservation_memo)
-        data += '&' + self.get_transaction_query(transactionid)
+        data = self.get_restrans_time_query('add', start_time, end_time)
+        data += '&' + self.get_restrans_vehicle_query('add', vehicleid)
+        data += '&' + self.get_restrans_memo_query('add', reservation_memo)
+        data += '&' + self.get_transaction_query('add', transactionid)
         
         query = ''
         connector = ''
@@ -146,14 +158,16 @@ class PcsRequestMaker (object):
         response = conn.request(url, "GET", data, headers)
         return (response.read(), response.getheaders())
     
-    def request_empty_create_reservation_box_from_pcs(self, conn, sessionid):
+    def request_empty_create_reservation_box_from_pcs(self, conn, sessionid, transtype, liveid=None):
         host = self.__host
-        path = self.__newres_path
+        path = self.__transid_path
         
         headers = {
             'Cookie': 'sid=%s' % sessionid}
         
-        data = ''
+        data = 'mv_action=%s' % transtype
+        if liveid is not None:
+            data += '&pk=%s' % liveid
         query = ''
         connector = ''
         
@@ -161,6 +175,27 @@ class PcsRequestMaker (object):
         
         response = conn.request(url, "POST", data, headers)
         return(response.read(), response.getheaders())
+    
+    def request_modify_reservation_from_pcs(self, conn, sessionid, liveid, transactionid, vehicleid, start_time, end_time, memo):
+        host = self.__host
+        path = self.__editres_path
+        
+        headers = {
+            'Cookie': 'sid=%s' % sessionid}
+        
+        data = self.get_restrans_time_query('edit', start_time, end_time)
+        data += '&' + self.get_restrans_vehicle_query('edit', vehicleid)
+        data += '&' + self.get_restrans_memo_query('edit', memo)
+        data += '&' + self.get_restrans_reservation_query('edit', liveid)
+        data += '&' + self.get_transaction_query('edit', transactionid)
+        
+        query = ''
+        connector = ''
+        
+        url = "http://%s%s%s%s" % (host, path, connector, query)
+        
+        response = conn.request(url, "POST", data, headers)
+        return (response.read(), response.getheaders())
 
 class PcsDocumentDecoder(object):
     def get_text_from_element(self, td):
@@ -362,6 +397,9 @@ class PcsDocumentDecoder(object):
         
     def decode_reservation_info_from_confirmation_doc(self, html_doc):
         log_id_span = html_doc.find('span', {'id':'confirm_id_'})
+        if log_id_span is None:
+            raise ScreenscrapeParseError('Cannot find the confirmation log id: %s' 
+                % (str(html_doc).replace('>','&gt;').replace('<','&lt;')))
         logid = self.get_text_from_element(log_id_span)
         
         vehicle_info_span = html_doc.find('span', {'id':'stack_pk'})
@@ -369,8 +407,8 @@ class PcsDocumentDecoder(object):
         
         return logid, modelname, podname
     
-    def decode_transaction_id_from_lightbox_block(self, block):
-        tid_input = block.find('input', {'id':'add_tid_'})
+    def decode_transaction_id_from_lightbox_block(self, transtype, block):
+        tid_input = block.find('input', {'id':transtype+'_tid_'})
         
         if tid_input is None:
             raise ScreenscrapeParseError('Failed to retrieve a transaction id.')
@@ -437,6 +475,59 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
 #                vid_match = re.match(vid_pattern, href)
 #                return vid_match.groups('vid')
     
+    def get_a_transaction_id(self, conn, sessionid, transtype, liveid=None):
+        # Get a transaction id -- I'm not quite certain what these are for, but
+        # I know we need one each time we make/change a reservation.
+        pcs_body, pcs_head = \
+            self.requester.request_empty_create_reservation_box_from_pcs(
+                conn, sessionid, transtype, liveid)
+        
+        lgtbox_block = self.get_html_document(pcs_body)
+        transactionid = \
+            self.decoder.decode_transaction_id_from_lightbox_block(
+                transtype, lgtbox_block)
+        
+        return transactionid
+    
+    def send_creation_info(self, conn, sessionid, vehicleid, transactionid, start_time, end_time, memo):
+        # Request for the reservation to be created and get the Live ID
+        pcs_body, pcs_head = \
+            self.requester.request_create_reservation_from_pcs(
+                conn, sessionid, vehicleid, transactionid, start_time, end_time, memo)
+        
+        redir_script = self.get_html_document(pcs_body)
+        liveid = \
+            self.decoder.decode_reservation_liveid_from_redirect_script_element(
+                redir_script)
+        
+        return liveid
+    
+    def send_modification_info(self, conn, sessionid, liveid, transactionid, vehicleid, start_time, end_time, memo):
+        # Request for the reservation to be modified and get the Live ID
+        pcs_body, pcs_head = \
+            self.requester.request_modify_reservation_from_pcs(
+                conn, sessionid, liveid, transactionid, vehicleid, start_time, end_time, memo)
+        
+        redir_script = self.get_html_document(pcs_body)
+        liveid = \
+            self.decoder.decode_reservation_liveid_from_redirect_script_element(
+                redir_script)
+        
+        return liveid
+    
+    def get_reservation_information(self, conn, sessionid, liveid):
+        # Get the other reservation info (Log ID, Model Name, Pod Name)
+        pcs_body, pcs_head = \
+            self.requester.request_confirm_reservation_from_pcs(
+                conn, sessionid, liveid)
+        
+        conf_html_doc = self.get_html_document(pcs_body)
+        logid, modelname, podname = \
+            self.decoder.decode_reservation_info_from_confirmation_doc(
+                conf_html_doc)
+        
+        return logid, modelname, podname
+    
     def build_vehicle(self, vehicleid, modelname, podid, podname):
         vehicle = Vehicle(vehicleid)
         vehicle.model = VehicleModel()
@@ -459,37 +550,19 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
     def create_reservation(self, sessionid, vehicleid, start_time, end_time, reservation_memo):
         conn = self.get_pcs_connection()
         
-        # Get a transaction id
-        pcs_body, pcs_head = \
-            self.requester.request_empty_create_reservation_box_from_pcs(
-                conn, sessionid)
-        
-        lgtbox_block = self.get_html_document(pcs_body)
         transactionid = \
-            self.decoder.decode_transaction_id_from_lightbox_block(
-                lgtbox_block)
+            self.get_a_transaction_id(conn, sessionid, 'add')
         
-        # Get the Live ID
-        pcs_body, pcs_head = \
-            self.requester.request_create_reservation_from_pcs(
-                conn, sessionid, vehicleid, transactionid, start_time, end_time, reservation_memo)
-        
-        redir_script = self.get_html_document(pcs_body)
         liveid = \
-            self.decoder.decode_reservation_liveid_from_redirect_script_element(
-                redir_script)
+            self.send_creation_info(conn, sessionid, vehicleid, transactionid, 
+                start_time, end_time, reservation_memo)
         
-        # Get the other reservation info (Log ID, Model Name, Pod Name)
-        pcs_body, pcs_head = \
-            self.requester.request_confirm_reservation_from_pcs(
-                conn, sessionid, liveid)
-        
-        conf_html_doc = self.get_html_document(pcs_body)
         logid, modelname, podname = \
-            self.decoder.decode_reservation_info_from_confirmation_doc(
-                conf_html_doc)
+            self.get_reservation_information(conn, sessionid, liveid)
+        
         # We don't know the pod id from the confirmation, and I'm not sure it's
-        # worth it to make an additional request to get it.
+        # worth it to make an additional request to get it.  If we need it in 
+        # the future, we'll work it out.
         podid = None
         
         reservation = self.build_reservation(logid, liveid, 
@@ -498,6 +571,25 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
         return reservation
     
     @override
-    def get_existing_reservation(self, sessionid, logid):
-        pass
+    def modify_reservation(self, sessionid, liveid, vehicleid, start_time, end_time, reservation_memo):
+        conn = self.get_pcs_connection()
+        
+        transactionid = \
+            self.get_a_transaction_id(conn, sessionid, 'edit', liveid)
+        
+        liveid = \
+            self.send_modification_info(conn, sessionid, liveid, transactionid, 
+                vehicleid, start_time, end_time, reservation_memo)
+        
+        res_info = \
+            self.get_reservation_information(conn, sessionid, liveid)
+        logid, modelname, podname = res_info
+
+        # We don't know the pod id or vehicle if from the confirmation.
+        podid = None
+        
+        reservation = self.build_reservation(logid, liveid, 
+            start_time, end_time, vehicleid, modelname, podid, podname)
+        
+        return reservation
 

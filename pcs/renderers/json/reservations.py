@@ -27,6 +27,10 @@ class ReservationsJsonView (_ReservationsViewInterface):
                 }
             }
         }
+        
+        if hasattr(reservation, 'liveid'):
+            res_data['liveid'] = reservation.liveid
+        
         return res_data
     
     @override
@@ -40,9 +44,6 @@ class ReservationsJsonView (_ReservationsViewInterface):
         }}
         for reservation in reservations:
             res_data = self.format_res_data(reservation)
-            if hasattr(reservation, 'liveid'):
-                res_data['liveid'] = reservation.liveid
-            
             data['reservation_list']['reservations'].append(res_data)
         
         # Sort the keys, so that tests are repeatable.
