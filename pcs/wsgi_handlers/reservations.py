@@ -35,12 +35,9 @@ class ReservationsHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
     
     def get(self):
         try:
-            userid = self.get_user_id()
             sessionid = self.get_session_id()
-            
             period = self.get_period()
             
-            #session = self.session_source.fetch_session(userid, sessionid)
             session = None
             reservations, page, page_count = self.reservation_source.fetch_reservations(sessionid, period)
             response_body = self.reservation_view.render_reservations(session, reservations, page, page_count)
@@ -53,16 +50,13 @@ class ReservationsHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
     
     def post(self):
         try:
-            userid =  self.get_user_id()
             sessionid = self.get_session_id()
             vehicleid = self.get_vehicle_id()
             start_time, end_time = self.get_time_range()
             memo = self.get_reservation_memo()
             
-            #session = self.session_source.fetch_session(userid, sessionid)
             session = None
-            
-            reservation = self.reservation_source.create_reservation(
+            reservation = self.reservation_source.fetch_reservation_creation(
                 sessionid, vehicleid, start_time, end_time, memo)
             
             response_body = self.reservation_view.render_confirmation(
@@ -106,7 +100,7 @@ class ReservationHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
             start_time, end_time = self.get_time_range()
             memo = self.get_reservation_memo()
             
-            reservation = self.reservation_source.modify_reservation(
+            reservation = self.reservation_source.fetch_reservation_modification(
                 sessionid, liveid, vehicleid, start_time, end_time, memo)
             
             session = None
@@ -125,7 +119,7 @@ class ReservationHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
             vehicleid = self.get_vehicle_id()
             start_time, end_time = self.get_time_range()
             
-            reservation = self.reservation_source.cancel_reservation(
+            reservation = self.reservation_source.fetch_reservation_cancellation(
                 sessionid, liveid, vehicleid, start_time, end_time)
             
             session = None

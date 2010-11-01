@@ -132,13 +132,9 @@ class ReservationsHandlerTest (unittest.TestCase):
         self.handler.get()
         
         response = self.handler.response.out.getvalue()
-        self.assert_(self.handler.userid_called)
         self.assert_(self.handler.sessionid_called)
-#        self.assertEqual(self.session_source.userid, 'user1234')
-#        self.assertEqual(self.session_source.sessionid, 'ses1234')
         self.assertEqual(self.reservation_source.sessionid, 'ses1234')
         self.assertEqual(self.reservation_source.year_month, None)
-#        self.assertEqual(self.reservation_view.session, 'my session')
         self.assertEqual(self.reservation_view.reservations, 'my reservations')
         self.assertEqual(response, 'my reservation response')
     
@@ -162,7 +158,7 @@ class ReservationsHandlerTest (unittest.TestCase):
             return 'my session'
         
         @patch(self.reservation_source)
-        def create_reservation(self, sessionid, vehicleid, start_time, end_time, reservation_memo):
+        def fetch_reservation_creation(self, sessionid, vehicleid, start_time, end_time, reservation_memo):
             self.sessionid = sessionid
             self.vehicleid = vehicleid
             self.start = start_time
@@ -256,7 +252,7 @@ class ReservationHandlerTest (unittest.TestCase):
             return 'reservation memo'
         
         @patch(self.reservation_source)
-        def modify_reservation(self, sessionid, liveid, vehicleid, start_time, end_time, reservation_memo):
+        def fetch_reservation_modification(self, sessionid, liveid, vehicleid, start_time, end_time, reservation_memo):
             self.sessionid = sessionid
             self.liveid = liveid
             self.vehicleid = vehicleid
@@ -312,7 +308,7 @@ class ReservationHandlerTest (unittest.TestCase):
             return 'vid1234'
         
         @patch(self.reservation_source)
-        def cancel_reservation(self, sessionid, liveid, vehicleid, start_time, end_time):
+        def fetch_reservation_cancellation(self, sessionid, liveid, vehicleid, start_time, end_time):
             self.sessionid = sessionid
             self.liveid = liveid
             self.vehicleid = vehicleid
@@ -643,7 +639,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         def request_empty_create_reservation_box_from_pcs(self, conn, sessionid, transtype, liveid=None):
             return RESERVATION_LIGHTBOX_WITH_NO_VEHICLE_INFO, None
         
-        confirmation = self.source.create_reservation(None,None,None,None,None)
+        confirmation = self.source.fetch_reservation_creation(None,None,None,None,None)
     
     def testShouldPassCorrectParametersToPcsForEmptyCreateResBox(self):
         class StubConnection (object):
@@ -780,7 +776,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
             self.bld_podname = podname
             return 'my reservation'
         
-        reservation = self.source.modify_reservation(sessionid, liveid, vehicleid, start_time, end_time, memo)
+        reservation = self.source.fetch_reservation_modification(sessionid, liveid, vehicleid, start_time, end_time, memo)
         
         self.assert_(self.source.transactionid_called)
         self.assert_(self.source.modify_res_called)
@@ -959,7 +955,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
             self.bld_podname = podname
             return 'my reservation'
         
-        reservation = self.source.cancel_reservation(sessionid, liveid, vehicleid, start_time, end_time)
+        reservation = self.source.fetch_reservation_cancellation(sessionid, liveid, vehicleid, start_time, end_time)
         
         self.assert_(self.source.transactionid_called)
         self.assertEqual(self.source.trn_type, 'do_cancel')

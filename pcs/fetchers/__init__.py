@@ -27,13 +27,13 @@ class _ReservationsSourceInterface (object):
     def fetch_reservations(self, sessionid, year_month=None):
         raise NotImplementedError()
     
-    def create_reservation(self, sessionid, vehicleid, start_time, end_time, reservation_memo):
+    def fetch_reservation_creation(self, sessionid, vehicleid, start_time, end_time, reservation_memo):
         raise NotImplementedError()
     
-    def modify_reservation(self, sessionid, liveid, vehicleid, start_time, end_time, reservation_memo):
+    def fetch_reservation_modification(self, sessionid, liveid, vehicleid, start_time, end_time, reservation_memo):
         raise NotImplementedError()
     
-    def cancel_reservation(self, sessionid, liveid, vehicleid, start_time, end_time):
+    def fetch_reservation_cancellation(self, sessionid, liveid, vehicleid, start_time, end_time):
         raise NotImplementedError()
 
 class _LocationsSourceInterface (object):

@@ -443,14 +443,12 @@ class PcsDocumentDecoder(object):
 class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
     
     def __init__(self,
-                 vehicle_source = AvailabilityScreenscrapeSource(),
                  requester = None,
                  decoder = None):
         super(ReservationsScreenscrapeSource, self).__init__()
         
         self.requester = requester or PcsRequestMaker()
         self.decoder = decoder or PcsDocumentDecoder()
-        self.vehicle_source = vehicle_source
     
     def get_pcs_connection(self):
         return PcsConnection()
@@ -479,23 +477,6 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
                 reservations_html_doc)
         
         return reservations, current_page, page_count
-    
-#    def get_vehicle_id_from_confirmation_doc(self, confirm_doc):
-#        table = confirm_doc.find('table', {'class':'mi'})
-#        tbody = table.find('tbody')
-#        trs = tbody.findAll('tr')
-#        
-#        row = 0
-#        for tr in trs:
-#            row += 1
-#            if row == 3:
-#                td = tr.find('td', {'align':'left'})
-#                anchor = td.find('a')
-#                href = anchor['href']
-#                
-#                vid_pattern = r'stack_pk=(?P<vid>[0-9]+)'
-#                vid_match = re.match(vid_pattern, href)
-#                return vid_match.groups('vid')
     
     def get_a_transaction_id(self, conn, sessionid, transtype, liveid=None):
         # Get a transaction id -- I'm not quite certain what these are for, but
@@ -581,7 +562,7 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
         return reservation
     
     @override 
-    def create_reservation(self, sessionid, vehicleid, start_time, end_time, reservation_memo):
+    def fetch_reservation_creation(self, sessionid, vehicleid, start_time, end_time, reservation_memo):
         conn = self.get_pcs_connection()
         
         transactionid = \
@@ -605,7 +586,7 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
         return reservation
     
     @override
-    def modify_reservation(self, sessionid, liveid, vehicleid, start_time, end_time, reservation_memo):
+    def fetch_reservation_modification(self, sessionid, liveid, vehicleid, start_time, end_time, reservation_memo):
         conn = self.get_pcs_connection()
         
         transactionid = \
@@ -628,7 +609,7 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
         return reservation
     
     @override
-    def cancel_reservation(self, sessionid, liveid, vehicleid, start_time, end_time):
+    def fetch_reservation_cancellation(self, sessionid, liveid, vehicleid, start_time, end_time):
         conn = self.get_pcs_connection()
         
         transactionid = \
