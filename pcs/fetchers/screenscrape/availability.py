@@ -144,6 +144,8 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
         from_match = re.match(from_pattern, stipulation)
         if from_match is not None:
             hour = int(from_match.group('hour'))
+            if hour == 12:
+                hour = 0
             minute = int(from_match.group('minute'))
             midi = from_match.group('midi')
             if midi == 'p':
