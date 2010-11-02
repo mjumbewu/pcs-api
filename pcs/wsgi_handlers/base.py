@@ -1,4 +1,5 @@
 """Package for the wsgi user input source."""
+import logging
 import re
 import sys
 
@@ -60,7 +61,14 @@ class _SessionBasedHandler (object):
         
         _,_,tb = sys.exc_info()
         tb_str = '\n'.join(traceback.format_tb(tb))
-        return self.error_view.render_error(None, type(error).__name__ + ': ' + str(error), tb_str)
+        
+        detailed_error = 'Headers: %s\n\nCookies: %s\n\nQuery: %s\n\nPayload: %s\n\n' \
+            % (self.request.headers, self.request.cookies, 
+               self.request.query_string, self.request.body) \
+            + type(error).__name__ + ': ' + str(error) + '\n\n' \
+            + 'Traceback:\n' + tb_str
+        logging.error(detailed_error)
+        return self.error_view.render_error(None, str(error), detailed_error)
 
 class _TimeRangeBasedHandler (object):
     def __init__(self):
