@@ -242,10 +242,13 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
         
         # Since the availability information is in the div too, store it.
         if availability_p['class'] == 'good':
+            vehicle_availability.availability = 'full'
             vehicle_availability.score = 1
         elif availability_p['class'] == 'bad':
+            vehicle_availability.availability = 'none'
             vehicle_availability.score = 0
         elif availability_p['class'] == 'maybe':
+            vehicle_availability.availability = 'part'
             vehicle_availability.score = 0.5
             self.assign_vehicle_availability_stipulation(vehicle_availability, availability_p.text)
         

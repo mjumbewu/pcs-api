@@ -42,7 +42,7 @@ class LocationAvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler)
         raise WsgiParameterError('No valid location given')
     
     def get_location(self, sessionid, locationid):
-        if ',' in locationid:
+        if locationid and ',' in locationid:
             comma = locationid.find(',')
             lat = locationid[:comma]
             lon = locationid[comma+1:]
@@ -59,17 +59,18 @@ class LocationAvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler)
             userid = self.get_user_id()
             sessionid = self.get_session_id()
             
-            if locationid == '.form':
+            if locationid == '_form':
                 locationid = self.get_location_id()
-            elif locationid == '.default':
+            elif locationid == '_default':
                 locationid = None
             
-            session = self.get_session(userid, sessionid)
+            #session = self.get_session(userid, sessionid)
+            session = None
             location = self.get_location(sessionid, locationid)
             
             start_time, end_time = self.get_time_range()
 
-            vehicle_availabilities = self.get_available_vehicles(session.id, location.id, start_time, end_time)
+            vehicle_availabilities = self.get_available_vehicles(sessionid, location.id, start_time, end_time)
             
             response_body = self.vehicle_view.render_location_availability(
                 session, location, start_time, end_time, vehicle_availabilities)

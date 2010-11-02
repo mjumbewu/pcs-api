@@ -9,6 +9,7 @@
 {% for vehicle_availability in vehicle_availabilities %}
 		{
 			"vehicle" : {
+				"id": "{{ vehicle_availability.vehicle.id }}",
 				"pod" : {
 					"id" : "{{ vehicle_availability.vehicle.pod.id }}",
 					"name" : "{{ vehicle_availability.vehicle.pod.name }}"} ,
@@ -16,7 +17,8 @@
 					"id" : "{{ vehicle_availability.vehicle.model.id }}",
 					"name" : "{{ vehicle_availability.vehicle.model.name }}"}} ,
 			"earliest" : "{{ vehicle_availability.earliest|date:"Y-m-d\TH:i" }}",
-			"latest" : "{{ vehicle_availability.latest|date:"Y-m-d\TH:i" }}"
+			"latest" : "{{ vehicle_availability.latest|date:"Y-m-d\TH:i" }}",
+			"availability" : "{{ vehicle_availability.availability }}"
 		}{% if not forloop.last %} ,{% endif%}
 {% endfor %}
 	]
