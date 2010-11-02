@@ -36,14 +36,20 @@ class SessionHandler (_SessionBasedHandler):
         Attempt to save the given login session to a cookie on the user's 
         machine.
         """
-        session_data = {
-            'id':session.id,
-            'user':session.user,
-            'name':session.name
-        }
-        
-        session_string = json.dumps(session_data).replace(r'"', r'\"')
-        self.response.headers.add_header('Set-Cookie',str('session="'+session_string+'"; path=/'))
+#        session_data = {
+#            'id':session.id,
+#            'user':session.user,
+#            'name':session.name
+#        }
+#        
+#        session_string = json.dumps(session_data).replace(r'"', r'\"')
+#        self.response.headers.add_header('Set-Cookie',str('session="'+session_string+'"; path=/'))
+        self.response.headers.add_header(
+            'Set-Cookie','session_id=%s;' % session.id)
+#        self.response.headers.add_header(
+#            'Set-Cookie','session_user=%s;' % session.user)
+#        self.response.headers.add_header(
+#            'Set-Cookie','session_name=%s;' % session.name)
         
     def get(self):
         try:

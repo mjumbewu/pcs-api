@@ -56,7 +56,6 @@ class LocationAvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler)
     
     def get(self, locationid):
         try:
-            userid = self.get_user_id()
             sessionid = self.get_session_id()
             
             if locationid == '_form':
@@ -64,8 +63,6 @@ class LocationAvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler)
             elif locationid == '_default':
                 locationid = None
             
-            #session = self.get_session(userid, sessionid)
-            session = None
             location = self.get_location(sessionid, locationid)
             
             start_time, end_time = self.get_time_range()
@@ -73,7 +70,7 @@ class LocationAvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler)
             vehicle_availabilities = self.get_available_vehicles(sessionid, location.id, start_time, end_time)
             
             response_body = self.vehicle_view.render_location_availability(
-                session, location, start_time, end_time, vehicle_availabilities)
+                None, location, start_time, end_time, vehicle_availabilities)
         except Exception, e:
             response_body = self.generate_error(e)
             

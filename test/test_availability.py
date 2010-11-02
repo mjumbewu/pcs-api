@@ -19,19 +19,26 @@ from util.testing import patch
 from util.testing import Stub
 from util.TimeZone import Eastern
 
+# A fake request class
+class StubRequest (dict):
+    def __init__(self):
+        self.headers = {}
+        self.query_string = ''
+        self.body = ''
+        self.cookies = {}
+    def arguments(self):
+        return []
+
+# A fake response class
+import StringIO
+class StubResponse (object):
+    def __init__(self):
+        self.out = StringIO.StringIO()
+    def set_status(self, status):
+        self.status = status
+
 class VehicleAvailabilityHandlerTest (unittest.TestCase):
     def setUp(self):
-        # A fake request class
-        class StubRequest (dict):
-            pass
-        
-        # A fake response class
-        import StringIO
-        class StubResponse (object):
-            out = StringIO.StringIO()
-            def set_status(self, status):
-                self.status = status
-        
         class StubSessionSource (object):
             pass
         StubSessionSource = Stub(_SessionSourceInterface)(StubSessionSource)
@@ -195,7 +202,7 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
         handler.get('veh1234')
         
         response = handler.response.out.getvalue()
-        self.assertEqual(response, "Exception: My Exception")
+        self.assertEqual(response, "My Exception")
         
 
 class VehicleAvailabilityHandlerAndScreenscrapeSourceTest (unittest.TestCase):
@@ -239,17 +246,6 @@ class VehicleAvailabilityHandlerAndScreenscrapeSourceTest (unittest.TestCase):
 class LocationAvailabilityHandlerTest (unittest.TestCase):
     
     def setUp(self):
-        # A fake request class
-        class StubRequest (dict):
-            pass
-        
-        # A fake response class
-        import StringIO
-        class StubResponse (object):
-            out = StringIO.StringIO()
-            def set_status(self, status):
-                self.status = status
-        
         # A source for session information
         class StubSessionSource (object):
             pass
@@ -290,7 +286,7 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
     
     def testShouldReturnSessionBasedOnReceivedCookies(self):
         # Given...
-        self.handler.request.cookies = {'session':r'"{\"id\":\"ses1234\"}"'}
+        self.handler.request.cookies = {'session_id':r'ses1234'}
         
         # When...
         sessionid = self.handler.get_session_id()
@@ -350,15 +346,13 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
     def testShouldGetSessionAndUserIdsFromCookies(self):
         # Given...
         self.handler.request.cookies = {
-            'session':r'"{\"id\":\"123abc\",\"user\":\"u12345\",\"name\":\"\"}"'
+            'session_id':r'123abc'
         }
         
         # When...
         sessionid = self.handler.get_session_id()
-        userid = self.handler.get_user_id()
         
         # Then...
-        self.assertEqual(userid, 'u12345')
         self.assertEqual(sessionid, '123abc')
     
     def testMissingSessionIdRiasesError(self):
@@ -370,22 +364,6 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
         # When...
         try:
             sessionid = self.handler.get_session_id()
-        
-        # Then...
-        except WsgiParameterError:
-            return
-        
-        self.fail('Lack of session id should have caused a WsgiParameterError')
-    
-    def testMissingUserIdRiasesError(self):
-        # Given...
-        self.handler.request.cookies = {
-            'session':r'"{\"sid\":\"123abc\"}"'
-        }
-        
-        # When...
-        try:
-            userid = self.handler.get_user_id()
         
         # Then...
         except WsgiParameterError:
@@ -509,15 +487,10 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
         
         # Then...
         response = self.handler.response.out.getvalue()
-        self.assertEqual(response, "Exception: Failure")
+        self.assertEqual(response, "Failure")
     
     def testGetMethodShouldInteractWithOtherMethodsWithSuccess(self):
         # Given...
-        @patch(self.handler)
-        def get_user_id(self):
-            self.get_user_id_called = True
-            return 'user1234'
-        
         @patch(self.handler)
         def get_session_id(self):
             self.get_session_id_called = True
@@ -578,17 +551,10 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
         response_body = self.handler.response.out.getvalue()
         
         # Then...
-        self.assert_(self.handler.get_user_id_called)
         self.assert_(self.handler.get_session_id_called)
-#        self.assert_(self.handler.get_location_id_called)
-        self.assertEqual(self.handler.get_session_userid, 'user1234')
-        self.assertEqual(self.handler.get_session_sessionid, 'ses1234')
         self.assertEqual(self.handler.get_location_sessionid, 'ses1234')
         self.assertEqual(self.handler.get_location_locationid, 'loc1234')
-        self.assertEqual(self.vehicle_view.available_session.id, 'ses1234')
         self.assertEqual(self.vehicle_view.available_location.id, 'loc1234')
-#        self.assertEqual(self.vehicle_view.available_start, 1)
-#        self.assertEqual(self.vehicle_view.available_end, 100)
         self.assertEqual(response_body, 'Success')
     
     def testLocationIdOfZeroShouldBeValid(self):
@@ -1080,6 +1046,7 @@ class AvailabilityJsonViewTest (unittest.TestCase):
     		end_time = datetime.datetime(2011,1,1,5,15,tzinfo=Eastern)
     		
     		vav1 = StubData()
+    		vav1.availability = 'part'
     		vav1.earliest = datetime.datetime(2010,11,1,3,15,tzinfo=Eastern)
     		vav1.vehicle = StubData()
     		vav1.vehicle.pod = StubData()
@@ -1089,6 +1056,7 @@ class AvailabilityJsonViewTest (unittest.TestCase):
     		vav1.vehicle.model.name = 'model 1'
     		
     		vav2 = StubData()
+    		vav2.availability = 'full'
     		vav2.vehicle = StubData()
     		vav2.vehicle.pod = StubData()
     		vav2.vehicle.pod.id = 'p1'
@@ -1097,6 +1065,7 @@ class AvailabilityJsonViewTest (unittest.TestCase):
     		vav2.vehicle.model.name = 'model 2'
     		
     		vav3 = StubData()
+    		vav3.availability = 'part'
     		vav3.latest = datetime.datetime(2010,11,1,4,45,tzinfo=Eastern)
     		vav3.vehicle = StubData()
     		vav3.vehicle.pod = StubData()
@@ -1121,6 +1090,7 @@ class AvailabilityJsonViewTest (unittest.TestCase):
 
 		{
 			"vehicle" : {
+				"id" : "",
 				"pod" : {
 					"id" : "p1",
 					"name" : "pod 1"} ,
@@ -1128,11 +1098,13 @@ class AvailabilityJsonViewTest (unittest.TestCase):
 					"id" : "",
 					"name" : "model 1"}} ,
 			"earliest" : "2010-11-01T03:15",
-			"latest" : ""
+			"latest" : "",
+			"availability" : "part"
 		} ,
 
 		{
 			"vehicle" : {
+				"id" : "",
 				"pod" : {
 					"id" : "p1",
 					"name" : "pod 1"} ,
@@ -1140,11 +1112,13 @@ class AvailabilityJsonViewTest (unittest.TestCase):
 					"id" : "",
 					"name" : "model 2"}} ,
 			"earliest" : "",
-			"latest" : ""
+			"latest" : "",
+			"availability" : "full"
 		} ,
 
 		{
 			"vehicle" : {
+				"id" : "",
 				"pod" : {
 					"id" : "p2",
 					"name" : "pod 2"} ,
@@ -1152,9 +1126,11 @@ class AvailabilityJsonViewTest (unittest.TestCase):
 					"id" : "",
 					"name" : "model 1"}} ,
 			"earliest" : "",
-			"latest" : "2010-11-01T04:45"
+			"latest" : "2010-11-01T04:45",
+			"availability" : "part"
 		}
 
 	]
-}}""",
+}}
+""",
     		rendering)

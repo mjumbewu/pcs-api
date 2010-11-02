@@ -9,7 +9,7 @@
 {% for vehicle_availability in vehicle_availabilities %}
 		{
 			"vehicle" : {
-				"id": "{{ vehicle_availability.vehicle.id }}",
+				"id" : "{{ vehicle_availability.vehicle.id }}",
 				"pod" : {
 					"id" : "{{ vehicle_availability.vehicle.pod.id }}",
 					"name" : "{{ vehicle_availability.vehicle.pod.name }}"} ,

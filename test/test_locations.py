@@ -16,20 +16,27 @@ from pcs.renderers.json.locations import LocationsJsonView
 from util.testing import patch
 from util.testing import Stub
 
+# A fake request class
+class StubRequest (dict):
+    def __init__(self):
+        self.headers = {}
+        self.query_string = ''
+        self.body = ''
+        self.cookies = {}
+    def arguments(self):
+        return []
+
+# A fake response class
+import StringIO
+class StubResponse (object):
+    def __init__(self):
+        self.out = StringIO.StringIO()
+    def set_status(self, status):
+        self.status = status
+
 class LocationHandlerTest (unittest.TestCase):
     
     def setUp(self):
-        # A fake request class
-        class StubRequest (dict):
-            cookies = {}
-        
-        # A fake response class
-        import StringIO
-        class StubResponse (object):
-            out = StringIO.StringIO()
-            def set_status(self, status):
-                self.status = status
-        
         # A source for session information
         class StubSessionSource (object):
             pass
@@ -134,7 +141,7 @@ class LocationHandlerTest (unittest.TestCase):
         
         @patch(self.error_view)
         def render_error(self, error_code, error_msg, error_detail):
-            return error_msg
+            return error_detail
         
         # When...
         self.handler.get()
@@ -145,7 +152,7 @@ class LocationHandlerTest (unittest.TestCase):
         self.assert_(self.handler.sessionid_called)
         self.assertEqual(self.handler.userid, 'user1234')
         self.assertEqual(self.handler.sessionid, 'ses1234')
-        self.assert_(response_body.startswith('SessionExpiredError'), 'Should start with SessionExpiredError: %r' % response_body)
+        self.assert_('SessionExpiredError' in response_body, 'Should contain SessionExpiredError: %r' % response_body)
     
 
 from pcs.fetchers.screenscrape.locations import LocationsScreenscrapeSource

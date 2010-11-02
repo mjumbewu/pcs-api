@@ -22,27 +22,16 @@ class _SessionBasedHandler (object):
         self.session_source = session_source
         self.error_view = error_view
     
-    def get_session_data(self):
-        session_string = self.request.cookies.get('session', None)
-        if session_string is None:
-            raise WsgiParameterError('Could not find session cookie')
-        
-        session_string = session_string.replace(r'\"',r'"')[1:-1]
-        try:
-            return json.loads(session_string)
-        except ValueError:
-            raise Exception(repr(session_string))
-    
     def get_user_id(self):
-        session_data = self.get_session_data()
-        user_id = session_data.get('user', None)
-        if user_id is None:
-            raise WsgiParameterError('Could not find user id.')
+#        user_id = self.request.cookies.get('session_user', None)
+#        if user_id is None:
+#            raise WsgiParameterError('Could not find user id.')
+        
+        user_id = None
         return user_id
     
     def get_session_id(self):
-        session_data = self.get_session_data()
-        session_id = session_data.get('id', None)
+        session_id = self.request.cookies.get('session_id', None)
         if session_id is None:
             raise WsgiParameterError('Could not find session id.')
         return session_id
@@ -65,7 +54,8 @@ class _SessionBasedHandler (object):
         detailed_error = 'Headers: %s\n\nCookies: %s\n\nQuery: %s\n\nPayload: %s\n\n' \
             % (self.request.headers, self.request.cookies, 
                self.request.query_string, self.request.body) \
-            + type(error).__name__ + ': ' + str(error) + '\n\n' \
+            + 'Arguments: %s\n\n' % (self.request.arguments()) \
+            + '%s: %s\n\n' % (type(error).__name__, error) \
             + 'Traceback:\n' + tb_str
         logging.error(detailed_error)
         return self.error_view.render_error(None, str(error), detailed_error)

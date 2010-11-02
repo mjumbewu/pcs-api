@@ -20,6 +20,24 @@ from util.testing import patch
 from util.testing import Stub
 from util.TimeZone import Eastern
 
+# A fake request class
+class StubRequest (dict):
+    def __init__(self):
+        self.headers = {}
+        self.query_string = ''
+        self.body = ''
+        self.cookies = {}
+    def arguments(self):
+        return []
+
+# A fake response class
+import StringIO
+class StubResponse (object):
+    def __init__(self):
+        self.out = StringIO.StringIO()
+    def set_status(self, status):
+        self.status = status
+
 class StubConnection (object):
     def request(self, url, method, data, headers):
         self.url = url
@@ -34,17 +52,6 @@ StubConnection = Stub(PcsConnection)(StubConnection)
 
 class ReservationsHandlerTest (unittest.TestCase):
     def setUp(self):
-        # A fake request class
-        class StubRequest (dict):
-            pass
-        
-        # A fake response class
-        import StringIO
-        class StubResponse (object):
-            out = StringIO.StringIO()
-            def set_status(self, status):
-                self.status = status
-        
         class StubSessionSource (object):
             pass
         StubSessionSource = Stub(_SessionSourceInterface)(StubSessionSource)
@@ -79,7 +86,7 @@ class ReservationsHandlerTest (unittest.TestCase):
     
     def testShouldPassDateStructureToReservationSource(self):
         self.request.cookies = {
-            'session':r'"{\"user\":\"123\",\"id\":\"456\"}"'
+            'session_id':r'456'
         }
         
         self.request['period'] = '2010-09'
@@ -607,9 +614,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         
         from pcs.data.reservation import ReservationStatus
         self.assertEqual(res_data[0].logid, '2491921')
-        self.assertEqual(res_data[0].status, ReservationStatus.PAST)
         self.assertEqual(res_data[-1].logid, '2514083')
-        self.assertEqual(res_data[-1].status, ReservationStatus.UPCOMING)
         self.assertEqual(res_data[-1].liveid, '149337407')
     
     def testShouldCreateReservationConfirmation(self):

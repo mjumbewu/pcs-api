@@ -8,6 +8,30 @@ from pcs.wsgi_handlers.base import WsgiParameterError
 from pcs.fetchers import SessionLoginError
 from pcs.fetchers import SessionExpiredError
 
+# A fake request class
+class StubRequest (dict):
+    def __init__(self):
+        self.headers = {}
+        self.query_string = ''
+        self.body = ''
+        self.cookies = {}
+    def arguments(self):
+        return []
+
+# A fake response class
+class StubHeaders (object):
+    header_list = []
+    def add_header(self, key, val):
+        self.header_list.append((key,val))
+
+import StringIO
+class StubResponse (object):
+    def __init__(self):
+        self.out = StringIO.StringIO()
+        self.headers = StubHeaders()
+    def set_status(self, status):
+        self.status = status
+
 from pcs.fetchers.screenscrape.pcsconnection import PcsConnection
 from pcs.fetchers.screenscrape.session import SessionScreenscrapeSource
 class SessionScreenscrapeSourceTest (unittest.TestCase):
@@ -203,20 +227,6 @@ from pcs.renderers import _SessionViewInterface
 from pcs.fetchers import SessionLoginError
 class SessionHandlerTest (unittest.TestCase):
     def setUp(self):
-        class StubRequest (dict):
-            cookies = {}
-        
-        class StubHeaders (object):
-            header_list = []
-            def add_header(self, key, val):
-                self.header_list.append((key,val))
-        
-        class StubResponse (object):
-            out = StringIO.StringIO()
-            def set_status(self, status):
-                self.status = status
-            headers = StubHeaders()
-        
         class StubSessionSource (object):
             pass
         StubSessionSource = Stub(_SessionSourceInterface)(StubSessionSource)
@@ -307,7 +317,7 @@ class SessionHandlerTest (unittest.TestCase):
         
         @patch(self.error_view)
         def render_error(self, error_code, error_msg, error_detail):
-            return error_msg
+            return error_detail
         
         # When...
         self.handler.get()
@@ -318,7 +328,7 @@ class SessionHandlerTest (unittest.TestCase):
         self.assert_(self.handler.sessionid_called)
         self.assertEqual(self.handler.userid, 'user1234')
         self.assertEqual(self.handler.sessionid, 'ses1234')
-        self.assert_(response_body.startswith('SessionExpiredError'), 'Response does not start with SessionExpiredError: %r' % response_body)
+        self.assert_('SessionExpiredError' in response_body, 'Response does not contain SessionExpiredError: %r' % response_body)
     
     def testShouldSaveSessionToSetCookieHeader(self):
         class StubSession (object):
@@ -330,7 +340,7 @@ class SessionHandlerTest (unittest.TestCase):
         self.handler.save_session(session)
         
         self.assertEqual(self.handler.response.headers.header_list, 
-            [ ('Set-Cookie',r'session="{\"id\": \"ses1234\", \"name\": \"My User Name\", \"user\": \"user1234\"}"; path=/') ])
+            [ ('Set-Cookie',r'session_id=ses1234;') ])
     
     def testShouldRespondWithSuccessContentWhenUserIdAndPasswordAreRecognized(self):
         # Given...
@@ -381,7 +391,7 @@ class SessionHandlerTest (unittest.TestCase):
         
         @patch(self.error_view)
         def render_error(self, error_code, error_msg, error_detail):
-            return error_msg
+            return error_detail
         
         # When...
         self.handler.post()
@@ -391,7 +401,7 @@ class SessionHandlerTest (unittest.TestCase):
         self.assert_(self.handler.credentials_called)
         self.assertEqual(self.session_source.userid, 'user1234')
         self.assertEqual(self.session_source.password, 'pass1234')
-        self.assert_(response_body.startswith('SessionLoginError'), 'Response does not start with SessionLoginError: %r' % response_body)
+        self.assert_('SessionLoginError' in response_body, 'Response does not contain SessionLoginError: %r' % response_body)
     
     def testShouldRaiseWsgiParameterErrorWhenUseridOrPasswordIsEmpty(self):
         self.handler.request['user'] = 'user1234'

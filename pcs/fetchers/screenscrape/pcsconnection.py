@@ -91,6 +91,9 @@ class PcsConnection (object):
             
             def getheaders(self):
                 return self.gae_response.headers
+            
+            def getheader(self, header):
+                return self.gae_response.headers[header]
         
         wrapped_response = ResponseWrapper(response)
         return wrapped_response
