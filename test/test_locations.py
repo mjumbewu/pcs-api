@@ -8,6 +8,7 @@ from pcs.wsgi_handlers.appengine.locations import LocationsJsonHandler
 from pcs.fetchers import _LocationsSourceInterface
 from pcs.fetchers import _SessionSourceInterface
 from pcs.fetchers import SessionExpiredError
+from pcs.fetchers.screenscrape import ScreenscrapeFetchError
 from pcs.fetchers.screenscrape import ScreenscrapeParseError
 from pcs.fetchers.screenscrape.pcsconnection import PcsConnection
 from pcs.renderers import _ErrorViewInterface
@@ -262,6 +263,26 @@ class LocationsScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(location.name, 'Custom Location')
         self.assertEqual(location.latitude, 123)
         self.assertEqual(location.longitude, 456)
+    
+    def testShouldRecognizeWhenSessionHasExpiredWhileFetchingLocProfiles(self):
+        from strings_for_testing import EXPIRED_PASSWORD_LOGIN_FORM
+        
+        source = LocationsScreenscrapeSource()
+        
+        @patch(source)
+        def get_preferences_response(self, conn, sessionid):
+            return EXPIRED_PASSWORD_LOGIN_FORM, None
+        
+        expected_code = 'invalid_session'
+        try:
+            sessionid = None
+            source.fetch_location_profiles(sessionid)
+        except ScreenscrapeFetchError, sfe:
+            self.assertEqual(sfe.code, expected_code,
+                'Fetch has incorrect code: %r, expected %r' % (sfe.code, expected_code))
+            return
+        
+        self.fail('Expected fetch error.')
 
 class LocationsJsonHandlerTest (unittest.TestCase):
     def testShouldBeInitializedWithJsonViewsAndScreenscrapeSources(self):

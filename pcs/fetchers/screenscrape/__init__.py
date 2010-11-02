@@ -10,3 +10,11 @@ class ScreenscrapeParseError (ErrorWithCode):
 
 class ScreenscrapeFetchError (ErrorWithCode):
     pass
+
+class _ScreenscrapeBase (object):
+    def verify_pcs_response(self, response_body, response_headers=None):
+        if 'Please&nbsp;sign&nbsp;in&nbsp;below:' in response_body:
+            raise ScreenscrapeFetchError(
+                'Your session is invalid.', 'invalid_session')
+        
+        return True

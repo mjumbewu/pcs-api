@@ -11,12 +11,13 @@ except ImportError:
 from pcs.data.location import LocationProfile
 from pcs.data.location import LocationCoordinate
 from pcs.fetchers import _LocationsSourceInterface
+from pcs.fetchers.screenscrape import _ScreenscrapeBase
 from pcs.fetchers.screenscrape import ScreenscrapeParseError
 from pcs.fetchers.screenscrape.pcsconnection import PcsConnection
 from util.abstract import override
 from util.BeautifulSoup import BeautifulSoup
 
-class LocationsScreenscrapeSource (_LocationsSourceInterface):
+class LocationsScreenscrapeSource (_LocationsSourceInterface, _ScreenscrapeBase):
     """
     Responsible for constructing a set of location profiles from a screenscrape
     of a PhillyCarShare response.
@@ -72,6 +73,7 @@ class LocationsScreenscrapeSource (_LocationsSourceInterface):
         locations = None
         prefs_body, prefs_headers = \
             self.get_preferences_response(conn, sessionid)
+        self.verify_pcs_response(prefs_body, prefs_headers)
         locations = self.parse_locations_from_preferences_body(prefs_body)
         
         return locations

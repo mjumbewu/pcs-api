@@ -17,6 +17,7 @@ from pcs.data.vehicle import Vehicle
 from pcs.data.vehicle import VehicleModel
 from pcs.data.vehicle import AvailableVehicle
 from pcs.fetchers import _AvailabilitySourceInterface
+from pcs.fetchers.screenscrape import _ScreenscrapeBase
 from pcs.fetchers.screenscrape import ScreenscrapeFetchError
 from pcs.fetchers.screenscrape import ScreenscrapeParseError
 from pcs.fetchers.screenscrape.pcsconnection import PcsConnection
@@ -25,7 +26,7 @@ from util.BeautifulSoup import BeautifulSoup
 from util.TimeZone import Eastern
 from util.TimeZone import to_timestamp
 
-class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
+class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface, _ScreenscrapeBase):
     """
     Responsible for logging in and constructing a session from a screenscrape
     of a PhillyCarShare response.
@@ -292,10 +293,13 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
     def fetch_available_vehicles_near(self, sessionid, locationid, start_time, end_time):
         conn = self.create_host_connection()
         
+        
         pcs_available_body, pcs_available_headers = \
             self.availability_from_pcs(conn, sessionid, locationid, start_time, end_time)
         self._body = pcs_available_body
         self._headers = pcs_available_headers
+        
+        self.verify_pcs_response(self._body)
         
         json_availability_data = self.get_json_data(pcs_available_body)
         html_pods_data = self.get_html_data(json_availability_data)
@@ -359,6 +363,8 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
         pcs_vehicle_body, pcs_vehicle_headers = \
             self.vehicle_info_from_pcs(conn, sessionid, vehicleid, start_time, end_time)
         html_vehicle_data = self.get_html_vehicle_data(pcs_vehicle_body)
+        
+        self.verify_pcs_response(pcs_vehicle_body, pcs_vehicle_headers)
         
         vehicle = self.create_vehicle_from_pcs_information_doc(html_vehicle_data)
         return vehicle

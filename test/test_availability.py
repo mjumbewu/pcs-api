@@ -1052,6 +1052,55 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
             return
         
         self.fail('Expected fetch error.')
+    
+    def testShouldUnderstandSessionExpiredAndRaiseFetchError(self):
+        from strings_for_testing import EXPIRED_PASSWORD_LOGIN_FORM
+        
+        expected_code = 'invalid_session'
+        try:
+            self.source.verify_pcs_response(EXPIRED_PASSWORD_LOGIN_FORM)
+        except ScreenscrapeFetchError, sfe:
+            self.assertEqual(sfe.code, expected_code,
+                'Fetch has incorrect code: %r, expected %r' % (sfe.code, expected_code))
+            return
+        
+        self.fail('Expected fetch error.')
+    
+    def testShouldRecognizeWhenSessionHasExpiredWhileFetchingVehNearLoc(self):
+        from strings_for_testing import EXPIRED_PASSWORD_LOGIN_FORM
+        
+        @patch(self.source)
+        def availability_from_pcs(self, conn, sessionid, locationid, start_time, end_time):
+            return EXPIRED_PASSWORD_LOGIN_FORM, None
+        
+        expected_code = 'invalid_session'
+        try:
+            sessionid = locationid = start_time = end_time = None
+            self.source.fetch_available_vehicles_near(sessionid, locationid, start_time, end_time)
+        except ScreenscrapeFetchError, sfe:
+            self.assertEqual(sfe.code, expected_code,
+                'Fetch has incorrect code: %r, expected %r' % (sfe.code, expected_code))
+            return
+        
+        self.fail('Expected fetch error.')
+    
+    def testShouldRecognizeWhenSessionHasExpiredWhileFetchingVeh(self):
+        from strings_for_testing import EXPIRED_PASSWORD_LOGIN_FORM
+        
+        @patch(self.source)
+        def vehicle_info_from_pcs(self, conn, sessionid, vehicleid, start_time, end_time):
+            return EXPIRED_PASSWORD_LOGIN_FORM, None
+        
+        expected_code = 'invalid_session'
+        try:
+            sessionid = vehicleid = start_time = end_time = None
+            self.source.fetch_vehicle(sessionid, vehicleid, start_time, end_time)
+        except ScreenscrapeFetchError, sfe:
+            self.assertEqual(sfe.code, expected_code,
+                'Fetch has incorrect code: %r, expected %r' % (sfe.code, expected_code))
+            return
+        
+        self.fail('Expected fetch error.')
 
 class LocationAvailabilityJsonHandlerTest (unittest.TestCase):
     def testShouldBeInitializedWithJsonViewsAndScreenscrapeSources(self):
