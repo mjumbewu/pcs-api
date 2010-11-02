@@ -45,6 +45,6 @@ class AvailabilityJsonView (_AvailabilityViewInterface):
             'end_stamp': to_xchange_time(end_time)
         }
         
-        path = os.path.join(os.path.dirname(__file__), 'vehicle_info.html')
+        path = os.path.join(os.path.dirname(__file__), 'vehicle_availability.json')
         response = self.render_method(path, values)
         return response

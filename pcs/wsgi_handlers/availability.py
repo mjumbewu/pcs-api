@@ -119,4 +119,12 @@ class LocationAvailabilityJsonHandler (LocationAvailabilityHandler):
             AvailabilityJsonView(),
             ErrorJsonView())
     
+class VehicleAvailabilityJsonHandler (VehicleAvailabilityHandler):
+    def __init__(self):
+        super(VehicleAvailabilityJsonHandler, self).__init__(
+            SessionScreenscrapeSource(),
+            AvailabilityScreenscrapeSource(),
+            AvailabilityJsonView(),
+            ErrorJsonView())
+    
 
