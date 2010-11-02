@@ -1023,6 +1023,8 @@ class ReservationsJsonViewTest (unittest.TestCase):
         res1.vehicle.pod = StubObject()
         res1.vehicle.pod.id = 'pod123'
         res1.vehicle.pod.name = 'pod 1'
+        res1.price = StubObject()
+        res1.price.total_amount = 10.27
         
         res2 = StubObject()
         res2.logid = 'res2'
@@ -1036,6 +1038,8 @@ class ReservationsJsonViewTest (unittest.TestCase):
         res2.vehicle.pod = StubObject()
         res2.vehicle.pod.id = 'pod123'
         res2.vehicle.pod.name = 'pod 1'
+        res2.price = StubObject()
+        res2.price.total_amount = 10.39
         
         reservations = [res1, res2]
         
@@ -1050,6 +1054,9 @@ class ReservationsJsonViewTest (unittest.TestCase):
       {
         "end_time": "2010-11-15T17:15", 
         "logid": "res1", 
+        "price": {
+          "total_amount": 10.27
+        }, 
         "start_time": "2010-11-15T16:30", 
         "vehicle": {
           "id": "v123", 
@@ -1066,6 +1073,9 @@ class ReservationsJsonViewTest (unittest.TestCase):
         "end_time": "2010-12-31T17:15", 
         "liveid": "confid2", 
         "logid": "res2", 
+        "price": {
+          "total_amount": 10.39
+        }, 
         "start_time": "2010-12-30T16:30", 
         "vehicle": {
           "id": "v123", 
@@ -1100,6 +1110,8 @@ class ReservationsJsonViewTest (unittest.TestCase):
         res1.vehicle.pod = StubObject()
         res1.vehicle.pod.id = 'pod123'
         res1.vehicle.pod.name = 'pod 1'
+        res1.price = StubObject()
+        res1.price.total_amount = 4.12
         
         res_data = renderer.format_res_data(res1)
         self.assertEqual(res_data, {
@@ -1115,6 +1127,9 @@ class ReservationsJsonViewTest (unittest.TestCase):
                     'id' : 'pod123',
                     'name' : 'pod 1'
                 }
+            },
+            'price' : {
+                'total_amount' : 4.12
             }
         })
     
@@ -1136,6 +1151,8 @@ class ReservationsJsonViewTest (unittest.TestCase):
         res1.vehicle.pod = StubObject()
         res1.vehicle.pod.id = 'pod123'
         res1.vehicle.pod.name = 'pod 1'
+        res1.price = StubObject()
+        res1.price.total_amount = 2.13
         
         res_data = renderer.format_res_data(res1)
         self.assertEqual(res_data, {
@@ -1152,6 +1169,9 @@ class ReservationsJsonViewTest (unittest.TestCase):
                     'id' : 'pod123',
                     'name' : 'pod 1'
                 }
+            },
+            'price' : {
+                'total_amount': 2.13
             }
         })
     
@@ -1172,6 +1192,8 @@ class ReservationsJsonViewTest (unittest.TestCase):
         res1.vehicle.pod = StubObject()
         res1.vehicle.pod.id = 'pod123'
         res1.vehicle.pod.name = 'pod 1'
+        res1.price = StubObject()
+        res1.price.total_amount = 11.82
         
         result = renderer.render_confirmation(None, res1, 'create')
         expected = \
@@ -1181,6 +1203,9 @@ class ReservationsJsonViewTest (unittest.TestCase):
     "reservation": {
       "end_time": "2010-11-15T17:15", 
       "logid": "res1", 
+      "price": {
+        "total_amount": 11.82
+      }, 
       "start_time": "2010-11-15T16:30", 
       "vehicle": {
         "id": "v123", 

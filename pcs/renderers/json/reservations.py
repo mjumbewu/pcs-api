@@ -25,6 +25,9 @@ class ReservationsJsonView (_ReservationsViewInterface):
                     'id' : reservation.vehicle.pod.id,
                     'name' : reservation.vehicle.pod.name
                 }
+            },
+            'price' : {
+                'total_amount' : reservation.price.total_amount
             }
         }
         
