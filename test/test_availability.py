@@ -1027,14 +1027,28 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(self.source.cp_price_obj, 'my json data')
         self.assertEqual(price, 'my price')
     
-    def testShouldUnderstandTimeInPastMessageAndRaiseErrorPcsServerError(self):
+    def testShouldUnderstandTimeInPastMessageAndRaiseFetchError(self):
         time_in_past_data_from_pcs = {u'status': 1, u'pagination': u'', u'instruction': u'<p class="note empty_res_list"><img src="/skin/img/exclamation.gif"/>Start time is in the past.<br/></p>'}
         
+        expected_code = 'start_time_in_past'
         try:
             self.source.get_html_data(time_in_past_data_from_pcs)
         except ScreenscrapeFetchError, sfe:
-            self.assertEqual(sfe.code, 'start_time_in_past',
-                'Fetch has incorrect code: %r, expected %r' % (sfe.code, 'start_time_in_past'))
+            self.assertEqual(sfe.code, expected_code,
+                'Fetch has incorrect code: %r, expected %r' % (sfe.code, expected_code))
+            return
+        
+        self.fail('Expected fetch error.')
+    
+    def testShouldUnderstandStartTimeAfterEndTimeMessageAndRaiseFetchError(self):
+        misordered_time_data_from_pcs = {u'status': 1, u'pagination': u'', u'instruction': u'<p class="note empty_res_list"><img src="/skin/img/exclamation.gif"/>Start time should be less than end time.<br/></p>'}
+        
+        expected_code = 'end_time_earlier_than_start'
+        try:
+            self.source.get_html_data(misordered_time_data_from_pcs)
+        except ScreenscrapeFetchError, sfe:
+            self.assertEqual(sfe.code, expected_code,
+                'Fetch has incorrect code: %r, expected %r' % (sfe.code, expected_code))
             return
         
         self.fail('Expected fetch error.')

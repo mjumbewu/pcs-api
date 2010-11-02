@@ -121,7 +121,12 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
                     if json_data['status'] == 1 and 'Start time is in the past.' in json_data['instruction']:
                         raise ScreenscrapeFetchError(
                             'Start time is in the past.', 'start_time_in_past')
+                    if json_data['status'] == 1 and 'Start time should be less than end time.' in json_data['instruction']:
+                        raise ScreenscrapeFetchError(
+                            'Start time should be less than end time.', 'end_time_earlier_than_start')
+            
             raise ScreenscrapeParseError('Json data has no "pods" key: %r' % json_data)
+        
         html_body = '<html><body>%s</body></html>' % (''.join(pod_divs))
         html_data = BeautifulSoup(html_body)
         return html_data
