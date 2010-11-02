@@ -17,6 +17,7 @@ from pcs.data.vehicle import Vehicle
 from pcs.data.vehicle import VehicleModel
 from pcs.data.vehicle import AvailableVehicle
 from pcs.fetchers import _AvailabilitySourceInterface
+from pcs.fetchers.screenscrape import ScreenscrapeFetchError
 from pcs.fetchers.screenscrape import ScreenscrapeParseError
 from pcs.fetchers.screenscrape.pcsconnection import PcsConnection
 from util.abstract import override
@@ -115,6 +116,11 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface):
             pod_divs = json_data['pods']
         except KeyError:
             # json_data['status'] == 1 ==> start time is in the past.
+            if 'status' in json_data:
+                if 'instruction' in json_data:
+                    if json_data['status'] == 1 and 'Start time is in the past.' in json_data['instruction']:
+                        raise ScreenscrapeFetchError(
+                            'Start time is in the past.', 'start_time_in_past')
             raise ScreenscrapeParseError('Json data has no "pods" key: %r' % json_data)
         html_body = '<html><body>%s</body></html>' % (''.join(pod_divs))
         html_data = BeautifulSoup(html_body)

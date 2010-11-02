@@ -58,7 +58,9 @@ class _SessionBasedHandler (object):
             + '%s: %s\n\n' % (type(error).__name__, error) \
             + 'Traceback:\n' + tb_str
         logging.error(detailed_error)
-        return self.error_view.render_error(None, str(error), detailed_error)
+        
+        code = error.code if hasattr(error, 'code') else None
+        return self.error_view.render_error(code, str(error), detailed_error)
 
 class _TimeRangeBasedHandler (object):
     def __init__(self):

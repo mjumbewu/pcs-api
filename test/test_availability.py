@@ -9,6 +9,7 @@ from pcs.wsgi_handlers.appengine.availability import LocationAvailabilityJsonHan
 from pcs.fetchers import _AvailabilitySourceInterface
 from pcs.fetchers import _LocationsSourceInterface
 from pcs.fetchers import _SessionSourceInterface
+from pcs.fetchers.screenscrape import ScreenscrapeFetchError
 from pcs.fetchers.screenscrape import ScreenscrapeParseError
 from pcs.fetchers.screenscrape.availability import AvailabilityScreenscrapeSource
 from pcs.fetchers.screenscrape.pcsconnection import PcsConnection
@@ -1026,6 +1027,17 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(self.source.cp_price_obj, 'my json data')
         self.assertEqual(price, 'my price')
     
+    def testShouldUnderstandTimeInPastMessageAndRaiseErrorPcsServerError(self):
+        time_in_past_data_from_pcs = {u'status': 1, u'pagination': u'', u'instruction': u'<p class="note empty_res_list"><img src="/skin/img/exclamation.gif"/>Start time is in the past.<br/></p>'}
+        
+        try:
+            self.source.get_html_data(time_in_past_data_from_pcs)
+        except ScreenscrapeFetchError, sfe:
+            self.assertEqual(sfe.code, 'start_time_in_past',
+                'Fetch has incorrect code: %r, expected %r' % (sfe.code, 'start_time_in_past'))
+            return
+        
+        self.fail('Expected fetch error.')
 
 class LocationAvailabilityJsonHandlerTest (unittest.TestCase):
     def testShouldBeInitializedWithJsonViewsAndScreenscrapeSources(self):
