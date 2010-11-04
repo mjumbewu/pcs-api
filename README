@@ -5,6 +5,12 @@ system.  It is built to run on Google App Engine, though there is very little
 App Engine-specific code.  It should be easily adaptable to a Django install,
 or some other Python web framework.
 
+There is no warranty on this software.  Use at your own risk.
+
+NOTE: THIS API IS NOT YET SANCTIONED BY PHILLYCARSHARE. AS SUCH, IT IS STRICTLY
+      FOR PERSONAL INTEREST ONLY, AT THIS POINT. THIS SITUATION MAY CHANGE SOON
+      (next week) BUT FOR NOW, YOU HAVE BEEN WARNED.
+
 
 STRUCTURE
 ~~~~~~~~~
