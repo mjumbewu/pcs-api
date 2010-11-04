@@ -307,7 +307,7 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface, _Screenscrap
         vehicles = self.create_vehicles_from_pcs_availability_doc(html_pods_data, start_time, end_time)
         return vehicles
     
-    def vehicle_info_from_pcs(self, conn, sessionid, vehicleid, start_time, end_time):
+    def request_vehicle_availability_from_pcs(self, conn, sessionid, vehicleid, start_time, end_time):
         if (sessionid, vehicleid, start_time, end_time) not in self._vehicle_cache:
             host = self.__host
             path = self.__vehicle_path
@@ -336,38 +336,77 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface, _Screenscrap
         html_data = BeautifulSoup('<html><body>%s</body></html>' % html_body)
         return html_data
     
-    def create_vehicle_from_pcs_information_doc(self, html_data):
-        vehicleid_tag = html_data.find('input', {'type':'hidden', 'name':'add[stack_pk]'})
+    def decode_vehicleid_from_availability_block(self, avail_block):
+        vehicleid_tag = avail_block.find('input', {'type':'hidden', 'name':'add[stack_pk]'})
         if vehicleid_tag is None:
-            raise ScreenscrapeParseError('Vehicle ID not found in vehicle information.')
+            raise ScreenscrapeParseError('Vehicle ID not found in vehicle availability.')
         
         vehicleid = vehicleid_tag['value']
+        return vehicleid
+    
+    def decode_pod_name_from_availability_block(self, avail_block):
+        podname_span = avail_block.find('span', {'id':'add_stack_pk__location'})
+        if podname_span is None:
+            raise ScreenscrapeParseError('Pod name not found in vehicle availability.')
         
-        model_tag = html_data.find('span', {'id':'add_stack_pk_vt'})
+        podname = podname_span.text
+        return podname
+    
+    def decode_model_name_from_availability_block(self, avail_block):
+        model_tag = avail_block.find('span', {'id':'add_stack_pk_vt'})
         if model_tag is None:
             raise ScreenscrapeParseError('Vehicle model not found in vehicle information.')
         
         model_name = model_tag.text
+        return model_name
         
+    def decode_vehicle_info_from_availability_block(self, html_data):
+        vehicleid = self.decode_vehicleid_from_availability_block(html_data)
+        podid = None
+        pod_name = self.decode_pod_name_from_availability_block(html_data)
+        model_name = self.decode_model_name_from_availability_block(html_data)
+        
+        return vehicleid, podid, pod_name, model_name
+        
+    def build_vehicle(self, vehicleid, podid, pod_name, model_name):
         model = VehicleModel()
         model.name = model_name
         
+        pod = Pod(podid)
+        pod.name = pod_name
+        
         vehicle = Vehicle(vehicleid)
+        vehicle.pod = pod
         vehicle.model = model
+        
         return vehicle
     
+    def build_vehicle_availability(self, vehicle, start_time, end_time):
+        if isinstance(vehicle, tuple):
+            vehicle = self.build_vehicle(*vehicle)
+        
+        veh_avail = AvailableVehicle()
+        veh_avail.vehicle = vehicle
+        veh_avail.start_time = start_time
+        veh_avail.end_time = end_time
+        return veh_avail
+    
     @override
-    def fetch_vehicle(self, sessionid, vehicleid, start_time, end_time):
+    def fetch_vehicle_availability(self, sessionid, vehicleid, start_time, end_time):
         conn = self.create_host_connection()
         
         pcs_vehicle_body, pcs_vehicle_headers = \
-            self.vehicle_info_from_pcs(conn, sessionid, vehicleid, start_time, end_time)
-        html_vehicle_data = self.get_html_vehicle_data(pcs_vehicle_body)
+            self.request_vehicle_availability_from_pcs(conn, sessionid, vehicleid, start_time, end_time)
+        veh_avail_block = self.get_html_vehicle_data(pcs_vehicle_body)
         
         self.verify_pcs_response(pcs_vehicle_body, pcs_vehicle_headers)
         
-        vehicle = self.create_vehicle_from_pcs_information_doc(html_vehicle_data)
-        return vehicle
+        vehicle_info = self.decode_vehicle_info_from_availability_block(
+            veh_avail_block)
+        vehicle_availability = self.build_vehicle_availability(
+            vehicle_info, start_time, end_time)
+        
+        return vehicle_availability
     
     def transaction_from_pcs_information_doc(self, html_data):
         tid_field = html_data.find('input', {'id':'add_tid_'})
@@ -378,7 +417,7 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface, _Screenscrap
         conn = self.create_host_connection()
         
         pcs_vehicle_body, pcs_vehicle_headers = \
-            self.vehicle_info_from_pcs(conn, sessionid, vehicleid, start_time, end_time)
+            self.request_vehicle_availability_from_pcs(conn, sessionid, vehicleid, start_time, end_time)
         html_vehicle_data = self.get_html_vehicle_data(pcs_vehicle_body)
         
         transactionid = self.transaction_from_pcs_information_doc(html_vehicle_data)

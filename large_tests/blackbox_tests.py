@@ -14,7 +14,13 @@ from util.TimeZone import current_time, to_isostring
 # Some stubs for requests and responses.
 #
 class StubRequest (dict):
-    pass
+    def __init__(self):
+        self.headers = {}
+        self.query_string = ''
+        self.body = ''
+    
+    def arguments(self):
+        return []
 
 class StubHeaders (dict):
     def add_header(self, key, val):
@@ -54,7 +60,9 @@ class RestInterfaceBlackBoxTest (unittest.TestCase):
             response = json.loads(response_body)
             self.check_for_error(response)
             
-            session_cookie = session_handler.response.headers['Set-Cookie'][8:-8]
+            # Trim off 'session_id=' and the trailing ';'
+            session_cookie = session_handler.response.headers['Set-Cookie'][11:-1]
+            
             self.session_cookie = session_cookie
         
         return self.session_cookie
@@ -65,7 +73,7 @@ class RestInterfaceBlackBoxTest (unittest.TestCase):
         handler.request = StubRequest()
         handler.response = StubResponse()
         
-        handler.request.cookies = {'session':session_cookie}
+        handler.request.cookies = {'session_id':session_cookie}
     
     def testGivenCoordinatesShouldRespondWithCorrectVehiclesNearLocation(self):
         session_cookie = self.sign_in_and_get_session_cookie()

@@ -977,6 +977,14 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(self.source.bld_modname, 'model name')
         self.assertEqual(self.source.bld_podname, 'pod name')
         self.assertEqual(reservation, 'my reservation')
+    
+    def testShouldDecodeLiveIdFromScriptWithPaymentKeysWell(self):
+        code = r'''my_reservations.php?mv_action=confirm&_r=3&pk=149449011&payment_pk=149449017'''
+        
+        liveid = \
+            self.source.decoder.decode_reservation_liveid_from_redirect_script_code(code)
+        
+        self.assertEqual(liveid, '149449011')
 
 class ReservationsJsonHandlerTest (unittest.TestCase):
     def testShouldUseScreenscrapeFetchersAndJsonRenderers(self):

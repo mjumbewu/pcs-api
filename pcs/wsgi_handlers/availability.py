@@ -95,14 +95,13 @@ class VehicleAvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
             session = self.get_session(userid, sessionid)
             start_time, end_time = self.get_time_range()
             
-            vehicle = self.vehicle_source.fetch_vehicle(sessionid, vehicleid, start_time, end_time)
+            vehicle_availability = self.vehicle_source.fetch_vehicle_availability(sessionid, vehicleid, start_time, end_time)
             price = self.vehicle_source.fetch_vehicle_price_estimate(sessionid, vehicleid, start_time, end_time)
-#            transaction = self.vehicle_source.fetch_updated_transaction(sessionid, vehicleid, start_time, end_time)
             
-#            session.transaction = transaction
+            vehicle_availability.price = price
             
-            response_body = self.vehicle_view.render_vehicle_availability(session, vehicle,
-                start_time, end_time, price)
+            response_body = self.vehicle_view.render_vehicle_availability(
+                session, vehicle_availability)
         
         except Exception, e:
             response_body = self.generate_error(e)

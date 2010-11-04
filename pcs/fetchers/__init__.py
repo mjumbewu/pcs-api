@@ -14,7 +14,7 @@ class _AvailabilitySourceInterface (object):
     def fetch_available_vehicles_near(self, sessionid, locationid, start_time, end_time):
         raise NotImplementedError()
     
-    def fetch_vehicle(self, sessionid, vehicleid, start_time, end_time):
+    def fetch_vehicle_availability(self, sessionid, vehicleid, start_time, end_time):
         raise NotImplementedError()
     
     def fetch_vehicle_price_estimate(self, sessionid, vehicleid, start_time, end_time):

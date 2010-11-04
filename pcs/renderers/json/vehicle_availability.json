@@ -2,13 +2,12 @@
 	"start_time" : "{{ start_time|date:"Y-m-d\TH:i" }}",
 	"end_time" : "{{ end_time|date:"Y-m-d\TH:i" }}",
 	"vehicle" : {
-		"id" : "{{ vehicle_availability.vehicle.id }}",
+		"id" : "{{ vehicle.id }}",
 		"pod" : {
-			"id" : "{{ vehicle_availability.vehicle.pod.id }}",
-			"name" : "{{ vehicle_availability.vehicle.pod.name }}"} ,
+			"id" : "{{ vehicle.pod.id }}",
+			"name" : "{{ vehicle.pod.name }}"} ,
 		"model" : {
-			"id" : "{{ vehicle_availability.vehicle.model.id }}",
-			"name" : "{{ vehicle_availability.vehicle.model.name }}"}}
+			"name" : "{{ vehicle.model.name }}"}} ,
 	"price" : {
 		"total_amount" : {{ price.total_amount }} }
 }}

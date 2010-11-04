@@ -385,7 +385,7 @@ class PcsDocumentDecoder(object):
         return logid
         
     def decode_reservation_liveid_from_redirect_script_code(self, script_code):
-        liveid_pattern = r"""window\.location = 'my_reservations\.php\?mv_action=confirm&_r=([0-9]+)&pk=(?P<liveid>[0-9]+)'""";
+        liveid_pattern = r"""(?P<window_script>window\.location = ')?my_reservations\.php\?mv_action=confirm&_r=([0-9]+)&pk=(?P<liveid>[0-9]+)(&payment_pk=[0-9]+)?(?(window_script)')""";
         liveid_match = re.match(liveid_pattern, script_code)
         
         if liveid_match is None:

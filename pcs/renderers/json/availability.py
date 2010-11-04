@@ -31,18 +31,16 @@ class AvailabilityJsonView (_AvailabilityViewInterface):
         return response
     
     @override
-    def render_vehicle_availability(self, session, vehicle, start_time, end_time, price):
+    def render_vehicle_availability(self, session, vehicle_availability):
         """
         Return a response with the availability of the given vehicle
         """
         values = {
             'session': session,
-            'vehicle': vehicle,
-            'start_time': start_time,
-            'end_time': end_time,
-            'price': price,
-            'start_stamp': to_xchange_time(start_time),
-            'end_stamp': to_xchange_time(end_time)
+            'vehicle': vehicle_availability.vehicle,
+            'start_time': vehicle_availability.start_time,
+            'end_time': vehicle_availability.end_time,
+            'price': vehicle_availability.price
         }
         
         path = os.path.join(os.path.dirname(__file__), 'vehicle_availability.json')

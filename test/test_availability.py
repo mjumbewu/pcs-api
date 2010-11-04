@@ -19,6 +19,7 @@ from pcs.renderers.json.availability import AvailabilityJsonView
 from util.testing import patch
 from util.testing import Stub
 from util.TimeZone import Eastern
+from util.TimeZone import current_time
 
 # A fake request class
 class StubRequest (dict):
@@ -37,6 +38,18 @@ class StubResponse (object):
         self.out = StringIO.StringIO()
     def set_status(self, status):
         self.status = status
+
+class StubConnection (object):
+    def request(self, url, method, data, headers):
+        self.url = url
+        self.method = method
+        self.data = data
+        self.headers = headers
+        class StubResponse (object):
+            def getheaders(self): return 'my headers'
+            def read(self): return 'my body'
+        return StubResponse()
+StubConnection = Stub(PcsConnection)(StubConnection)
 
 class VehicleAvailabilityHandlerTest (unittest.TestCase):
     def setUp(self):
@@ -110,12 +123,12 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
             return 'my session'
         
         @patch(self.vehicle_source)
-        def fetch_vehicle(self, sessionid, vehicleid, start_time, end_time):
+        def fetch_vehicle_availability(self, sessionid, vehicleid, start_time, end_time):
             self.vehicle_sessionid = sessionid
             self.vehicle_vehicleid = vehicleid
             self.vehicle_start_time = start_time
             self.vehicle_end_time = end_time
-            return 'my vehicle'
+            return 'my vehicle availability'
         
         @patch(self.vehicle_source)
         def fetch_vehicle_price_estimate(self, sessionid, vehicleid, start_time, end_time):
@@ -126,12 +139,10 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
             return 'my price estimate'
         
         @patch(self.vehicle_view)
-        def render_vehicle_availability(self, session, vehicle, start_time, end_time, price):
+        def render_vehicle_availability(self, session, vehicle_availability):
             self.session = session
-            self.vehicle = vehicle
-            self.start_time = start_time
-            self.end_time = end_time
-            return 'my vehicle info body'
+            self.vehicle_availability = vehicle_availability
+            return 'my vehicle availability body'
         
         @patch(self.error_view)
         def render_error(self, error_code, error_msg, error_detail):
@@ -147,9 +158,9 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
         self.assertEqual(self.vehicle_source.vehicle_vehicleid, 'veh1234')
         self.assertEqual(self.vehicle_source.price_sessionid, 'ses1234')
         self.assertEqual(self.vehicle_source.price_vehicleid, 'veh1234')
-#        self.assertEqual(self.vehicle_view.session, 'my session')
-#        self.assertEqual(self.vehicle_view.vehicle, 'my vehicle')
-        self.assertEqual(self.response.out.getvalue(), 'my vehicle info body')
+        self.assertEqual(self.vehicle_view.session, 'my session')
+        self.assertEqual(self.vehicle_view.vehicle_availability, 'my vehicle availability')
+        self.assertEqual(self.response.out.getvalue(), 'my vehicle availability body')
         
     def testReturnContentFromErrorViewWhenAnExceptionIsRaised(self):
         handler = VehicleAvailabilityHandler(self.session_source, self.vehicle_source, 
@@ -173,12 +184,12 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
             return 'my session'
         
         @patch(self.vehicle_source)
-        def fetch_vehicle(self, sessionid, vehicleid, start_time, end_time):
+        def fetch_vehicle_availability(self, sessionid, vehicleid, start_time, end_time):
             self.vehicle_sessionid = sessionid
             self.vehicle_vehicleid = vehicleid
             self.vehicle_start_time = start_time
             self.vehicle_end_time = end_time
-            return 'my vehicle'
+            return 'my vehicle availability'
         
         @patch(self.vehicle_source)
         def fetch_vehicle_price_estimate(self, sessionid, vehicleid, start_time, end_time):
@@ -189,12 +200,10 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
             return 'my price estimate'
         
         @patch(self.vehicle_view)
-        def render_vehicle_availability(self, session, vehicle, start_time, end_time, price):
+        def render_vehicle_availability(self, session, vehicle_availability):
             self.session = session
-            self.vehicle = vehicle
-            self.start_time = start_time
-            self.end_time = end_time
-            return 'my vehicle info body'
+            self.vehicle_availability = vehicle_availability
+            return 'my vehicle availability body'
         
         @patch(self.error_view)
         def render_error(self, error_code, error_msg, error_detail):
@@ -884,7 +893,7 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
         end_time = datetime.datetime(2010, 9, 6, 5, 15, tzinfo=Eastern)
         
         # When...
-        body, head = self.source.vehicle_info_from_pcs(conn, sessionid, vehicleid, start_time, end_time)
+        body, head = self.source.request_vehicle_availability_from_pcs(conn, sessionid, vehicleid, start_time, end_time)
         
         # Then...
         self.assertEqual(conn.url, 'http://res.pcs.org/vehicle.php')
@@ -903,36 +912,6 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
         
         # Then...
         self.assertEqual(html_data.find('body').find('div').text, 'Hello')
-    
-    def testHtmlBodyFromAvailabilityRequestShouldProduceExpectedVehicleAvailability(self):
-        html_body = r'''<html><body><div class="lightbox" id="fakeLightbox"><h3 >Your Reservation</h3><div class="lightbox_contents"><p id="lightbox_instruction" class="error"></p><form class="reservation" id="add" name="add" method="post" action="lightbox.php"><div class="left_panel"><fieldset class="stack_fieldset"><input type="hidden" name="add[stack_pk]" value="91800598" /><table ><tr ><td ><label for="add_stack_pk__location">Location:</label></td><td ><span id="add_stack_pk__location">47th & Baltimore</span></td></tr><tr ><td ><label for="add_stack_pk_vt">Vehicle Type:</label></td><td ><span id="add_stack_pk_vt">Tacoma Pickup</span></td></tr></table></fieldset><fieldset class="range_fieldset"><table ><tr ><td ><label for="add_start_stamp__start_date_">Start:</label></td><td class="stamp_control"><input id="add_start_stamp__start_date_" name="add[start_stamp][start_date][date]" class="date_control" onchange="" value="09/06/10" />    <script language="javascript" type="text/javascript">
-        DateInput('add_start_stamp__start_date__calendar', 'add_start_stamp__start_date_', true, '1283753498', 'm/d/y', null, null);
-    </script><select id="add_start_stamp__start_time_" name="add[start_stamp][start_time][time]" class="time_control"><option value="0">Midnight</option><option value="900">12:15 AM</option><option value="1800">12:30 AM</option><option value="2700">12:45 AM</option><option value="3600">01:00 AM</option><option value="4500">01:15 AM</option><option value="5400">01:30 AM</option><option value="6300">01:45 AM</option><option value="7200">02:00 AM</option><option value="8100" selected="selected">02:15 AM</option><option value="9000">02:30 AM</option><option value="9900">02:45 AM</option><option value="10800">03:00 AM</option><option value="11700">03:15 AM</option><option value="12600">03:30 AM</option><option value="13500">03:45 AM</option><option value="14400">04:00 AM</option><option value="15300">04:15 AM</option><option value="16200">04:30 AM</option><option value="17100">04:45 AM</option><option value="18000">05:00 AM</option><option value="18900">05:15 AM</option><option value="19800">05:30 AM</option><option value="20700">05:45 AM</option><option value="21600">06:00 AM</option><option value="22500">06:15 AM</option><option value="23400">06:30 AM</option><option value="24300">06:45 AM</option><option value="25200">07:00 AM</option><option value="26100">07:15 AM</option><option value="27000">07:30 AM</option><option value="27900">07:45 AM</option><option value="28800">08:00 AM</option><option value="29700">08:15 AM</option><option value="30600">08:30 AM</option><option value="31500">08:45 AM</option><option value="32400">09:00 AM</option><option value="33300">09:15 AM</option><option value="34200">09:30 AM</option><option value="35100">09:45 AM</option><option value="36000">10:00 AM</option><option value="36900">10:15 AM</option><option value="37800">10:30 AM</option><option value="38700">10:45 AM</option><option value="39600">11:00 AM</option><option value="40500">11:15 AM</option><option value="41400">11:30 AM</option><option value="42300">11:45 AM</option><option value="-1"></option><option value="43200">Noon</option><option value="44100">12:15 PM</option><option value="45000">12:30 PM</option><option value="45900">12:45 PM</option><option value="46800">01:00 PM</option><option value="47700">01:15 PM</option><option value="48600">01:30 PM</option><option value="49500">01:45 PM</option><option value="50400">02:00 PM</option><option value="51300">02:15 PM</option><option value="52200">02:30 PM</option><option value="53100">02:45 PM</option><option value="54000">03:00 PM</option><option value="54900">03:15 PM</option><option value="55800">03:30 PM</option><option value="56700">03:45 PM</option><option value="57600">04:00 PM</option><option value="58500">04:15 PM</option><option value="59400">04:30 PM</option><option value="60300">04:45 PM</option><option value="61200">05:00 PM</option><option value="62100">05:15 PM</option><option value="63000">05:30 PM</option><option value="63900">05:45 PM</option><option value="64800">06:00 PM</option><option value="65700">06:15 PM</option><option value="66600">06:30 PM</option><option value="67500">06:45 PM</option><option value="68400">07:00 PM</option><option value="69300">07:15 PM</option><option value="70200">07:30 PM</option><option value="71100">07:45 PM</option><option value="72000">08:00 PM</option><option value="72900">08:15 PM</option><option value="73800">08:30 PM</option><option value="74700">08:45 PM</option><option value="75600">09:00 PM</option><option value="76500">09:15 PM</option><option value="77400">09:30 PM</option><option value="78300">09:45 PM</option><option value="79200">10:00 PM</option><option value="80100">10:15 PM</option><option value="81000">10:30 PM</option><option value="81900">10:45 PM</option><option value="82800">11:00 PM</option><option value="83700">11:15 PM</option><option value="84600">11:30 PM</option><option value="85500">11:45 PM</option></select></td></tr><tr ><td ><label for="add_end_stamp__end_date_">End:</label></td><td class="stamp_control"><input id="add_end_stamp__end_date_" name="add[end_stamp][end_date][date]" class="date_control" onchange="" value="09/06/10" />    <script language="javascript" type="text/javascript">
-        DateInput('add_end_stamp__end_date__calendar', 'add_end_stamp__end_date_', true, '1283753498', 'm/d/y', null, null);
-    </script><select id="add_end_stamp__end_time_" name="add[end_stamp][end_time][time]" class="time_control"><option value="0">Midnight</option><option value="900">12:15 AM</option><option value="1800">12:30 AM</option><option value="2700">12:45 AM</option><option value="3600">01:00 AM</option><option value="4500">01:15 AM</option><option value="5400">01:30 AM</option><option value="6300">01:45 AM</option><option value="7200">02:00 AM</option><option value="8100">02:15 AM</option><option value="9000">02:30 AM</option><option value="9900">02:45 AM</option><option value="10800">03:00 AM</option><option value="11700">03:15 AM</option><option value="12600">03:30 AM</option><option value="13500">03:45 AM</option><option value="14400">04:00 AM</option><option value="15300">04:15 AM</option><option value="16200">04:30 AM</option><option value="17100">04:45 AM</option><option value="18000">05:00 AM</option><option value="18900" selected="selected">05:15 AM</option><option value="19800">05:30 AM</option><option value="20700">05:45 AM</option><option value="21600">06:00 AM</option><option value="22500">06:15 AM</option><option value="23400">06:30 AM</option><option value="24300">06:45 AM</option><option value="25200">07:00 AM</option><option value="26100">07:15 AM</option><option value="27000">07:30 AM</option><option value="27900">07:45 AM</option><option value="28800">08:00 AM</option><option value="29700">08:15 AM</option><option value="30600">08:30 AM</option><option value="31500">08:45 AM</option><option value="32400">09:00 AM</option><option value="33300">09:15 AM</option><option value="34200">09:30 AM</option><option value="35100">09:45 AM</option><option value="36000">10:00 AM</option><option value="36900">10:15 AM</option><option value="37800">10:30 AM</option><option value="38700">10:45 AM</option><option value="39600">11:00 AM</option><option value="40500">11:15 AM</option><option value="41400">11:30 AM</option><option value="42300">11:45 AM</option><option value="-1"></option><option value="43200">Noon</option><option value="44100">12:15 PM</option><option value="45000">12:30 PM</option><option value="45900">12:45 PM</option><option value="46800">01:00 PM</option><option value="47700">01:15 PM</option><option value="48600">01:30 PM</option><option value="49500">01:45 PM</option><option value="50400">02:00 PM</option><option value="51300">02:15 PM</option><option value="52200">02:30 PM</option><option value="53100">02:45 PM</option><option value="54000">03:00 PM</option><option value="54900">03:15 PM</option><option value="55800">03:30 PM</option><option value="56700">03:45 PM</option><option value="57600">04:00 PM</option><option value="58500">04:15 PM</option><option value="59400">04:30 PM</option><option value="60300">04:45 PM</option><option value="61200">05:00 PM</option><option value="62100">05:15 PM</option><option value="63000">05:30 PM</option><option value="63900">05:45 PM</option><option value="64800">06:00 PM</option><option value="65700">06:15 PM</option><option value="66600">06:30 PM</option><option value="67500">06:45 PM</option><option value="68400">07:00 PM</option><option value="69300">07:15 PM</option><option value="70200">07:30 PM</option><option value="71100">07:45 PM</option><option value="72000">08:00 PM</option><option value="72900">08:15 PM</option><option value="73800">08:30 PM</option><option value="74700">08:45 PM</option><option value="75600">09:00 PM</option><option value="76500">09:15 PM</option><option value="77400">09:30 PM</option><option value="78300">09:45 PM</option><option value="79200">10:00 PM</option><option value="80100">10:15 PM</option><option value="81000">10:30 PM</option><option value="81900">10:45 PM</option><option value="82800">11:00 PM</option><option value="83700">11:15 PM</option><option value="84600">11:30 PM</option><option value="85500">11:45 PM</option></select></td></tr><tr ><td ><label for="add_job_code_">Memo:</label></td><td ><input id="add_job_code_" name="add[job_code]" type="text" size="25" maxlength="25" value="" onkeypress="
-            var keyCode = event.keyCode ? event.keyCode : event.which ? event.which : event.charCode;
-                if (keyCode == 13) {
-                    return false;
-                }
-                return true;
-        " class="memo_control" /></td></tr><tr ><td colspan="2" style="color: #f50c0c; font-size: 11px; font-weight: bold;">Consider padding your time. Returning after your reservation End Time will cost you $40 per half hour.</td></tr></table><input id="add_tid_" type="hidden" name="add[tid]" value="3"/>
-<input type="hidden" name="mv_action" value="add" /><input type="hidden" name="_r" value="7" /></fieldset></div><div class="right_panel"><img class="vehicle" src="/images/client_images/toyota_tacoma.jpg" alt="Tacoma Pickup" /><div class="price"><div id="add_price__price_" class="container">$??.00 hourly / $??.00 daily</div></div><ul class="amenity"><li ></li></ul></div><div class="bottom_panel"><div class="cost"><div id="add_balance__balance__div"><label for="add_balance__balance_">AVAILABLE BALANCE:</label><span id="add_balance__balance_" class=""></span></div></div><div class="cost"><label for="add_estimate__estimate_">ESTIMATED COST:</label><span id="add_estimate__estimate_" class="">?</span><div class="price_box"> <label for="add_estimate__estimate__time_amount" class="top">Time:</label>
-<span id="add_estimate__estimate__time_amount">?</span>
-<label for="add_estimate__estimate__distance_amount" >Distance:</label>
-<span id="add_estimate__estimate__distance_amount" >?</span>
-<label for="add_estimate__estimate__fee_amount">Fees:</label>
-<span id="add_estimate__estimate__fee_amount">?</span>
-<label for="add_estimate__estimate__tax_amount" id="add_estimate__estimate__tax_summary_label"  class="bottom">Total&nbsp;Tax</label>
-<span id="add_estimate__estimate__tax_amount">?</span></div></div><div class="cost"><div id="add_available_credit__available_credit__div"><label for="add_available_credit__available_credit_">AVAILABLE CREDIT:</label><span id="add_available_credit__available_credit_" class=""></span></div><div id="add_credit__balance__div"><label for="add_credit__balance_">APPLIED CREDIT:</label><span id="add_credit__balance_" class=""></span></div><div id="add_amount_due__amount_due__div"><label for="add_amount_due__amount_due_">AMOUNT DUE:</label><span id="add_amount_due__amount_due_" class="amount_due"></span><div class="instruction">NOTE: By clicking the "reserve it" button, your card will be billed the "amount due" shown above. <p>Any excess will be available for future reservations.  Distance is estimated at 7 miles per reserved hour.</p></div></div></div><div id="add_timeline___track" class="timeline slider"><div class="slider reservation good_reservation" id="reservation_bar"></div><div class="slider handle start" id="reservation_bar_start_handle"></div><div class="slider handle end" id="reservation_bar_end_handle"></div><ul class="segments" id="reservation_bar_track"><li ><ul ><li class="bad pad_end"></li><li class="bad"></li><li class="bad"></li><li class="bad pad_end"></li></ul></li><li ><ul ><li class="bad pad_end"></li><li class="bad"></li><li class="bad"></li><li class="bad pad_end"></li></ul></li><li ><ul ><li class="bad pad_end"></li><li class="bad"></li><li class="bad"></li><li class="bad pad_end"></li></ul></li><li ><ul ><li class="bad pad_end"></li><li class="bad"></li><li class="bad"></li><li class="bad pad_end"></li></ul></li><li ><ul ><li class="bad pad_end"></li><li class="bad"></li><li class="bad"></li><li class="bad pad_end"></li></ul></li><li ><ul ><li class="bad pad_end"></li><li class="bad"></li><li class="bad"></li><li class="bad pad_end"></li></ul></li><li ><ul ><li class="bad pad_end"></li><li class="bad"></li><li class="bad"></li><li class="bad pad_end"></li></ul></li><li ><ul ><li class="bad pad_end"></li><li class="bad"></li><li class="bad"></li><li class="bad pad_end"></li></ul></li><li ><ul ><li class="bad pad_end"></li><li class="bad"></li><li class="bad"></li><li class="bad pad_end"></li></ul></li><li ><ul ><li class="bad pad_end"></li><li class="bad"></li><li class="bad"></li><li class="bad pad_end"></li></ul></li><li ><ul ><li class="bad pad_end"></li><li class="bad"></li><li class="bad"></li><li class="bad pad_end"></li></ul></li><li ><ul ><li class="bad pad_end"></li><li class="bad"></li><li class="bad"></li><li class="bad pad_end"></li></ul></li><li ><ul ><li class="bad pad_end"></li><li class="bad"></li><li class="bad"></li><li class="bad pad_end"></li></ul></li><li ><ul ><li class="bad pad_end"></li><li class="bad"></li><li class="bad"></li><li class="bad pad_end"></li></ul></li><li ><ul ><li class="bad pad_end"></li><li class="bad"></li><li class="bad"></li><li class="bad pad_end"></li></ul></li><li ><ul ><li class="bad pad_end"></li><li class="bad"></li><li class="bad"></li><li class="bad pad_end"></li></ul></li><li ><ul ><li class="bad pad_end"></li><li class="bad"></li><li class="bad"></li><li class="bad pad_end"></li></ul></li><li ><ul ><li class="bad pad_end"></li><li class="bad"></li><li class="bad"></li><li class="bad pad_end"></li></ul></li><li ><ul ><li class="bad pad_end"></li><li class="bad"></li><li class="bad"></li><li class="bad pad_end"></li></ul></li><li ><ul ><li class="bad pad_end"></li><li class="bad"></li><li class="bad"></li><li class="bad pad_end"></li></ul></li><li ><ul ><li class="free pad_end"></li><li class="good"></li><li class="good"></li><li class="good pad_end"></li></ul></li><li ><ul ><li class="good pad_end"></li><li class="good"></li><li class="good"></li><li class="good pad_end"></li></ul></li><li ><ul ><li class="good pad_end"></li><li class="good"></li><li class="good"></li><li class="good pad_end"></li></ul></li><li ><ul ><li class="good pad_end"></li><li class="free"></li><li class="free"></li><li class="free pad_end"></li></ul></li></ul><img src="/skin/img/day_gauge.gif" /></div><div id="add_timeline__error" class="slider error_display"></div><div id='optional_rate_plan_adjustment' style='text-align:left;'><font class='text'></font></div><button id="lb_cancel_button" class="cancel"></button><button id="lb_reserve_button" class="reserve"></button></div></form><br style="clear: both;" /></div></div><script language="javascript" type="text/javascript">MV.globals.reserve.lightbox = new MV.controls.reserve.lightbox({"range_params":{"start_control":{"date_id":"add_start_stamp__start_date_","time_id":"add_start_stamp__start_time_"},"end_control":{"date_id":"add_end_stamp__end_date_","time_id":"add_end_stamp__end_time_"}},"estimate_params":{"price_id":"add_price__price_","available_balance_id":"add_balance__balance_","amount_due_id":"add_amount_due__amount_due_","credit_id":"add_credit__balance_","credit_box_id":"add_credit__balance__div","available_credit_box_id":"add_available_credit__available_credit__div","available_credit_id":"add_available_credit__available_credit_","cost_params":{"id":"add_estimate__estimate_","time_id":"add_estimate__estimate__time_amount","distance_id":"add_estimate__estimate__distance_amount","fees_id":"add_estimate__estimate__fee_amount","tax_id":"add_estimate__estimate__tax_amount","tax_pks":[],"labels":{"please_wait":"Please wait...","hourly":"Hourly","daily":"Daily"}},"hide_ab_shortfall":false},"accept_button_id":"lb_reserve_button","cancel_button_id":"lb_cancel_button","instruction_id":"lightbox_instruction","form_id":"add","attach_close_event":true,"attach_confirm_event":true,"use_dynamic_timeline":true,"initial_update":true,"preserve_instruction":true,"is_lightbox":true,"disabled_class":"reserve_disabled","slider_params":{"action":"add","stack_pk":"91800598","reservation_pk":0,"start_stamp":"1283753700","start_stamp_min":1283752800,"start_stamp_max":1293771600,"end_stamp":"1283764500","end_stamp_min":1283752800,"end_stamp_max":1293771600,"start_date_control":"add_start_stamp__start_date_","start_time_control":"add_start_stamp__start_time_","end_date_control":"add_end_stamp__end_date_","end_time_control":"add_end_stamp__end_time_","lower":1283680800,"upper":1283767200,"increment":900,"date_calibration":"09\/05\/10","control_ids":{"track_id":"reservation_bar_track","start_handle_id":"reservation_bar_start_handle","end_handle_id":"reservation_bar_end_handle","res_marker_id":"reservation_bar","error_id":"add_timeline__error"},"no_slider":false,"error_label":"Please adjust your times to an available period. Use the form above or click-and-drag your times."}});</script></body></html>'''
-        from util.BeautifulSoup import BeautifulSoup
-        html_data = BeautifulSoup(html_body)
-        
-        # When...
-        vehicle = self.source.create_vehicle_from_pcs_information_doc(html_data)
-        
-        # Then...
-        self.assertEqual(vehicle.id, '91800598')
-        self.assertEqual(vehicle.model.name, 'Tacoma Pickup')
     
     def testShouldReturnVehiclePriceEstimateBodyFromThePcsConnection(self):
         class StubResponse (object):
@@ -1088,19 +1067,129 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
         from strings_for_testing import EXPIRED_PASSWORD_LOGIN_FORM
         
         @patch(self.source)
-        def vehicle_info_from_pcs(self, conn, sessionid, vehicleid, start_time, end_time):
+        def request_vehicle_availability_from_pcs(self, conn, sessionid, vehicleid, start_time, end_time):
             return EXPIRED_PASSWORD_LOGIN_FORM, None
         
         expected_code = 'invalid_session'
         try:
             sessionid = vehicleid = start_time = end_time = None
-            self.source.fetch_vehicle(sessionid, vehicleid, start_time, end_time)
+            self.source.fetch_vehicle_availability(sessionid, vehicleid, start_time, end_time)
         except ScreenscrapeFetchError, sfe:
             self.assertEqual(sfe.code, expected_code,
                 'Fetch has incorrect code: %r, expected %r' % (sfe.code, expected_code))
             return
         
         self.fail('Expected fetch error.')
+    
+    def testCorrectRequestDataShouldBeSentForVehAvailFromPcs(self):
+        conn = StubConnection()
+        
+        sessionid='ses1234'
+        vehicleid='veh1234'
+        start_time=datetime.datetime(2010,11,02,12,30,tzinfo=Eastern)
+        end_time=datetime.datetime(2010,11,02,2,15,tzinfo=Eastern)
+        
+        self.source.request_vehicle_availability_from_pcs(conn, sessionid, vehicleid, start_time, end_time)
+        
+        import cgi
+        self.assertEqual(conn.url, 'http://res.pcs.org/vehicle.php')
+        self.assertEqual(conn.method, 'POST')
+        self.assertEqual(cgi.parse_qs(conn.data), {'default[end_stamp]': ['1288678500'], 'mv_action': ['add'], 'default[stack_pk]': ['veh1234'], 'default[start_stamp]': ['1288715400']})
+        self.assertEqual(conn.headers, {'Cookie':'sid=ses1234'})
+    
+    def testShouldDecodeVehicleIdFromVehicleAvailabilityBlock(self):
+        from strings_for_testing import VEHICLE_AVAIL_FOR_NEW_RESERVATION
+        
+        from util.BeautifulSoup import BeautifulSoup
+        availability_block = BeautifulSoup(VEHICLE_AVAIL_FOR_NEW_RESERVATION)
+        vehicleid = self.source.decode_vehicleid_from_availability_block(
+            availability_block)
+        
+        self.assertEqual(vehicleid, '96692246')
+    
+    def testShouldDecodePodNameFromVehicleAvailabilityBlock(self):
+        from strings_for_testing import VEHICLE_AVAIL_FOR_NEW_RESERVATION
+        
+        from util.BeautifulSoup import BeautifulSoup
+        availability_block = BeautifulSoup(VEHICLE_AVAIL_FOR_NEW_RESERVATION)
+        pod_name = self.source.decode_pod_name_from_availability_block(
+            availability_block)
+        
+        self.assertEqual(pod_name, '47th & Baltimore')
+    
+    def testShouldDecodeModelNameFromVehicleAvailabilityBlock(self):
+        from strings_for_testing import VEHICLE_AVAIL_FOR_NEW_RESERVATION
+        
+        from util.BeautifulSoup import BeautifulSoup
+        availability_block = BeautifulSoup(VEHICLE_AVAIL_FOR_NEW_RESERVATION)
+        model_name = self.source.decode_model_name_from_availability_block(
+            availability_block)
+        
+        self.assertEqual(model_name, 'Prius Liftback')
+    
+    def testShouldDecodeVehicleInfoFromVehicleAvailabilityBlock(self):
+        from strings_for_testing import VEHICLE_AVAIL_FOR_NEW_RESERVATION
+        
+        from util.BeautifulSoup import BeautifulSoup
+        availability_block = BeautifulSoup(VEHICLE_AVAIL_FOR_NEW_RESERVATION)
+        vehicleid, podid, pod_name, model_name = \
+            self.source.decode_vehicle_info_from_availability_block(
+                availability_block)
+        
+        self.assertEqual(vehicleid, '96692246')
+        self.assert_(podid is None)
+        self.assertEqual(pod_name, '47th & Baltimore')
+        self.assertEqual(model_name, 'Prius Liftback')
+    
+    def testShouldBuildCorrectVehicleFromGivenData(self):
+        vehicleid = '96692246'
+        pod_name = '47th & Baltimore'
+        podid = 'pod1234'
+        model_name = 'Prius Liftback'
+        
+        vehicle = self.source.build_vehicle(vehicleid, podid, pod_name, model_name)
+        
+        self.assertEqual(vehicle.id, '96692246')
+        self.assertEqual(vehicle.pod.id, 'pod1234')
+        self.assertEqual(vehicle.pod.name, '47th & Baltimore')
+        self.assertEqual(vehicle.model.name, 'Prius Liftback')
+    
+    def testShouldBuildCorrectVehicleAvailabilityFromGivenData(self):
+        vehicleid = '96692246'
+        pod_name = '47th & Baltimore'
+        podid = 'pod1234'
+        model_name = 'Prius Liftback'
+        start_time = 100
+        end_time = 1000
+        
+        vav = self.source.build_vehicle_availability(
+            (vehicleid, podid, pod_name, model_name), start_time, end_time)
+        
+        self.assertEqual(vav.vehicle.id, '96692246')
+        self.assertEqual(vav.vehicle.pod.id, 'pod1234')
+        self.assertEqual(vav.vehicle.pod.name, '47th & Baltimore')
+        self.assertEqual(vav.vehicle.model.name, 'Prius Liftback')
+        self.assertEqual(vav.start_time, 100)
+        self.assertEqual(vav.end_time, 1000)
+    
+    def testFetchedVehAvailShouldHaveCorrectAttributes(self):
+        from strings_for_testing import VEHICLE_AVAIL_FOR_NEW_RESERVATION
+        conn = StubConnection()
+        
+        @patch(self.source)
+        def create_host_connection(self):
+            return conn
+        
+        @patch(conn)
+        def request(self, url, method, data, headers):
+            class StubResponse (object):
+                def getheaders(self): return {}
+                def read(self): return VEHICLE_AVAIL_FOR_NEW_RESERVATION
+            return StubResponse()
+        
+        sessionid = vehicleid = None
+        start_time = end_time = current_time()
+        self.source.fetch_vehicle_availability(sessionid, vehicleid, start_time, end_time)
 
 class LocationAvailabilityJsonHandlerTest (unittest.TestCase):
     def testShouldBeInitializedWithJsonViewsAndScreenscrapeSources(self):
@@ -1142,6 +1231,46 @@ class AvailabilityJsonViewTest (unittest.TestCase):
         
         self.assertEqual(self.values, {'session':'my session', 'location':'my location', 'start_time':datetime.datetime(2010,11,1,tzinfo=Eastern), 'end_time':datetime.datetime(2011,1,1,tzinfo=Eastern), 'start_stamp': 1288584000, 'end_stamp': 1293858000, 'vehicle_availabilities':['v1','v2']})
         self.assertEqual(rendering, 'the rendering')
+    
+    def testShouldRenderVehicleAvailabilityCorrectly(self):
+        class StubData (object):
+            pass
+
+        session = StubData()
+
+        vav = StubData()
+        vav.start_time = datetime.datetime(2010,11,1,2,30,tzinfo=Eastern)
+        vav.end_time = datetime.datetime(2011,1,1,5,15,tzinfo=Eastern)
+        vav.availability = 'part'
+        vav.earliest = datetime.datetime(2010,11,1,3,15,tzinfo=Eastern)
+        vav.vehicle = StubData()
+        vav.vehicle.id = 'v1'
+        vav.vehicle.pod = StubData()
+        vav.vehicle.pod.id = 'p1'
+        vav.vehicle.pod.name = 'pod 1'
+        vav.vehicle.model = StubData()
+        vav.vehicle.model.name = 'model 1'
+        vav.price = StubData()
+        vav.price.total_amount = 2.0
+
+        view = AvailabilityJsonView()
+        rendering = view.render_vehicle_availability(session, vav)
+
+        self.assertEqual(rendering, 
+'''{"vehicle_availability" : {
+	"start_time" : "2010-11-01T02:30",
+	"end_time" : "2011-01-01T05:15",
+	"vehicle" : {
+		"id" : "v1",
+		"pod" : {
+			"id" : "p1",
+			"name" : "pod 1"} ,
+		"model" : {
+			"name" : "model 1"}} ,
+	"price" : {
+		"total_amount" : 2.0 }
+}}
+''')
     
     def testShouldRenderLocationAvailabilityCorrectly(self):
     		class StubData (object):
