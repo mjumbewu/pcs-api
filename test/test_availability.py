@@ -128,7 +128,10 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
             self.vehicle_vehicleid = vehicleid
             self.vehicle_start_time = start_time
             self.vehicle_end_time = end_time
-            return 'my vehicle availability'
+            class StubObject (object):
+                pass
+            self.vehicle_return = StubObject()
+            return self.vehicle_return
         
         @patch(self.vehicle_source)
         def fetch_vehicle_price_estimate(self, sessionid, vehicleid, start_time, end_time):
@@ -144,12 +147,15 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
             self.vehicle_availability = vehicle_availability
             return 'my vehicle availability body'
         
+        self.error_view.error_called = False
         @patch(self.error_view)
         def render_error(self, error_code, error_msg, error_detail):
-            return str(error_msg)
+            self.error_called = True
+            return error_detail + '\n' + str(error_msg)
         
         handler.get('veh1234')
         
+        self.assert_(not self.error_view.error_called, handler.response.out.getvalue())
         self.assert_(handler.userid_called)
         self.assert_(handler.sessionid_called)
         self.assertEqual(handler.userid, 'user1234')
@@ -158,8 +164,8 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
         self.assertEqual(self.vehicle_source.vehicle_vehicleid, 'veh1234')
         self.assertEqual(self.vehicle_source.price_sessionid, 'ses1234')
         self.assertEqual(self.vehicle_source.price_vehicleid, 'veh1234')
+        self.assertEqual(self.vehicle_source.vehicle_return.price, 'my price estimate')
         self.assertEqual(self.vehicle_view.session, 'my session')
-        self.assertEqual(self.vehicle_view.vehicle_availability, 'my vehicle availability')
         self.assertEqual(self.response.out.getvalue(), 'my vehicle availability body')
         
     def testReturnContentFromErrorViewWhenAnExceptionIsRaised(self):
