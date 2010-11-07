@@ -1190,6 +1190,36 @@ class ReservationsJsonViewTest (unittest.TestCase):
             pass
         
         res1 = StubObject()
+        res1.liveid = 'res1'
+        res1.start_time = datetime.datetime(2010, 11, 15, 16, 30, tzinfo=Eastern)
+        res1.end_time = datetime.datetime(2010, 11, 15, 17, 15, tzinfo=Eastern)
+        res1.vehicle = StubObject()
+        res1.vehicle.id = 'v123'
+        
+        result = renderer.render_confirmation(None, res1, 'create')
+        expected = \
+"""{
+  "confirmation": {
+    "event": "create", 
+    "reservation": {
+      "end_time": "2010-11-15T17:15", 
+      "liveid": "res1", 
+      "start_time": "2010-11-15T16:30", 
+      "vehicle": {
+        "id": "v123"
+      }
+    }
+  }
+}"""
+        self.assertEqual(result, expected)
+    
+    def testShouldRenderReservationJson(self):
+        renderer = ReservationsJsonView()
+        
+        class StubObject (object):
+            pass
+        
+        res1 = StubObject()
         res1.logid = 'res1'
         res1.start_time = datetime.datetime(2010, 11, 15, 16, 30, tzinfo=Eastern)
         res1.end_time = datetime.datetime(2010, 11, 15, 17, 15, tzinfo=Eastern)
@@ -1203,27 +1233,24 @@ class ReservationsJsonViewTest (unittest.TestCase):
         res1.price = StubObject()
         res1.price.total_amount = 11.82
         
-        result = renderer.render_confirmation(None, res1, 'create')
+        result = renderer.render_reservation(None, res1)
         expected = \
 """{
-  "confirmation": {
-    "event": "create", 
-    "reservation": {
-      "end_time": "2010-11-15T17:15", 
-      "logid": "res1", 
-      "price": {
-        "total_amount": 11.82
+  "reservation": {
+    "end_time": "2010-11-15T17:15", 
+    "logid": "res1", 
+    "price": {
+      "total_amount": 11.82
+    }, 
+    "start_time": "2010-11-15T16:30", 
+    "vehicle": {
+      "id": "v123", 
+      "model": {
+        "name": "model 1"
       }, 
-      "start_time": "2010-11-15T16:30", 
-      "vehicle": {
-        "id": "v123", 
-        "model": {
-          "name": "model 1"
-        }, 
-        "pod": {
-          "id": "pod123", 
-          "name": "pod 1"
-        }
+      "pod": {
+        "id": "pod123", 
+        "name": "pod 1"
       }
     }
   }

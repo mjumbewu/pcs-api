@@ -23,6 +23,9 @@ class _ReservationsViewInterface (object):
     def render_reservations(self, session, reservations, page_num, total_pages):
         raise NotImplementedError()
     
+    def render_reservation(self, session, reservation):
+        raise NotImplementedError()
+    
     def render_confirmation(self, session, reservation, event):
         raise NotImplementedError()
 
