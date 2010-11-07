@@ -35,6 +35,9 @@ class _ReservationsSourceInterface (object):
     
     def fetch_reservation_cancellation(self, sessionid, liveid, vehicleid, start_time, end_time):
         raise NotImplementedError()
+    
+    def fetch_reservation_information(self, sessionid, liveid):
+        raise NotImplementedError()
 
 class _LocationsSourceInterface (object):
     def fetch_location_profiles(self, sessionid):

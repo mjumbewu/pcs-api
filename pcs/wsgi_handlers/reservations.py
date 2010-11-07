@@ -90,8 +90,20 @@ class ReservationHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
         return vehicle_id
     
     def get(self, liveid):
-        # get
-        pass
+        try:
+            sessionid = self.get_session_id()
+            
+            reservation = self.reservation_source.fetch_reservation_information(
+                sessionid, liveid)
+            
+            session = None
+            response_body = self.reservation_view.render_reservation(
+                session, reservation)
+        except Exception, e:
+            response_body = self.generate_error(e)
+        
+        self.response.out.write(response_body)
+        self.response.set_status(200)
     
     def put(self, liveid):
         try:

@@ -416,7 +416,18 @@ class PcsDocumentDecoder(object):
         modelname = names_match.group('vehicle_model')
         
         return modelname, podname
+    
+    def decode_vehicle_id_info_from_element(self, elem):
+        elem_href = elem['href']
         
+        ids_match = re.search(r'my_fleet.php\?mv_action=stack_detail&_r=([0-9]+)&pk=(?P<podid>[0-9]+)&stack_pk=(?P<vehicleid>[0-9]+)', elem_href)
+        if ids_match is None:
+            raise Exception(elem_href)
+        podid = ids_match.group('podid')
+        vehicleid = ids_match.group('vehicleid')
+        
+        return vehicleid, podid
+    
     def decode_reservation_info_from_confirmation_doc(self, html_doc):
         log_id_span = html_doc.find('span', {'id':'confirm_id_'})
         if log_id_span is None:
@@ -424,11 +435,112 @@ class PcsDocumentDecoder(object):
                 % (str(html_doc).replace('>','&gt;').replace('<','&lt;')))
         logid = self.get_text_from_element(log_id_span)
         
-        vehicle_info_span = html_doc.find('span', {'id':'stack_pk'})
-        modelname, podname = self.decode_vehicle_name_info_from_element(vehicle_info_span)
+#        vehicle_info_span = html_doc.find('span', {'id':'stack_pk'})
+        res_table = html_doc.find('table', {'class':'mi'})
         
-        return logid, modelname, podname
+        if not res_table:
+            raise ScreenscrapeParseError("No table found with class 'mi': %s" % html_doc)
+        
+        # Pod/Vehicle names/ids are in the 3rd row, 2nd column.
+        # Start/End times are in the 5th/6th rows, 2nd column.
+        #
+        # NOTE: Start/End times are in the 5th/6th rows because of an unclosed
+        #       <tr> tag immediately before the start time row.  Beautiful soup
+        #       interprets this as an empty row.  So, I'm counting it as the
+        #       (empty) fourth row.
+        res_rows = res_table.findAll('tr')
+        
+        if len(res_rows) < 6:
+            raise ScreenscrapeParseError("Reservation info table must have at least 6 rows: %s" % res_table)
+        
+        # ... so we find the ids and names
+        vehicle_info_row = res_rows[2]
+        vehicle_info_tds = vehicle_info_row.findAll('td')
+        
+        if len(vehicle_info_tds) < 2:
+            raise ScreenscrapeParseError("Vehicle info table row must have at least 2 columns: %s" % vehicle_info_row)
+        
+        vehicle_info_td = vehicle_info_tds[1]
+        vehicle_info_a = vehicle_info_td.find('a')
+        
+        if not vehicle_info_a:
+            raise ScreenscrapeParseError("No vehicle information anchor found: %s" % html_doc)
+        
+        modelname, podname = self.decode_vehicle_name_info_from_element(vehicle_info_a)
+        vehicleid, podid = self.decode_vehicle_id_info_from_element(vehicle_info_a)
+        
+        # ... and we find the start time
+        start_time_row = res_rows[4]
+        start_time_tds = start_time_row.findAll('td')
+        
+        if len(start_time_tds) < 2:
+            raise ScreenscrapeParseError("Start time table row must have at least 2 columns: %s" % start_time_row)
+        
+        start_time_td = start_time_tds[1]
+        start_time_elem = start_time_td.find('font')
+        
+        if not start_time_elem:
+            raise ScreenscrapeParseError("No start time found: %s" % html_doc)
+        
+        start_time = self.decode_res_time_from_element(start_time_elem)
+        
+        # .. and the end time
+        end_time_row = res_rows[5]
+        end_time_tds = end_time_row.findAll('td')
+        
+        if len(end_time_tds) < 2:
+            raise ScreenscrapeParseError("End time table row must have at least 2 columns: %s" % end_time_row)
+        
+        end_time_td = end_time_tds[1]
+        end_time_elem = end_time_td.find('font')
+        
+        if not end_time_elem:
+            raise ScreenscrapeParseError("No end time found: %s" % html_doc)
+        
+        end_time = self.decode_res_time_from_element(end_time_elem)
+        
+        return logid, start_time, end_time, vehicleid, modelname, podid, podname
     
+    def decode_res_time_from_element(self, elem):
+        time_text = self.get_text_from_element(elem)
+        
+        pattern = '(?P<hour>[0-9]+):(?P<minute>[0-9]+) (?P<midi>[ap])m .*, (?P<month>[A-za-z]+) (?P<day>[0-9]+), (?P<year>[0-9]+)'
+        time_match = re.match(pattern, time_text)
+        
+        if not time_match:
+            raise ScreenscrapeParseError('Could not match %r to the pattern %r' % (time_text, pattern))
+        
+        months = {
+            'January':1,
+            'February':2,
+            'March':3,
+            'April':4,
+            'May':5,
+            'June':6,
+            'July':7,
+            'August':8,
+            'September':9,
+            'October':10,
+            'November':11,
+            'December':12
+        }
+        
+        hour = int(time_match.group('hour'))
+        if hour == 12:
+            hour = 0
+        midi = time_match.group('midi')
+        if midi == 'p':
+            hour += 12
+        minute = int(time_match.group('minute'))
+        try:
+            month = months[time_match.group('month')]
+        except KeyError:
+            raise ScreenscrapeParseError("Unrecognized month: %r" % time_match.group('month'))
+        day = int(time_match.group('day'))
+        year = int(time_match.group('year'))
+        
+        return datetime.datetime(year, month, day, hour, minute, tzinfo=Eastern)
+        
     def decode_transaction_id_from_lightbox_block(self, transtype, block):
         tid_input = block.find('input', {'id':transtype+'_tid_'})
         
@@ -524,31 +636,34 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
                 conn, sessionid, liveid, transactionid, vehicleid, start_time, end_time)
         
         conf_html_doc = self.get_html_document(pcs_body)
-        logid, modelname, podname = \
+        logid, start_time, end_time, vehicleid, modelname, podid, podname = \
             self.decoder.decode_reservation_info_from_confirmation_doc(
                 conf_html_doc)
         
         return logid, modelname, podname
     
-    def get_reservation_information(self, conn, sessionid, liveid):
-        # Get the other reservation info (Log ID, Model Name, Pod Name)
+    def send_reservation_request(self, conn, sessionid, liveid):
         pcs_body, pcs_head = \
             self.requester.request_confirm_reservation_from_pcs(
                 conn, sessionid, liveid)
         
         conf_html_doc = self.get_html_document(pcs_body)
-        logid, modelname, podname = \
+        logid, start_time, end_time, vehicleid, modelname, podid, podname = \
             self.decoder.decode_reservation_info_from_confirmation_doc(
                 conf_html_doc)
         
-        return logid, modelname, podname
+        return logid, start_time, end_time, vehicleid, modelname, podid, podname
     
     def build_vehicle(self, vehicleid, modelname, podid, podname):
         vehicle = Vehicle(vehicleid)
-        vehicle.model = VehicleModel()
-        vehicle.model.name = modelname
-        vehicle.pod = Pod(podid)
-        vehicle.pod.name = podname
+        
+        if modelname:
+            vehicle.model = VehicleModel()
+            vehicle.model.name = modelname
+        
+        if podid or podname:
+            vehicle.pod = Pod(podid)
+            vehicle.pod.name = podname
         
         return vehicle
     
@@ -558,6 +673,18 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
         reservation.end_time = end_time
         
         reservation.vehicle = self.build_vehicle(vehicleid, modelname, podid, podname)
+        
+        return reservation
+    
+    @override
+    def fetch_reservation_information(self, sessionid, liveid):
+        conn = self.get_pcs_connection()
+        
+        logid, start_time, end_time, vehicleid, modelname, podid, podname = \
+            self.send_reservation_request(conn, sessionid, liveid)
+        
+        reservation = self.build_reservation(logid, liveid, start_time, 
+            end_time, vehicleid, modelname, podid, podname)
         
         return reservation
     
@@ -572,13 +699,10 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
             self.send_creation_info(conn, sessionid, vehicleid, transactionid, 
                 start_time, end_time, reservation_memo)
         
-        logid, modelname, podname = \
-            self.get_reservation_information(conn, sessionid, liveid)
-        
         # We don't know the pod id from the confirmation, and I'm not sure it's
         # worth it to make an additional request to get it.  If we need it in 
         # the future, we'll work it out.
-        podid = None
+        logid = modelname = podid = podname = None
         
         reservation = self.build_reservation(logid, liveid, 
             start_time, end_time, vehicleid, modelname, podid, podname)
@@ -596,12 +720,8 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
             self.send_modification_info(conn, sessionid, liveid, transactionid, 
                 vehicleid, start_time, end_time, reservation_memo)
         
-        res_info = \
-            self.get_reservation_information(conn, sessionid, liveid)
-        logid, modelname, podname = res_info
-
         # We don't know the pod id or vehicle if from the confirmation.
-        podid = None
+        logid = modelname = podname = podid = None
         
         reservation = self.build_reservation(logid, liveid, 
             start_time, end_time, vehicleid, modelname, podid, podname)
