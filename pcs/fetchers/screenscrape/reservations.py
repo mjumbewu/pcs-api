@@ -17,6 +17,7 @@ from pcs.data.vehicle import Vehicle
 from pcs.data.vehicle import VehicleModel
 from pcs.data.reservation import Reservation
 from pcs.fetchers import _ReservationsSourceInterface
+from pcs.fetchers.screenscrape import ScreenscrapeFetchError
 from pcs.fetchers.screenscrape import ScreenscrapeParseError
 from pcs.fetchers.screenscrape.pcsconnection import PcsConnection
 from pcs.fetchers.screenscrape.availability import AvailabilityScreenscrapeSource
@@ -395,7 +396,22 @@ class PcsDocumentDecoder(object):
         
         return liveid
     
+    def verify_no_error_in_lightbox_doc(self, lgtbox_doc):
+        error_p_elem = lgtbox_doc.find('p', {'class':'error'})
+        
+        if error_p_elem:
+            error_txt = self.get_text_from_element(error_p_elem)
+            error_code = None
+            if error_txt == 'You can only make one reservation during a given time period.':
+                error_code = 'time_period_conflict'
+            
+            raise ScreenscrapeFetchError(error_txt, error_code)
+        
+        return True
+    
     def decode_reservation_liveid_from_redirect_script_element(self, script_doc):
+        self.verify_no_error_in_lightbox_doc(script_doc)
+        
         script_tag = script_doc.find('script')
         
         if script_tag is None:

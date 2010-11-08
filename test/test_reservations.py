@@ -9,6 +9,7 @@ from pcs.wsgi_handlers.appengine.reservations import ReservationJsonHandler
 from pcs.wsgi_handlers.appengine.reservations import ReservationsJsonHandler
 from pcs.fetchers import _ReservationsSourceInterface
 from pcs.fetchers import _SessionSourceInterface
+from pcs.fetchers.screenscrape import ScreenscrapeFetchError
 from pcs.fetchers.screenscrape import ScreenscrapeParseError
 from pcs.fetchers.screenscrape.reservations import ReservationsScreenscrapeSource
 from pcs.fetchers.screenscrape.pcsconnection import PcsConnection
@@ -722,6 +723,35 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
             self.source.decoder.decode_reservation_liveid_from_redirect_script_element(redir_elem)
         
         self.assertEqual(liveid, '149385106')
+    
+    def testShouldRaiseExceptionWithConflictCodeWhenDateInputScriptIsReturned(self):
+        from strings_for_testing import RESERVATION_LIGHTBOX_WITH_CONFLICTING_TIME
+        
+        lgtbox_block = BeautifulSoup(RESERVATION_LIGHTBOX_WITH_CONFLICTING_TIME)
+        try:
+            self.source.decoder.decode_reservation_liveid_from_redirect_script_element(lgtbox_block)
+        except ScreenscrapeFetchError:
+            return
+        
+        self.fail('Expected fetch error.')
+    
+    def testShouldRaiseExceptionWhenErrorInLightboxBlock(self):
+        from strings_for_testing import RESERVATION_LIGHTBOX_WITH_CONFLICTING_TIME
+        
+        lgtbox_block = BeautifulSoup(RESERVATION_LIGHTBOX_WITH_CONFLICTING_TIME)
+        try:
+            self.source.decoder.verify_no_error_in_lightbox_doc(lgtbox_block)
+        except ScreenscrapeFetchError:
+            return
+        
+        self.fail('Expected fetch error.')
+    
+    def testShouldVerifyContentsWhenNoErrorInLightboxBlock(self):
+        from strings_for_testing import NEW_RESERVATION_REDIRECT_SCRIPT
+        
+        redir_elem = BeautifulSoup(NEW_RESERVATION_REDIRECT_SCRIPT)
+        v = self.source.decoder.verify_no_error_in_lightbox_doc(redir_elem)
+        self.assert_(v)
     
     def testShouldExtractCorrectReservationInfoFromConfirmationDocument(self):
         from strings_for_testing import NEW_RESERVATION_CONFIRMATION

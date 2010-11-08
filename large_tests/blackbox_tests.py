@@ -97,6 +97,13 @@ class RestInterfaceBlackBoxTest (unittest.TestCase):
                      error['msg'] + '\n' + error['detail'] + '\n' + error['msg'])
     
     def testMakeChangeAndCancelAReservation(self):
+        
+        # This is a long test that will exercise the whole process of making,
+        # checking, editing, and canceling a reservation.  It really is a long
+        # test (on the order of 30 seconds), so make sure you're all unit-tested
+        # up before running it; don't expect to make it a part of your regular
+        # tests.
+        
         session_cookie = self.sign_in_and_get_session_cookie()
         
         #######################################################################
@@ -160,6 +167,31 @@ class RestInterfaceBlackBoxTest (unittest.TestCase):
         self.assert_(confirmation is not None)
         self.assertEqual(confirmation['reservation']['liveid'], liveid)
         self.assertEqual(confirmation['reservation']['vehicle']['id'], vehicleid)
+        
+        #######################################################################
+        # Get the reservation information, using the same liveid
+        from pcs.wsgi_handlers.reservations import ReservationJsonHandler
+        handler = ReservationJsonHandler()
+        self.initialize_handler_for_session(handler, session_cookie)
+        
+        handler.get(liveid)
+        
+        response_body = handler.response.out.getvalue()
+        
+        # I should get a reservation consistent with the one I just modified
+        response = json.loads(response_body)
+        self.check_for_error(response)
+        
+        reservation = response.get('reservation', None)
+        self.assert_(reservation is not None)
+        self.assertEqual(reservation['liveid'], liveid)
+        self.assertEqual(reservation['vehicle']['id'], vehicleid)
+        self.assertEqual(reservation['start_time'], to_isostring(start_time)[:16])
+        self.assertEqual(reservation['end_time'], to_isostring(end_time)[:16])
+        self.assertEqual(reservation['vehicle']['model']['name'], 'Prius Liftback')
+        self.assertEqual(reservation['vehicle']['pod']['name'], '47th & Baltimore')
+        self.assertEqual(reservation['vehicle']['pod']['id'], '30005')
+        self.assertEqual(reservation['memo'], 'reservation modify test')
         
         #######################################################################
         # Now cancel the reservation
