@@ -1434,3 +1434,57 @@ class AvailabilityJsonViewTest (unittest.TestCase):
 }}
 """,
     		rendering)
+    
+    def testShouldRenderCoordinateAvailabilityCorrectly(self):
+    		class StubData (object):
+    				pass
+    		
+    		session = StubData()
+    		location = StubData()
+    		location.id = ('lat','lon')
+    		location.name = 'location name'
+    		start_time = datetime.datetime(2010,11,1,2,30,tzinfo=Eastern)
+    		end_time = datetime.datetime(2011,1,1,5,15,tzinfo=Eastern)
+    		
+    		vav1 = StubData()
+    		vav1.availability = 'part'
+    		vav1.earliest = datetime.datetime(2010,11,1,3,15,tzinfo=Eastern)
+    		vav1.vehicle = StubData()
+    		vav1.vehicle.pod = StubData()
+    		vav1.vehicle.pod.id = 'p1'
+    		vav1.vehicle.pod.name = 'pod 1'
+    		vav1.vehicle.model = StubData()
+    		vav1.vehicle.model.name = 'model 1'
+    		
+    		vehicle_availabilities = [vav1]
+    		view = AvailabilityJsonView()
+    		rendering = view.render_location_availability(session, location, start_time, end_time, vehicle_availabilities)
+    		
+    		self.assertEqual(
+"""{"location_availability" : {
+	"location" : {
+		"id" : "lat,lon",
+		"name" : "location name"
+	} ,
+	"start_time" : "2010-11-01T02:30",
+	"end_time" : "2011-01-01T05:15",
+	"vehicle_availabilities" : [
+
+		{
+			"vehicle" : {
+				"id" : "",
+				"pod" : {
+					"id" : "p1",
+					"name" : "pod 1"} ,
+				"model" : {
+					"id" : "",
+					"name" : "model 1"}} ,
+			"earliest" : "2010-11-01T03:15",
+			"latest" : "",
+			"availability" : "part"
+		}
+
+	]
+}}
+""",
+    		rendering)

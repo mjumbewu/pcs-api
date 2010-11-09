@@ -16,9 +16,17 @@ class AvailabilityJsonView (_AvailabilityViewInterface):
         """
         Return a response with vehicle availability near a given location
         """
+        class LocationCopy (object):
+            def __init__(self, location):
+                self.name = location.name
+                if isinstance(location.id, tuple):
+                    self.id = '%s,%s' % location.id
+                else:
+                    self.id = location.id
+        
         values = {
             'session': session,
-            'location': location,
+            'location': location if isinstance(location, str) else LocationCopy(location),
             'start_time': start_time,
             'end_time': end_time,
             'start_stamp': to_xchange_time(start_time),
