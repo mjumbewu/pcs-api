@@ -638,6 +638,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(reservation.vehicle.model.name, 'Prius Liftback')
         self.assertEqual(reservation.start_time.timetuple()[:6], (2010,9,1,12,45,0))
         self.assertEqual(reservation.end_time.timetuple()[:6], (2010,9,1,16,45,0))
+        self.assertEqual(reservation.price.total_amount, 29.28)
         self.assertEqual(reservation.status, ReservationStatus.PAST)
     
     def testShouldFetchReservationsWithOneUpcomingInGivenMonth(self):
@@ -757,7 +758,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         from strings_for_testing import NEW_RESERVATION_CONFIRMATION
         
         conf_doc = BeautifulSoup(NEW_RESERVATION_CONFIRMATION)
-        logid, start_time, end_time, vehicleid, modelname, podid, podname, memo = \
+        logid, start_time, end_time, vehicleid, modelname, podid, podname, memo, pricetotal = \
             self.source.decoder.decode_reservation_info_from_confirmation_doc(conf_doc)
         
         self.assertEqual(logid, '2516709')
@@ -768,6 +769,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(start_time, datetime.datetime(2010,10,31,2,45,tzinfo=Eastern))
         self.assertEqual(end_time, datetime.datetime(2010,10,31,3,0,tzinfo=Eastern))
         self.assertEqual(memo, 'testing')
+        self.assertEqual(pricetotal, 3.24)
     
     def testShouldBuildCorrectReservationFromGivenInformation(self):
         logid = 'logid1234'
@@ -779,8 +781,9 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         podid = 'pod0987'
         podname = 'closeby'
         memo = 'res memo'
+        pricetotal = 15.64
         
-        reservation = self.source.build_reservation(logid, liveid, start_time, end_time, vehicleid, modelname, podid, podname, memo)
+        reservation = self.source.build_reservation(logid, liveid, start_time, end_time, vehicleid, modelname, podid, podname, memo, pricetotal)
         
         self.assertEqual(reservation.logid, logid)
         self.assertEqual(reservation.liveid, liveid)
@@ -791,6 +794,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(reservation.vehicle.pod.id, podid)
         self.assertEqual(reservation.vehicle.pod.name, podname)
         self.assertEqual(reservation.memo, memo)
+        self.assertEqual(reservation.price.total_amount, pricetotal)
     
     def testShouldBuildCorrectReservationWithMissingInformation(self):
         logid = None
@@ -802,8 +806,9 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         podid = None
         podname = None
         memo = None
+        pricetotal = None
         
-        reservation = self.source.build_reservation(logid, liveid, start_time, end_time, vehicleid, modelname, podid, podname, memo)
+        reservation = self.source.build_reservation(logid, liveid, start_time, end_time, vehicleid, modelname, podid, podname, memo, pricetotal)
         
         self.assertEqual(reservation.logid, None)
         self.assertEqual(reservation.liveid, liveid)
@@ -813,6 +818,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         self.assert_(not hasattr(reservation.vehicle, 'model'))
         self.assert_(not hasattr(reservation.vehicle, 'pod'))
         self.assert_(not hasattr(reservation, 'memo'))
+        self.assert_(not hasattr(reservation, 'price'))
     
     def testShouldBuildCorrectVehicleFromGivenInformation(self):
         vehicleid = 'vid1234'
@@ -906,11 +912,11 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
             self.res_liveid = liveid
             return 'log1234', datetime.datetime(2010,4,30), \
                 datetime.datetime(2010,5,1), 'vid1234', 'modelname', None, \
-                'podname', 'res memo'
+                'podname', 'res memo', 2.3
         
         self.source.res_builder_called = False
         @patch(self.source)
-        def build_reservation(self, logid, liveid, start_time, end_time, vehicleid, modelname, podid, podname, memo):
+        def build_reservation(self, logid, liveid, start_time, end_time, vehicleid, modelname, podid, podname, memo, pricetotal):
             self.res_builder_called = True
             self.bld_logid = logid
             self.bld_liveid = liveid
@@ -919,6 +925,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
             self.bld_podid = podid
             self.bld_podname = podname
             self.bld_memo = memo
+            self.bld_price = pricetotal
             return 'my reservation'
         
         reservation = self.source.fetch_reservation_information(sessionid, liveid)
@@ -932,6 +939,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(self.source.bld_modname, 'modelname')
         self.assertEqual(self.source.bld_podname, 'podname')
         self.assertEqual(self.source.bld_memo, 'res memo')
+        self.assertEqual(self.source.bld_price, 2.3)
         self.assertEqual(reservation, 'my reservation')
     
     def testShouldDecodeLiveIdFromModifactionRequest(self):
@@ -964,12 +972,13 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
             from strings_for_testing import NEW_RESERVATION_CONFIRMATION
             return NEW_RESERVATION_CONFIRMATION, None
             
-        logid, start_time, end_time, vehicleid, modelname, podid, podname, memo = \
+        logid, start_time, end_time, vehicleid, modelname, podid, podname, memo, pricetotal = \
             self.source.send_reservation_request(conn, sid, liveid)
         
         self.assertEqual(logid, '2516709')
         self.assertEqual(modelname, 'Prius Liftback')
         self.assertEqual(podname, '47th & Baltimore')
+        self.assertEqual(pricetotal, 3.24)
         
     
     def testShouldDecodeResInfoFromCancellationRequest(self):
@@ -987,12 +996,13 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
             from strings_for_testing import CANCELLED_RESERVATION_CONFIRMATION
             return CANCELLED_RESERVATION_CONFIRMATION, None
             
-        logid, modelname, podname, memo = \
+        logid, modelname, podname, memo, pricetotal = \
             self.source.send_cancellation_info(conn, sid, liveid, tid, vid, stime, etime)
         
         self.assertEqual(logid, '2517617')
         self.assertEqual(modelname, 'Prius Liftback')
         self.assertEqual(podname, '47th & Baltimore')
+        self.assert_(pricetotal is None)
     
     def testShouldConstructCorrectRequestForCreatingReservation(self):
         conn = StubConnection()
@@ -1080,11 +1090,11 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
             self.can_vid = vehicleid
             self.can_start = start_time
             self.can_end = end_time
-            return 'logid', 'model name', 'pod name', 'res memo'
+            return 'logid', 'model name', 'pod name', 'res memo', 2.34
         
         self.source.res_builder_called = False
         @patch(self.source)
-        def build_reservation(self, logid, liveid, start_time, end_time, vehicleid, modelname, podid, podname, memo):
+        def build_reservation(self, logid, liveid, start_time, end_time, vehicleid, modelname, podid, podname, memo, pricetotal):
             self.res_builder_called = True
             self.bld_logid = logid
             self.bld_liveid = liveid
@@ -1093,6 +1103,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
             self.bld_podid = podid
             self.bld_podname = podname
             self.bld_memo = memo
+            self.bld_price = pricetotal
             return 'my reservation'
         
         reservation = self.source.fetch_reservation_cancellation(sessionid, liveid, vehicleid, start_time, end_time)
@@ -1112,6 +1123,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(self.source.bld_modname, 'model name')
         self.assertEqual(self.source.bld_podname, 'pod name')
         self.assertEqual(self.source.bld_memo, 'res memo')
+        self.assertEqual(self.source.bld_price, 2.34)
         self.assertEqual(reservation, 'my reservation')
     
     def testShouldDecodeLiveIdFromScriptWithPaymentKeysWell(self):
