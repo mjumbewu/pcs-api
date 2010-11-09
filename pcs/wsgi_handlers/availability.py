@@ -65,7 +65,7 @@ class LocationAvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler)
             
             location = self.get_location(sessionid, locationid)
             
-            start_time, end_time = self.get_time_range()
+            start_time, end_time = self.get_ceiled_time_range()
 
             vehicle_availabilities = self.get_available_vehicles(sessionid, location.id, start_time, end_time)
             
@@ -93,7 +93,7 @@ class VehicleAvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
             userid = self.get_user_id()
             sessionid = self.get_session_id()
             session = self.get_session(userid, sessionid)
-            start_time, end_time = self.get_time_range()
+            start_time, end_time = self.get_ceiled_time_range()
             
             vehicle_availability = self.vehicle_source.fetch_vehicle_availability(sessionid, vehicleid, start_time, end_time)
             price = self.vehicle_source.fetch_vehicle_price_estimate(sessionid, vehicleid, start_time, end_time)

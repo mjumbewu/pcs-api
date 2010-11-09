@@ -117,6 +117,10 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
             return 'ses1234'
         
         @patch(handler)
+        def get_ceiled_time_range(self):
+            return 1, 100
+        
+        @patch(handler)
         def get_session(self, userid, sessionid):
             self.userid = userid
             self.sessionid = sessionid
@@ -162,6 +166,8 @@ class VehicleAvailabilityHandlerTest (unittest.TestCase):
         self.assertEqual(handler.sessionid, 'ses1234')
         self.assertEqual(self.vehicle_source.vehicle_sessionid, 'ses1234')
         self.assertEqual(self.vehicle_source.vehicle_vehicleid, 'veh1234')
+        self.assertEqual(self.vehicle_source.vehicle_start_time, 1)
+        self.assertEqual(self.vehicle_source.vehicle_end_time, 100)
         self.assertEqual(self.vehicle_source.price_sessionid, 'ses1234')
         self.assertEqual(self.vehicle_source.price_vehicleid, 'veh1234')
         self.assertEqual(self.vehicle_source.vehicle_return.price, 'my price estimate')
@@ -538,7 +544,7 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
             return mylocation
         
         @patch(self.handler)
-        def get_time_range(self):
+        def get_ceiled_time_range(self):
             return (1, 100)
         
         @patch(self.handler)
@@ -571,6 +577,8 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
         self.assertEqual(self.handler.get_location_sessionid, 'ses1234')
         self.assertEqual(self.handler.get_location_locationid, 'loc1234')
         self.assertEqual(self.vehicle_view.available_location.id, 'loc1234')
+        self.assertEqual(self.vehicle_view.available_start, 1)
+        self.assertEqual(self.vehicle_view.available_end, 100)
         self.assertEqual(response_body, 'Success')
     
     def testLocationIdOfZeroShouldBeValid(self):
@@ -611,6 +619,18 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
         # Then...
         except WsgiParameterError:
             self.fail('No parameter exception should have been raised.')
+    
+    def testCeiledTimesShouldBeToTheNearest15Minutes(self):
+        @patch(self.handler)
+        def get_time_range(self):
+            return (
+                datetime.datetime(2009,11,9,23,53,30,tzinfo=Eastern), 
+                datetime.datetime(2009,11,10,5,00,20,tzinfo=Eastern))
+        
+        start, end = self.handler.get_ceiled_time_range()
+        
+        self.assertEqual(start, datetime.datetime(2009,11,10,0,0,tzinfo=Eastern))
+        self.assertEqual(end, datetime.datetime(2009,11,10,5,15,tzinfo=Eastern))
         
 
 class AvailabilityScreenscrapeSourceTest (unittest.TestCase):

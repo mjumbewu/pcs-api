@@ -66,6 +66,25 @@ class _TimeRangeBasedHandler (object):
     def __init__(self):
         super(_TimeRangeBasedHandler, self).__init__()
     
+    def _ceil_time(self, dt):
+        minutes = dt.minute % 15
+        delta_minutes = 15 - minutes
+        
+        import datetime
+        no_secs_time = dt.replace(second=0)
+        delta = datetime.timedelta(minutes=delta_minutes)
+        ceil_time = no_secs_time + delta
+        
+        return ceil_time
+        
+    def get_ceiled_time_range(self):
+        start_time, end_time = self.get_time_range()
+        
+        start_time = self._ceil_time(start_time)
+        end_time = self._ceil_time(end_time)
+        
+        return start_time, end_time
+    
     def get_time_range(self):
         return self.get_single_iso_datetime_range()
     
