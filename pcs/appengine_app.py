@@ -13,7 +13,7 @@ application = webapp.WSGIApplication(
          ('/locations.json', LocationsJsonHandler),
          ('/locations/(.*)/availability.json', LocationAvailabilityJsonHandler),
          ('/vehicles/(.*)/availability.json', VehicleAvailabilityJsonHandler),
-         ('/reservation/(.*).json', ReservationJsonHandler),
+         ('/reservations/(.*).json', ReservationJsonHandler),
          ('/reservations.json', ReservationsJsonHandler)],
         debug=True)
 
