@@ -47,6 +47,16 @@ class LocationAvailabilityHandler (_SessionBasedHandler, _TimeRangeBasedHandler)
             lat = locationid[:comma]
             lon = locationid[comma+1:]
             location = self.location_source.fetch_custom_location('My Current Location', (lat, lon))
+        elif locationid and '%2C' in locationid:
+            comma = locationid.find('%2C')
+            lat = locationid[:comma]
+            lon = locationid[comma+3:]
+            location = self.location_source.fetch_custom_location('My Current Location', (lat, lon))
+        elif locationid and '%2c' in locationid:
+            comma = locationid.find('%2c')
+            lat = locationid[:comma]
+            lon = locationid[comma+3:]
+            location = self.location_source.fetch_custom_location('My Current Location', (lat, lon))
         else:
             location = self.location_source.fetch_location_profile(sessionid, locationid)
         

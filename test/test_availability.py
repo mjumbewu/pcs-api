@@ -488,6 +488,42 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
         self.assertEqual(self.location_source.location_key, ('123','456'))
         self.assertEqual(location, 'my location')
     
+    def testShouldReturnLocationAccordingToLocationSourceWhenGivenAnEncodedUrlInUpper(self):
+        # Given...
+        @patch(self.location_source)
+        def fetch_custom_location(self, location_name, location_key):
+            self.location_name = location_name
+            self.location_key = location_key
+            return 'my location'
+        
+        # When...
+        sessionid = 'ses1234'
+        locationid = '123%2C456'
+        location = self.handler.get_location(sessionid, locationid)
+        
+        # Then...
+        self.assertEqual(self.location_source.location_name, 'My Current Location')
+        self.assertEqual(self.location_source.location_key, ('123','456'))
+        self.assertEqual(location, 'my location')
+    
+    def testShouldReturnLocationAccordingToLocationSourceWhenGivenAnEncodedUrlInLower(self):
+        # Given...
+        @patch(self.location_source)
+        def fetch_custom_location(self, location_name, location_key):
+            self.location_name = location_name
+            self.location_key = location_key
+            return 'my location'
+        
+        # When...
+        sessionid = 'ses1234'
+        locationid = '123%2c456'
+        location = self.handler.get_location(sessionid, locationid)
+        
+        # Then...
+        self.assertEqual(self.location_source.location_name, 'My Current Location')
+        self.assertEqual(self.location_source.location_key, ('123','456'))
+        self.assertEqual(location, 'my location')
+    
     def testShouldRespondWithFailureContentWhenSessionSourceCannotFindSessionWithGivenId(self):
         """With no valid session, the availability handler will give a failure document response."""
         
