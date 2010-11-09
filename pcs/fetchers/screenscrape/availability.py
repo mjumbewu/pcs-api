@@ -124,7 +124,7 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface, _Screenscrap
                             'Start time is in the past.', 'start_time_in_past')
                     if json_data['status'] == 1 and 'Start time should be less than end time.' in json_data['instruction']:
                         raise ScreenscrapeFetchError(
-                            'Start time should be less than end time.', 'end_time_earlier_than_start')
+                            'Start time should be earlier than end time.', 'end_time_earlier_than_start')
             
             raise ScreenscrapeParseError('Json data has no "pods" key: %r' % json_data)
         
