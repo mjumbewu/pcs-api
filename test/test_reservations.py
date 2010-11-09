@@ -757,7 +757,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         from strings_for_testing import NEW_RESERVATION_CONFIRMATION
         
         conf_doc = BeautifulSoup(NEW_RESERVATION_CONFIRMATION)
-        logid, start_time, end_time, vehicleid, modelname, podid, podname = \
+        logid, start_time, end_time, vehicleid, modelname, podid, podname, memo = \
             self.source.decoder.decode_reservation_info_from_confirmation_doc(conf_doc)
         
         self.assertEqual(logid, '2516709')
@@ -767,6 +767,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(podid, '30005')
         self.assertEqual(start_time, datetime.datetime(2010,10,31,2,45,tzinfo=Eastern))
         self.assertEqual(end_time, datetime.datetime(2010,10,31,3,0,tzinfo=Eastern))
+        self.assertEqual(memo, 'testing')
     
     def testShouldBuildCorrectReservationFromGivenInformation(self):
         logid = 'logid1234'
@@ -777,8 +778,9 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         modelname = 'fancy'
         podid = 'pod0987'
         podname = 'closeby'
+        memo = 'res memo'
         
-        reservation = self.source.build_reservation(logid, liveid, start_time, end_time, vehicleid, modelname, podid, podname)
+        reservation = self.source.build_reservation(logid, liveid, start_time, end_time, vehicleid, modelname, podid, podname, memo)
         
         self.assertEqual(reservation.logid, logid)
         self.assertEqual(reservation.liveid, liveid)
@@ -788,6 +790,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(reservation.vehicle.model.name, modelname)
         self.assertEqual(reservation.vehicle.pod.id, podid)
         self.assertEqual(reservation.vehicle.pod.name, podname)
+        self.assertEqual(reservation.memo, memo)
     
     def testShouldBuildCorrectReservationWithMissingInformation(self):
         logid = None
@@ -798,8 +801,9 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         modelname = None
         podid = None
         podname = None
+        memo = None
         
-        reservation = self.source.build_reservation(logid, liveid, start_time, end_time, vehicleid, modelname, podid, podname)
+        reservation = self.source.build_reservation(logid, liveid, start_time, end_time, vehicleid, modelname, podid, podname, memo)
         
         self.assertEqual(reservation.logid, None)
         self.assertEqual(reservation.liveid, liveid)
@@ -808,6 +812,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(reservation.vehicle.id, vehicleid)
         self.assert_(not hasattr(reservation.vehicle, 'model'))
         self.assert_(not hasattr(reservation.vehicle, 'pod'))
+        self.assert_(not hasattr(reservation, 'memo'))
     
     def testShouldBuildCorrectVehicleFromGivenInformation(self):
         vehicleid = 'vid1234'
@@ -901,11 +906,11 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
             self.res_liveid = liveid
             return 'log1234', datetime.datetime(2010,4,30), \
                 datetime.datetime(2010,5,1), 'vid1234', 'modelname', None, \
-                'podname'
+                'podname', 'res memo'
         
         self.source.res_builder_called = False
         @patch(self.source)
-        def build_reservation(self, logid, liveid, start_time, end_time, vehicleid, modelname, podid, podname):
+        def build_reservation(self, logid, liveid, start_time, end_time, vehicleid, modelname, podid, podname, memo):
             self.res_builder_called = True
             self.bld_logid = logid
             self.bld_liveid = liveid
@@ -913,6 +918,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
             self.bld_modname = modelname
             self.bld_podid = podid
             self.bld_podname = podname
+            self.bld_memo = memo
             return 'my reservation'
         
         reservation = self.source.fetch_reservation_information(sessionid, liveid)
@@ -925,6 +931,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(self.source.bld_liveid, 'live1234')
         self.assertEqual(self.source.bld_modname, 'modelname')
         self.assertEqual(self.source.bld_podname, 'podname')
+        self.assertEqual(self.source.bld_memo, 'res memo')
         self.assertEqual(reservation, 'my reservation')
     
     def testShouldDecodeLiveIdFromModifactionRequest(self):
@@ -957,7 +964,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
             from strings_for_testing import NEW_RESERVATION_CONFIRMATION
             return NEW_RESERVATION_CONFIRMATION, None
             
-        logid, start_time, end_time, vehicleid, modelname, podid, podname = \
+        logid, start_time, end_time, vehicleid, modelname, podid, podname, memo = \
             self.source.send_reservation_request(conn, sid, liveid)
         
         self.assertEqual(logid, '2516709')
@@ -980,7 +987,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
             from strings_for_testing import CANCELLED_RESERVATION_CONFIRMATION
             return CANCELLED_RESERVATION_CONFIRMATION, None
             
-        logid, modelname, podname = \
+        logid, modelname, podname, memo = \
             self.source.send_cancellation_info(conn, sid, liveid, tid, vid, stime, etime)
         
         self.assertEqual(logid, '2517617')
@@ -1073,11 +1080,11 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
             self.can_vid = vehicleid
             self.can_start = start_time
             self.can_end = end_time
-            return 'logid', 'model name', 'pod name'
+            return 'logid', 'model name', 'pod name', 'res memo'
         
         self.source.res_builder_called = False
         @patch(self.source)
-        def build_reservation(self, logid, liveid, start_time, end_time, vehicleid, modelname, podid, podname):
+        def build_reservation(self, logid, liveid, start_time, end_time, vehicleid, modelname, podid, podname, memo):
             self.res_builder_called = True
             self.bld_logid = logid
             self.bld_liveid = liveid
@@ -1085,6 +1092,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
             self.bld_modname = modelname
             self.bld_podid = podid
             self.bld_podname = podname
+            self.bld_memo = memo
             return 'my reservation'
         
         reservation = self.source.fetch_reservation_cancellation(sessionid, liveid, vehicleid, start_time, end_time)
@@ -1103,6 +1111,7 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         self.assertEqual(self.source.bld_liveid, liveid)
         self.assertEqual(self.source.bld_modname, 'model name')
         self.assertEqual(self.source.bld_podname, 'pod name')
+        self.assertEqual(self.source.bld_memo, 'res memo')
         self.assertEqual(reservation, 'my reservation')
     
     def testShouldDecodeLiveIdFromScriptWithPaymentKeysWell(self):
@@ -1288,6 +1297,7 @@ class ReservationsJsonViewTest (unittest.TestCase):
         res1.vehicle.pod.name = 'pod 1'
         res1.price = StubObject()
         res1.price.total_amount = 2.13
+        res1.memo = 'res memo'
         
         res_data = renderer.format_res_data(res1)
         self.assertEqual(res_data, {
@@ -1307,7 +1317,8 @@ class ReservationsJsonViewTest (unittest.TestCase):
             },
             'price' : {
                 'total_amount': 2.13
-            }
+            },
+            'memo' : 'res memo'
         })
     
     def testShouldRenderConfirmationJson(self):
@@ -1359,6 +1370,7 @@ class ReservationsJsonViewTest (unittest.TestCase):
         res1.vehicle.pod.name = 'pod 1'
         res1.price = StubObject()
         res1.price.total_amount = 11.82
+        res1.memo = 'res memo'
         
         result = renderer.render_reservation(None, res1)
         expected = \
@@ -1366,6 +1378,7 @@ class ReservationsJsonViewTest (unittest.TestCase):
   "reservation": {
     "end_time": "2010-11-15T17:15", 
     "logid": "res1", 
+    "memo": "res memo", 
     "price": {
       "total_amount": 11.82
     }, 

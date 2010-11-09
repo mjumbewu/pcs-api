@@ -37,6 +37,8 @@ class ReservationsJsonView (_ReservationsViewInterface):
             res_data['price'] = {
                     'total_amount' : reservation.price.total_amount
                 }
+        if hasattr(reservation, 'memo'):
+            res_data['memo'] = reservation.memo
         
         return res_data
     

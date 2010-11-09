@@ -515,7 +515,22 @@ class PcsDocumentDecoder(object):
         
         end_time = self.decode_res_time_from_element(end_time_elem)
         
-        return logid, start_time, end_time, vehicleid, modelname, podid, podname
+        # .. and the memo
+        memo_row = res_rows[7]
+        memo_tds = memo_row.findAll('td')
+        
+        if len(memo_tds) < 2:
+            raise ScreenscrapeParseError("Memo table row must have at least 2 columns: %s" % memo_row)
+        
+        memo_td = memo_tds[1]
+        memo_elem = memo_td.find('font')
+        
+        if not memo_elem:
+            raise ScreenscrapeParseError("No memo found: %s" % html_doc)
+        
+        memo = self.get_text_from_element(memo_elem)
+        
+        return logid, start_time, end_time, vehicleid, modelname, podid, podname, memo
     
     def decode_res_time_from_element(self, elem):
         time_text = self.get_text_from_element(elem)
@@ -652,11 +667,11 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
                 conn, sessionid, liveid, transactionid, vehicleid, start_time, end_time)
         
         conf_html_doc = self.get_html_document(pcs_body)
-        logid, start_time, end_time, vehicleid, modelname, podid, podname = \
+        logid, start_time, end_time, vehicleid, modelname, podid, podname, memo = \
             self.decoder.decode_reservation_info_from_confirmation_doc(
                 conf_html_doc)
         
-        return logid, modelname, podname
+        return logid, modelname, podname, memo
     
     def send_reservation_request(self, conn, sessionid, liveid):
         pcs_body, pcs_head = \
@@ -664,11 +679,11 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
                 conn, sessionid, liveid)
         
         conf_html_doc = self.get_html_document(pcs_body)
-        logid, start_time, end_time, vehicleid, modelname, podid, podname = \
+        logid, start_time, end_time, vehicleid, modelname, podid, podname, memo = \
             self.decoder.decode_reservation_info_from_confirmation_doc(
                 conf_html_doc)
         
-        return logid, start_time, end_time, vehicleid, modelname, podid, podname
+        return logid, start_time, end_time, vehicleid, modelname, podid, podname, memo
     
     def build_vehicle(self, vehicleid, modelname, podid, podname):
         vehicle = Vehicle(vehicleid)
@@ -683,10 +698,13 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
         
         return vehicle
     
-    def build_reservation(self, logid, liveid, start_time, end_time, vehicleid, modelname, podid, podname):
+    def build_reservation(self, logid, liveid, start_time, end_time, vehicleid, modelname, podid, podname, memo):
         reservation = Reservation(logid,liveid)
         reservation.start_time = start_time
         reservation.end_time = end_time
+        
+        if memo:
+            reservation.memo = memo
         
         reservation.vehicle = self.build_vehicle(vehicleid, modelname, podid, podname)
         
@@ -696,11 +714,11 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
     def fetch_reservation_information(self, sessionid, liveid):
         conn = self.get_pcs_connection()
         
-        logid, start_time, end_time, vehicleid, modelname, podid, podname = \
+        logid, start_time, end_time, vehicleid, modelname, podid, podname, memo = \
             self.send_reservation_request(conn, sessionid, liveid)
         
         reservation = self.build_reservation(logid, liveid, start_time, 
-            end_time, vehicleid, modelname, podid, podname)
+            end_time, vehicleid, modelname, podid, podname, memo)
         
         return reservation
     
@@ -718,10 +736,10 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
         # We don't know the pod id from the confirmation, and I'm not sure it's
         # worth it to make an additional request to get it.  If we need it in 
         # the future, we'll work it out.
-        logid = modelname = podid = podname = None
+        logid = modelname = podid = podname = memo = None
         
         reservation = self.build_reservation(logid, liveid, 
-            start_time, end_time, vehicleid, modelname, podid, podname)
+            start_time, end_time, vehicleid, modelname, podid, podname, memo)
         
         return reservation
     
@@ -737,10 +755,10 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
                 vehicleid, start_time, end_time, reservation_memo)
         
         # We don't know the pod id or vehicle if from the confirmation.
-        logid = modelname = podname = podid = None
+        logid = modelname = podname = podid = memo = None
         
         reservation = self.build_reservation(logid, liveid, 
-            start_time, end_time, vehicleid, modelname, podid, podname)
+            start_time, end_time, vehicleid, modelname, podid, podname, memo)
         
         return reservation
     
@@ -754,11 +772,11 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
         res_info = \
             self.send_cancellation_info(conn, sessionid, liveid, transactionid,
                 vehicleid, start_time, end_time)
-        logid, modelname, podname = res_info
+        logid, modelname, podname, memo = res_info
         podid = None
         
         reservation = self.build_reservation(logid, liveid, 
-            start_time, end_time, vehicleid, modelname, podid, podname)
+            start_time, end_time, vehicleid, modelname, podid, podname, memo)
         
         return reservation
 
