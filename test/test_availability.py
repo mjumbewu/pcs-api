@@ -902,6 +902,40 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
         minute = 30
         self.assertEqual(vehicle.earliest, datetime.datetime(year, month, day, hour, minute, tzinfo=Eastern))
     
+    def testShouldCorrectlyParseAvailabilityFromStipulationAboutLatestAvailabilityInNoonHour(self):
+        source = AvailabilityScreenscrapeSource()
+        class StubVehicle (object):
+            pass
+        vehicle = StubVehicle()
+        stipulation = 'Available until 12:30 pm on 09/01'
+        
+        source.assign_vehicle_availability_stipulation(vehicle, stipulation)
+        
+        now = datetime.datetime.now(Eastern)
+        year = now.year if now.month < 9 else now.year+1
+        month = 9
+        day = 1
+        hour = 12
+        minute = 30
+        self.assertEqual(vehicle.latest, datetime.datetime(year, month, day, hour, minute, tzinfo=Eastern))
+    
+    def testShouldCorrectlyParseAvailabilityFromStipulationAboutLatestAvailabilityInMidnightHour(self):
+        source = AvailabilityScreenscrapeSource()
+        class StubVehicle (object):
+            pass
+        vehicle = StubVehicle()
+        stipulation = 'Available until 12:30 am on 09/01'
+        
+        source.assign_vehicle_availability_stipulation(vehicle, stipulation)
+        
+        now = datetime.datetime.now(Eastern)
+        year = now.year if now.month < 9 else now.year+1
+        month = 9
+        day = 1
+        hour = 0
+        minute = 30
+        self.assertEqual(vehicle.latest, datetime.datetime(year, month, day, hour, minute, tzinfo=Eastern))
+    
     def testShouldCorrectlyParseAvailabilityFromStipulationAboutLatestAvailability(self):
         source = AvailabilityScreenscrapeSource()
         class StubVehicle (object):
@@ -939,6 +973,29 @@ class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
         now = datetime.datetime.now(Eastern)
         day = 2
         hour = 4
+        minute = 45
+        self.assertEqual(vehicle.latest, datetime.datetime(year, month, day, hour, minute, tzinfo=Eastern))
+    
+    def testShouldCorrectlyParseAvailabilityFromStipulationAboutSandwichedAvailability(self):
+        source = AvailabilityScreenscrapeSource()
+        class StubVehicle (object):
+            pass
+        vehicle = StubVehicle()
+        stipulation = 'Available from 12:30 pm on 09/01 to 12:45 am on 09/02'
+        
+        source.assign_vehicle_availability_stipulation(vehicle, stipulation)
+        
+        now = datetime.datetime.now(Eastern)
+        year = now.year if now.month < 9 else now.year+1
+        month = 9
+        day = 1
+        hour = 12
+        minute = 30
+        self.assertEqual(vehicle.earliest, datetime.datetime(year, month, day, hour, minute, tzinfo=Eastern))
+        
+        now = datetime.datetime.now(Eastern)
+        day = 2
+        hour = 0
         minute = 45
         self.assertEqual(vehicle.latest, datetime.datetime(year, month, day, hour, minute, tzinfo=Eastern))
     

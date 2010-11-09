@@ -177,6 +177,8 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface, _Screenscrap
         until_match = re.match(until_pattern, stipulation)
         if until_match is not None:
             hour = int(until_match.group('hour'))
+            if hour == 12:
+                hour = 0
             minute = int(until_match.group('minute'))
             midi = until_match.group('midi')
             if midi == 'p':
@@ -197,6 +199,8 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface, _Screenscrap
         if between_match is not None:
             # from...
             hour = int(between_match.group('hour1'))
+            if hour == 12:
+                hour = 0
             minute = int(between_match.group('minute1'))
             midi = between_match.group('midi1')
             if midi == 'p':
@@ -212,6 +216,8 @@ class AvailabilityScreenscrapeSource (_AvailabilitySourceInterface, _Screenscrap
             
             # until...
             hour = int(between_match.group('hour2'))
+            if hour == 12:
+                hour = 0
             minute = int(between_match.group('minute2'))
             midi = between_match.group('midi2')
             if midi == 'p':
