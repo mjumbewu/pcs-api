@@ -70,12 +70,14 @@ class _TimeRangeBasedHandler (object):
         minutes = dt.minute % 15
         delta_minutes = 15 - minutes
         
-        import datetime
-        no_secs_time = dt.replace(second=0)
-        delta = datetime.timedelta(minutes=delta_minutes)
-        ceil_time = no_secs_time + delta
-        
-        return ceil_time
+        if delta_minutes == 15 and dt.second == 0:
+            return dt
+        else:
+            import datetime
+            delta = datetime.timedelta(minutes=delta_minutes)
+            ceil_time = dt.replace(second=0) + delta
+            
+            return ceil_time
         
     def get_ceiled_time_range(self):
         start_time, end_time = self.get_time_range()

@@ -668,6 +668,17 @@ class LocationAvailabilityHandlerTest (unittest.TestCase):
         self.assertEqual(start, datetime.datetime(2009,11,10,0,0,tzinfo=Eastern))
         self.assertEqual(end, datetime.datetime(2009,11,10,5,15,tzinfo=Eastern))
         
+        @patch(self.handler)
+        def get_time_range(self):
+            return (
+                datetime.datetime(2009,11,9,23,15,00,tzinfo=Eastern), 
+                datetime.datetime(2009,11,10,5,14,59,tzinfo=Eastern))
+        
+        start, end = self.handler.get_ceiled_time_range()
+        
+        self.assertEqual(start, datetime.datetime(2009,11,9,23,15,tzinfo=Eastern))
+        self.assertEqual(end, datetime.datetime(2009,11,10,5,15,tzinfo=Eastern))
+        
 
 class AvailabilityScreenscrapeSourceTest (unittest.TestCase):
     
