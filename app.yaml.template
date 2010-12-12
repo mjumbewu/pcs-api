@@ -1,5 +1,8 @@
-application: phillycarshare-api-kwawatu
-version: 1
+#
+# Copy this file to app.yaml.  Fill in your appengine application name:
+#
+application: [app-name]
+version: [app-version]
 runtime: python
 api_version: 1
 

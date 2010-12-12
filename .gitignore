@@ -1,3 +1,4 @@
 *~
 *.py[c|o]
 private_info.py
+app.yaml
