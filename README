@@ -1,16 +1,101 @@
-All files in this project are Copyright (C) 2010 Mjumbe Poe
+This is an attempt at an API over HTTP for the PhillyCarShare reservation
+system. It is built to run on Google App Engine, though there should be very
+little App Engine-specific code. It should be easily adaptable to a Django
+install, or some other Python web framework.
 
-This is an attempt at an API over HTTP for the PhillyCarShare reservation 
-system.  It is built to run on Google App Engine, though there is very little
-App Engine-specific code.  It should be easily adaptable to a Django install,
-or some other Python web framework.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-There is no warranty on this software.  Use at your own risk.
 
-NOTE: THIS API IS NOT YET SANCTIONED BY PHILLYCARSHARE. AS SUCH, IT IS STRICTLY
-      FOR PERSONAL INTEREST ONLY, AT THIS POINT. THIS SITUATION MAY CHANGE SOON
-      (next week) BUT FOR NOW, YOU HAVE BEEN WARNED.
+QUESTIONS
+~~~~~~~~~
+(I don't have an FAQ yet, but these are questions that I'd ask, at least)
 
+Q: What format is the data?
+A: JSON. Not JSON-P for now, so if you want to use it from JavaScript, you're
+   going to need a proxy on your server. Here a simple WSGI one. I might add
+   JSON-P in the future, and maybe XML, but I have need for neither right now.
+   If you'd like to add JSON-P, it shouldn't take much work. If you'd like an
+   idea of where to start, drop me a line.
+
+Q: How do I get an API key?
+A: DM or E-mail me.
+
+Q: Can I set up my own instance?
+A: Absolutely! The API is written in Python as a WSGI application. It has an
+   AppEngine application instance already, so if you want to run it on
+   AppEngine, it should take little to no modification. If you want to run it on
+   something else, like Django, it will take some modification, though I'm
+   working to make sure that it doesn't take too much (still a work in progress
+   though!).
+
+Q: Does this only work with PhillyCarShare?
+A: I don't know. PhillyCarShare uses software from MetaVera to manage their
+   reservations. I do not know the structure of other MetaVera-built reservation
+   managers. I am only able to test this against PhillyCarShare, as I only have
+   a PCS account. If you want to test against another MetaVera site, feel free.
+   If you want me to test it, that's fine too, but I'd need some credentials
+   (i.e. userid and password).
+
+Q: Is this legal?
+A: In short, yes.  But it's also a bit of an experiment.
+
+Q: Is there documentation?
+A: I'm working on it.
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The only available data format for now is JSON.  So, just remember:
+[format] = json.
+
+API OVERVIEW
+~~~~~~~~~~~~
+
+/session.[format]
+POST
+    Create a new session from the given user credentials.  Note: this should be
+    done through a secure connection, since credentials are submitted.
+    
+  - Params:
+    user
+    password
+    
+  - Response:
+    Response will contain a session identifier in a cookie. This cookie should
+    be sent with any subsequent calls to the API.
+
+/locations/[id]/availability.[format]
+GET
+    Check for available vehicles near the given location.
+  
+  - Params:
+    start_time (ISO8601 string - defaults to now rounded to next 15 minutes)
+    end_time (ISO8601 string - defaults to 3 hours later than start_time)
+  
+  - Note:
+    The [id] variable may be a saved location profile id, a set of GPS
+    coordinates (e.g., '/locations/[long],[lat]/avail...'), or '_default' to use
+    the user's default location profile.
+
+/vehicles/[id]/availability.[format]
+GET
+    Check the availability (and price) of a given vehicle during a certain time
+  
+  - Params:
+    start_time (ISO8601 string)
+    end_time (ISO8601 string)
+
+/reservations.[format]
+GET
+POST
+
+/reservations/[id].[format]
+GET
+PUT
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 STRUCTURE
 ~~~~~~~~~
@@ -41,62 +126,6 @@ package, especially since the only source for now is screenscraping.  The tests
 reside in the 'test' directory.  To run the tests, start the appengine
 server, and browse to http://localhost:8080/test.  Make sure to sign in as 
 administrator.  
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-API OVERVIEW
-~~~~~~~~~~~~
-
-/login.[format]
-GET
-    Get a form or some other mechanism for the user to be able to submit their
-    username and password
-
-/session.[format]
-POST
-    Create a new session from the given user credentials.  Note: this should be
-    done through a secure connection, since credentials are submitted.
-    
-  - Params:
-    user
-    password
-    
-  - Response:
-    Response will contain a session identifier in a cookie. This cookie should
-    be sent with any subsequent calls to the API.
-
-/locations/[id]/availability.[format]
-GET
-    Check for available vehicles near the given location.
-  
-  - Params:
-    start_time (ISO8601 string - defaults to now rounded to next 15 minutes)
-    end_time (ISO8601 string - defaults to 3 hours later than start_time)
-    flexible (True/False - defaults to True)
-    show_all (True/False - defaults to True)
-  
-  - Note:
-    The [id] variable may be a saved location profile id, a set of GPS
-    coordinates in a tuple (e.g., '([long],[lat])'), or '.default' to use the
-    user's default location profile.
-
-/vehicles/[id]/availability.[format]
-GET
-    Check the availability (and price) of a given vehicle during a certain time
-  
-  - Params:
-    start_time (ISO8601 string)
-    end_time (ISO8601 string)
-
-/reservations.[format]
-GET
-POST
-
-/reservations/[id].[format]
-GET
-PUT
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
