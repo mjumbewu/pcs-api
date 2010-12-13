@@ -2,7 +2,7 @@
 # Copy this file to app.yaml.  Fill in your appengine application name:
 #
 application: [app-name]
-version: [app-version]
+version: 0.1.001
 runtime: python
 api_version: 1
 
