@@ -43,16 +43,23 @@ A: I'm working on it.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The only available data format for now is JSON.  So, just remember:
-[format] = json.
 
 API OVERVIEW
 ~~~~~~~~~~~~
 
+Some things to remember about the API:
+  - The only available data format for now is JSON.  So, just remember: 
+    [format] = json.
+  - Most of the requests will expect a valid session id in a cookie named
+    'session'. A session id is returned from the /session.json URL. So, of
+    course, you will not need a session cookie for requests to /session.json
+
 /session.[format]
 POST
     Create a new session from the given user credentials.  Note: this should be
-    done through a secure connection, since credentials are submitted.
+    done through a secure connection, since credentials are submitted. Also
+    note: the API does not store any submitted usernames or passwords. It will
+    only pass that information along to PhillyCarShare's system.
     
   - Params:
     user
@@ -62,6 +69,10 @@ POST
     Response will contain a session identifier in a cookie. This cookie should
     be sent with any subsequent calls to the API.
 
+/locations.[format]
+GET
+    Retrieve a list of the user's pre-defined locations.
+    
 /locations/[id]/availability.[format]
 GET
     Check for available vehicles near the given location.
@@ -71,7 +82,7 @@ GET
     end_time (ISO8601 string - defaults to 3 hours later than start_time)
   
   - Note:
-    The [id] variable may be a saved location profile id, a set of GPS
+    The [id] in the url may be a saved location profile id, a set of GPS
     coordinates (e.g., '/locations/[long],[lat]/avail...'), or '_default' to use
     the user's default location profile.
 
