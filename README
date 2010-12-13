@@ -13,13 +13,10 @@ QUESTIONS
 
 Q: What format is the data?
 A: JSON. Not JSON-P for now, so if you want to use it from JavaScript, you're
-   going to need a proxy on your server. Here a simple WSGI one. I might add
-   JSON-P in the future, and maybe XML, but I have need for neither right now.
-   If you'd like to add JSON-P, it shouldn't take much work. If you'd like an
-   idea of where to start, drop me a line.
-
-Q: How do I get an API key?
-A: DM or E-mail me.
+   going to need a proxy on your server. I might add JSON-P in the future, and
+   maybe XML, but I have need for neither right now. If you'd like to add
+   JSON-P, it shouldn't take much work. If you'd like an idea of where to start,
+   drop me a line.
 
 Q: Can I set up my own instance?
 A: Absolutely! The API is written in Python as a WSGI application. It has an
