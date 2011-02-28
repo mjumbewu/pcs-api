@@ -150,6 +150,7 @@ class RestInterfaceBlackBoxTest (unittest.TestCase):
         start_time = later.replace(hour=3, minute=45)
         end_time = later.replace(hour=4, minute=00)
         
+        handler.request['action'] = 'edit'
         handler.request['vehicle'] = vehicleid
         handler.request['start_time'] = to_isostring(start_time)
         handler.request['end_time'] = to_isostring(end_time)
