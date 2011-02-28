@@ -89,6 +89,12 @@ class ReservationHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
             raise WsgiParameterError('Could not find vehicle id.')
         return vehicle_id
     
+    def get_mod_action(self):
+        mod_action = self.request.get('action', None)
+        if mod_action not in ('edit', 'early', 'extend'):
+            raise WsgiParameterError('action parameter must be one of edit, early, or extend')
+        return mod_action
+    
     def get(self, liveid):
         try:
             sessionid = self.get_session_id()
@@ -108,12 +114,13 @@ class ReservationHandler (_SessionBasedHandler, _TimeRangeBasedHandler):
     def put(self, liveid):
         try:
             sessionid = self.get_session_id()
+            mod_type = self.get_mod_action()
             vehicleid = self.get_vehicle_id()
             start_time, end_time = self.get_time_range()
             memo = self.get_reservation_memo()
             
             reservation = self.reservation_source.fetch_reservation_modification(
-                sessionid, liveid, vehicleid, start_time, end_time, memo)
+                sessionid, mod_type, liveid, vehicleid, start_time, end_time, memo)
             
             session = None
             response_body = self.reservation_view.render_confirmation(

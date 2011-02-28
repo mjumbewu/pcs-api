@@ -722,6 +722,8 @@ RESERVATION_LIGHTBOX_WITH_NO_VEHICLE_INFO=r'''<div class="lightbox" id="fakeLigh
 <label for="add_estimate__estimate__tax_amount" id="add_estimate__estimate__tax_summary_label"  class="bottom">Total&nbsp;Tax</label>
 <span id="add_estimate__estimate__tax_amount">?</span></div></div><div class="cost"><div id="add_available_credit__available_credit__div"><label for="add_available_credit__available_credit_">AVAILABLE CREDIT:</label><span id="add_available_credit__available_credit_" class=""></span></div><div id="add_credit__balance__div"><label for="add_credit__balance_">APPLIED CREDIT:</label><span id="add_credit__balance_" class=""></span></div><div id="add_amount_due__amount_due__div"><label for="add_amount_due__amount_due_">AMOUNT DUE:</label><span id="add_amount_due__amount_due_" class="amount_due"></span><div class="instruction">NOTE: By clicking the "reserve it" button, your card will be billed the "amount due" shown above.</div></div></div><div id="add_timeline__error" class="slider error_display"></div><div id='optional_rate_plan_adjustment' style='text-align:left;'><font class='text'></font></div><button id="lb_cancel_button" class="cancel"></button><button id="lb_reserve_button" class="reserve"></button></div></form><br style="clear: both;" /></div></div><script language="javascript" type="text/javascript">MV.globals.reserve.lightbox = new MV.controls.reserve.lightbox({"range_params":{"start_control":{"date_id":"add_start_stamp__start_date_","time_id":"add_start_stamp__start_time_"},"end_control":{"date_id":"add_end_stamp__end_date_","time_id":"add_end_stamp__end_time_"}},"estimate_params":{"price_id":"add_price__price_","available_balance_id":"add_balance__balance_","amount_due_id":"add_amount_due__amount_due_","credit_id":"add_credit__balance_","credit_box_id":"add_credit__balance__div","available_credit_box_id":"add_available_credit__available_credit__div","available_credit_id":"add_available_credit__available_credit_","cost_params":{"id":"add_estimate__estimate_","time_id":"add_estimate__estimate__time_amount","distance_id":"add_estimate__estimate__distance_amount","fees_id":"add_estimate__estimate__fee_amount","tax_id":"add_estimate__estimate__tax_amount","tax_pks":[],"labels":{"please_wait":"Please wait...","hourly":"Hourly","daily":"Daily"}},"hide_ab_shortfall":false},"accept_button_id":"lb_reserve_button","cancel_button_id":"lb_cancel_button","instruction_id":"lightbox_instruction","form_id":"add","attach_close_event":true,"attach_confirm_event":true,"use_dynamic_timeline":true,"initial_update":true,"preserve_instruction":true,"is_lightbox":true,"disabled_class":"reserve_disabled","slider_params":{"action":"add","stack_pk":null,"reservation_pk":0,"start_stamp":null,"start_stamp_min":1288506600,"start_stamp_max":1296450000,"end_stamp":null,"end_stamp_min":1288506600,"end_stamp_max":1296450000,"start_date_control":"add_start_stamp__start_date_","start_time_control":"add_start_stamp__start_time_","end_date_control":"add_end_stamp__end_date_","end_time_control":"add_end_stamp__end_time_","lower":null,"upper":null,"increment":900,"date_calibration":"10\/31\/10","control_ids":{"track_id":"reservation_bar_track","start_handle_id":"reservation_bar_start_handle","end_handle_id":"reservation_bar_end_handle","res_marker_id":"reservation_bar","error_id":"add_timeline__error"},"no_slider":true,"error_label":"Please adjust your times to an available period. Use the form above or click-and-drag your times."}});</script>'''
 
+EXTEND_RESERVATION_INVALID_REQUEST_BLOCK=r'''Resulting reservation confirmation document has no "script" tag: <div class="midbox"><h3>Notice</h3><p class="note"><img src="/skin/img/exclamation.gif" /><label for="notice_notice_0_" id="notice_notice_0__label">Error:</label><span id="notice_notice_0_">The requested page is no longer available.</span><span class="instruction">&nbsp;</span></p></div>'''
+
 CANCELLED_RESERVATION_CONFIRMATION=r'''<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
 <meta http-equiv="pragma" content="no-cache" />
@@ -894,3 +896,343 @@ RESERVATION_LIGHTBOX_WITH_CONFLICTING_TIME=r'''<div class="lightbox" id="fakeLig
 <span id="add_estimate__estimate__fee_amount">?</span>
 <label for="add_estimate__estimate__tax_amount" id="add_estimate__estimate__tax_summary_label"  class="bottom">Total&nbsp;Tax</label>
 <span id="add_estimate__estimate__tax_amount">?</span></div></div><div class="cost"><div id="add_available_credit__available_credit__div"><label for="add_available_credit__available_credit_">AVAILABLE CREDIT:</label><span id="add_available_credit__available_credit_" class=""></span></div><div id="add_credit__balance__div"><label for="add_credit__balance_">APPLIED CREDIT:</label><span id="add_credit__balance_" class=""></span></div><div id="add_amount_due__amount_due__div"><label for="add_amount_due__amount_due_">AMOUNT DUE:</label><span id="add_amount_due__amount_due_" class="amount_due"></span><div class="instruction">NOTE: By clicking the "reserve it" button, your card will be billed the "amount due" shown above.</div></div></div><div id="add_timeline___track" class="timeline slider"><div class="slider reservation good_reservation" id="reservation_bar"></div><div class="slider handle start" id="reservation_bar_start_handle"></div><div class="slider handle end" id="reservation_bar_end_handle"></div><ul class="segments" id="reservation_bar_track"><li class="free_16px"></li><li class="free_16px"></li><li class="free_16px"></li><li class="free_16px"></li><li class="free_16px"></li><li class="free_16px"></li><li class="free_16px"></li><li class="free_16px"></li><li class="free_16px"></li><li class="free_16px"></li><li class="free_16px"></li><li class="free_16px"></li><li class="free_16px"></li><li class="free_16px"></li><li class="free_16px"></li><li class="free_16px"></li><li class="free_16px"></li><li class="free_16px"></li><li class="free_16px"></li><li class="free_16px"></li><li class="free_16px"></li><li ><ul ><li class="bad pad_end"></li><li class="free"></li><li class="free"></li><li class="bad pad_end"></li></ul></li><li class="free_16px"></li><li class="free_16px"></li></ul><img src="/skin/base_images//day_gauge.gif" /></div><div id="add_timeline__error" class="slider error_display"></div><div id='optional_rate_plan_adjustment' style='text-align:left;'><font class='text'></font></div><button id="lb_cancel_button" class="cancel"></button><button id="lb_reserve_button" class="reserve"></button></div></form><br style="clear: both;" /></div></div><script language="javascript" type="text/javascript">MV.globals.reserve.lightbox = new MV.controls.reserve.lightbox({"range_params":{"start_control":{"date_id":"add_start_stamp__start_date_","time_id":"add_start_stamp__start_time_"},"end_control":{"date_id":"add_end_stamp__end_date_","time_id":"add_end_stamp__end_time_"}},"estimate_params":{"price_id":"add_price__price_","available_balance_id":"add_balance__balance_","amount_due_id":"add_amount_due__amount_due_","credit_id":"add_credit__balance_","credit_box_id":"add_credit__balance__div","available_credit_box_id":"add_available_credit__available_credit__div","available_credit_id":"add_available_credit__available_credit_","cost_params":{"id":"add_estimate__estimate_","time_id":"add_estimate__estimate__time_amount","distance_id":"add_estimate__estimate__distance_amount","fees_id":"add_estimate__estimate__fee_amount","tax_id":"add_estimate__estimate__tax_amount","tax_pks":[],"labels":{"please_wait":"Please wait...","hourly":"Hourly","daily":"Daily"}},"hide_ab_shortfall":false},"accept_button_id":"lb_reserve_button","cancel_button_id":"lb_cancel_button","instruction_id":"lightbox_instruction","form_id":"add","attach_close_event":true,"attach_confirm_event":true,"use_dynamic_timeline":true,"initial_update":true,"preserve_instruction":true,"is_lightbox":true,"disabled_class":"reserve_disabled","slider_params":{"action":"add","stack_pk":"96692246","reservation_pk":0,"start_stamp":1289462400,"start_stamp_min":1289257200,"start_stamp_max":1298869200,"end_stamp":1289463300,"end_stamp_min":1289257200,"end_stamp_max":1298869200,"start_date_control":"add_start_stamp__start_date_","start_time_control":"add_start_stamp__start_time_","end_date_control":"add_end_stamp__end_date_","end_time_control":"add_end_stamp__end_time_","lower":1289386800,"upper":1289473200,"increment":900,"date_calibration":"11\/10\/10","control_ids":{"track_id":"reservation_bar_track","start_handle_id":"reservation_bar_start_handle","end_handle_id":"reservation_bar_end_handle","res_marker_id":"reservation_bar","error_id":"add_timeline__error"},"no_slider":false,"error_label":"Please adjust your times to an available period. Use the form above or click-and-drag your times."}});</script>'''
+
+KEY_TO_THE_CITY_DOCUMENT=r'''
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr"> 
+ 
+<head> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
+  <title>Promos/Key to the City | PhillyCarShare</title> 
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
+<meta name="keywords" content="car share, car sharing, carshare, carsharing, philly, philadelphia" /> 
+<link rel="shortcut icon" href="/sites/default/files/zen_favicon.ico" type="image/x-icon" /> 
+  <link type="text/css" rel="stylesheet" media="all" href="/sites/default/files/css/css_659df6e2113866f52c8cc39434d846aa.css" /> 
+<link type="text/css" rel="stylesheet" media="print" href="/sites/default/files/css/css_1b07ca9eb88b84c8bd0fbecd8e370209.css" /> 
+<!--[if IE]>
+<link type="text/css" rel="stylesheet" media="all" href="/sites/all/themes/zen/zen/ie.css?T" />
+<![endif]--> 
+  <script type="text/javascript" src="/sites/default/files/js/js_b7d75e059c86d1836dce7a384c31ae73.js"></script> 
+<script type="text/javascript"> 
+<!--//--><![CDATA[//><!--
+jQuery.extend(Drupal.settings, { "basePath": "/", "googleanalytics": { "trackOutgoing": 1, "trackMailto": 1, "trackDownload": 1, "trackDownloadExtensions": "7z|aac|avi|csv|doc|exe|flv|gif|gz|jpe?g|js|mp(3|4|e?g)|mov|pdf|phps|png|ppt|rar|sit|tar|torrent|txt|wma|wmv|xls|xml|zip" } });
+//--><!]]>
+</script> 
+     <link rel="stylesheet" type="text/css" href="/sites/all/themes/css/reset.css" /> 
+     <link rel="stylesheet" type="text/css" href="/sites/all/themes/css/pcs.css" /> 
+     <script src="/sites/all/themes/js/jquery.js" type="text/javascript"></script> 
+     <script src="/sites/all/themes/js/expander.js" type="text/javascript"></script> 
+ 
+ 
+     <script src="/sites/all/themes/js/nav.js" type="text/javascript"></script> 
+     <script src="/sites/all/themes/js/login.js_2_2_1_1" type="text/javascript"></script> 
+ 
+ 
+ 
+</head> 
+<body class="not-front not-logged-in node-type-page no-sidebars page-promos-key-to-the-city section-promos"> 
+ 
+  <div id="page"><div id="page-inner"> 
+ 
+    <a name="top" id="navigation-top"></a> 
+    
+    <div id="header"><div id="header-inner" class="clear-block"> 
+ 
+      
+      
+    </div></div> <!-- /#header-inner, /#header --> 
+ 
+    <div id="main"><div id="main-inner" class="clear-block"> 
+ 
+      <div id="content"><div id="content-inner"> 
+	<div id="main_body"> 
+<div class="top_cont"> 
+<div class="logo_cont"><a href="/"><img src="/sites/all/themes/images/logo.gif" alt="PhillyCarShare" /></a></div> 
+<div class="main_nav_cont"> 
+<ul id="nav"> 
+<li id="btn_residents"><a href="/residents"><span class="btn_text">residents</span></a> 
+ 
+<ul> 
+<li><a href="/sites/default/files/member-handbook.pdf" target="_blank">member handbook</a></li> 
+<li><a href="/residents">how it works</a></li> 
+<li><a href="/residents/is-car-sharing-right-for-me" style="display: block;">is car sharing right for me?</a></li> 
+<li><a href="/residents/rates" style="display: block;">rates</a></li> 
+<li><a href="/residents/students" style="display: block;">students</a></li> 
+<li><a href="/residents/benefits" style="display: block;">benefits</a></li> 
+<li><a href="/faq/residents">FAQ</a></li> 
+<li><a href="/faq/survey">survey FAQ</a></li> 
+<li><a href="/join">join now</a></li> 
+<li><a href="/sites/default/files/gas-reimburse.pdf" target="_blank">gas reimbursement</a></li> 
+ 
+</ul> 
+</li> 
+ 
+<li id="btn_businesses"><a href="/businesses"><span class="btn_text">businesses</span></a> 
+<ul> 
+<li><a href="/sites/default/files/member-handbook.pdf" target="_blank">member handbook</a></li> 
+<li><a href="/businesses">how it works</a></li> 
+<li><a href="/businesses/rates" style="display: block;">rates</a></li> 
+<li><a href="/businesses/fleet" style="display: block;">fleet</a></li> 
+<li><a href="/businesses/benefits" style="display: block;">benefits</a></li> 
+<li><a href="/businesses/penn" style="display: block;">Penn</a></li> 
+<li><a href="/faq/businesses">FAQ</a></li> 
+<li><a href="/join">join now</a></li> 
+<li><a href="/sites/default/files/gas-reimburse.pdf" target="_blank">gas reimbursement</a></li> 
+ 
+ 
+</ul> 
+</li> 
+<li id="btn_cars"><a href="/cars"><span class="btn_text">Cars</span></a></li> 
+<li id="btn_locations"><a href="/locations/pod-search"><span class="btn_text">Locations</span></a> 
+<ul> 
+<li><a href="/locations/pod-search" style="display: block;">pod search</a></li> 
+<li><a href="/locations/offer-a-parking-spot" style="display: block;">offer a parking spot</a></li> 
+</ul> 
+</li> 
+ 
+<li id="btn_promos"><a href="/promos/press-room"><span class="btn_text">Promos</span></a> 
+<ul> 
+<li><a href="/promos/press-room" style="display: block;">roaming memberships</a></li> 
+<li><a href="/promos/phillyaptco" style="display: block;">the philly apartment co</a></li> 
+<li><a href="/promos/referrals" style="display: block;">refer a friend</a></li> 
+<li><a href="/promos/gift-certificates" style="display: block;">gift certificates</a></li> 
+<li><a href="/promos/share-haul-save" style="display: block;">share it, haul it, save it!</a></li> 
+<li><a href="/promos/free-rail-to-phillycarshare" style="display: block;">free rail to PhillyCarShare</a></li> 
+<li><a href="/promos/key-to-the-city" style="display: block;">key to the city</a></li> 
+ 
+</ul> 
+</li> 
+<li id="btn_vision"><a href="/vision"><span class="btn_text">Vision</span></a> 
+<ul> 
+<li><a href="/vision">vision/mission</a></li> 
+<li><a href="/vision/pcs-impact-study">PCS impact study</a></li> 
+<li><a href="/vision/pcs-sustainable-design">PCS &amp; sustainable design</a></li> 
+<li><a href="/vision/jobs" style="display: block;">jobs</a></li> 
+<li><a href="/vision/why-were-nonprofit" style="display: block;">why we're nonprofit</a></li> 
+<li><a href="/vision/history" style="display: block;">history</a></li> 
+<li><a href="/vision/our-people" style="display: block;">our people</a></li> 
+<li><a href="/vision/give-today" style="display: block;">give today!</a></li> 
+<li><a href="/vision/press-room" style="display: block;">press room</a></li> 
+</ul> 
+</li> 
+</ul>		</div> 
+<div class="cont_pic"><img src="/sites/all/themes/images/interior/rotate.php" alt="PhillyCarShare" /></div> 
+</div>	
+<div class="content_wrapper"> 
+ 
+        <div id="content-area"> 
+          <div id="node-23" class="node node-type-page"><div class="node-inner"> 
+ 
+  
+  
+  
+  
+  <div class="content"> 
+    <div class="cont_pic"><img src="/sites/all/themes/images/cont_pic_ktc.jpg" alt="PhillyCarShare" /> 
+</div>	
+ 
+<div class="content_wrapper"> 
+<div class="cont_col_1"> 
+ 
+<div class="breadcrumb"> 
+<p><em>News</em> 
+:&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="/promos/sell-car-drive-free">sell your car, drive for free</a>&nbsp;&nbsp;:&nbsp;&nbsp;
+<a href="/promos/press-room">roaming memberships</a>&nbsp;&nbsp;:&nbsp;&nbsp;
+<a href="/promos/phillyaptco">the philly apartment co</a>&nbsp;&nbsp;:&nbsp;&nbsp;
+<a href="/promos/referrals">refer a friend</a>&nbsp;&nbsp;:&nbsp;&nbsp;
+<a href="/promos/gift-certificates">gift certificates</a>&nbsp;&nbsp;:&nbsp;&nbsp;
+<a href="/promos/share-haul-save">share it, haul it, save it</a>&nbsp;&nbsp;:&nbsp;&nbsp;
+<a href="/promos/free-rail-to-phillycarshare">free rail to PhillyCarShare</a>&nbsp;&nbsp;:&nbsp;&nbsp;
+<a href="/promos/key-to-the-city"><strong>key to the city</strong></a>&nbsp;&nbsp;&nbsp;&nbsp;
+</div> 
+ 
+<h1>Key to the City</h1> 
+ 
+<p>PhillyCarShare&#39;s Key to the City provides our members with exclusive discounts to participating Philadelphia retailers. Just present your incentive tag and receive the following cool deals available to only PhillyCarShare members. Click on a category for more information on local businesses.</p> 
+<div style="text-align: center"><img src="/sites/all/themes/images/keytothecity.jpg" alt="" width="211" height="83" /></div> 
+<p>&nbsp;</p> 
+<div align="center"><a href="/promos/key-to-the-city/a-e">A&amp;E</a> : <a href="/promos/key-to-the-city/food-and-beverage">Food and Beverage</a> : <a href="/promos/key-to-the-city/nightlife">Nightlife</a> : <a href="/promos/key-to-the-city/places-to-shop">Places to Shop</a> : <a href="/promos/key-to-the-city/upcoming-events">Upcoming Events</a> : <a href="/promos/key-to-the-city/terms">Terms</a></div><p align="center"><a href="/promos/key-to-the-city/health-and-fitness">Health Fitness and Well Being</a> : <a href="/promos/key-to-the-city/pet-care">Pet Care</a>  : <a href="/promos/key-to-the-city/professional-services">Professional Services </a><br /></p> 
+ 
+<hr />     
+<p>Here are some of our newest partners...</p> 
+ 
+<table border="0" cellspacing="0" cellpadding="5" width="554" height="359">               
+<tbody> 
+ 
+ 
+<tr><td align="center"> 
+<a href="http://www.harvestlocalfoods.com" target="_blank"><img src="/sites/all/themes/images/key/key-harvestlogo.jpg" border="0" alt="" width="200" height="268" /></a> 
+</td> 
+<td align="center"> 
+<a href="http://www.hydrosbottle.com/" target="_blank"><img src="http://www.phillycarshare.org/sites/default/files/newsletters/201005/hydrosbottle.png" alt="" border="0" align="middle" /></a> 
+</td> 
+ 
+</tr> 
+<tr> 
+<td align="center"> 
+<p>Working with over 40 local family farmers and food artisans. Shop online from a selection of seasonal products year-round. Door-to-door delivery. PCS members get free delivery on their first order. <br /><a href="http://www.harvestlocalfoods.com" target="_blank">www.harvestlocalfoods.com</a> 
+</p> 
+ 
+<p>&nbsp;</p> 
+</td> 
+<td align="center"> 
+<p>Never buy bottled water again! &nbsp;The <strong>Hydros Bottle</strong> is a reusable water bottle with a built-in filter designed to give you crisp, refreshing water on the go.</p> 
+                                   <p>All PhillyCarShare users receive a 10% discount on your order at <a title="http://www.hydrosbottle.com/" href="http://www.hydrosbottle.com" target="_blank">www.hydrosbottle.com</a>.</p> 
+                                   <p>Enter: "PCSCITYKEY"</p> 
+</td> 
+</tr> 
+ 
+<tr><td align="center"> <a href="http://www.whitedog.com/"><img src="/sites/default/files/newsletters/201004/whitedog.jpg" alt="" /></a></td> 
+<td align="center"> <a href="http://www.franklinfountain.com/" target="_blank"><img src="/sites/default/files/newsletters/201004/franklin-fountain.jpg" alt="" /></a></td><td>&nbsp;</td> 
+</tr> 
+ 
+<tr> 
+<td align="center"><p> <a href="http://www.whitedog.com/" target="_blank"><strong><font face="Times New Roman" size="2" style="font-weight: bold; font-size: 11pt">White Dog Caf&eacute;</font></strong></a><br /></p> 
+<p>Located in three adjacent Victorian brownstones in the University City section of Philadelphia, <strong>The White Dog Caf&eacute;</strong> is a local favorite known for its unusual blend of award-winning contemporary American cuisine, civic engagement and environmental sustainability.</p> 
+                                   <p>10% off food purchases (alcohol not included)<br /> 
+                                   <a href="http://www.whitedog.com/" target="_blank">www.whitedog.com</a></p> 
+</td> 
+<td align="center"><p align="center"><a href="http://www.franklinfountain.com/" target="_blank"><strong><font face="Times New Roman" size="2" style="font-weight: bold; font-size: 11pt">The Franklin Fountain</font></strong></a></p> 
+<p>aims to serve an experience steeped in ideals, drizzled with drollery,  and sprinkled with the forgotten flavors of the American past.</p> 
+                                   <p>10% off all Ice Cream, Sodas & Desserts from The Franklin Fountain. Offer limited to one use per month, per member.</p> 
+                                   <p>116 Market Street<br /> 
+                                   <a href="http://www.franklinfountain.com/" target="_blank">www.franklinfountain.com</a> 
+                                   <br /> 
+                                   215-627-1899
+</p> 
+<p>&nbsp;</p></td> 
+</tr> 
+ 
+<tr><td align="center"> <a href="http://www.playsandplayers.org/"><img src="/sites/default/files/newsletters/201003/playsandplayers.jpg" alt="" width="200" height="42" /></a></td> 
+<td align="center"> <a href="http://www.wulffarchitects.com/" target="_blank"><img src="/sites/default/files/newsletters/201003/wulffarchitects.jpg" alt="" width="225" height="90" /></a></td><td>&nbsp;</td> 
+</tr> 
+ 
+<tr> 
+<td align="center"><p> <a href="http://www.playsandplayers.org" target="_blank"><strong><font face="Times New Roman" size="2" style="font-weight: bold; font-size: 11pt">Plays and Players Theater</font></strong></a><br /></p> 
+<p>is an historic company existing in a vibrant arts scene, where artists young and old can continue to practice and perform their craft.</p> 
+<p>Buy One Get One for Opening Weekend (Thurs-Sun) and any Thursday evening performances throughout the season.
+</p></td> 
+<td align="center"><p align="center"><a href="http://www.wulffarchitects.com/" target="_blank"><strong><font face="Times New Roman" size="2" style="font-weight: bold; font-size: 11pt">Wulff Architects</font></strong></a></p> 
+<p>is a regionally recognized firm located in Center City and specializing in Architectural Design, Interior Design, LEED, Project Management, Feasibility Studies, Furniture and Finish Selections and Site/Master/Urban Planning. Since its inception, Wulff Architects has maintained a repeat clientele through a reputation for competitive pricing and a commitment to design excellence.</p> 
+<p>We want to be a part of your next commercial or residential project.
+Members receive a Free Consultation, please ask for Erin Smith.
+</p> 
+<p>&nbsp;</p></td> 
+</tr> 
+ 
+<tr> 
+<td align="center" valign="middle"><a href="http://www.philadelphia-acupuncture.com" target="_blank"><img src="/sites/all/themes/images/key-empirical.jpg" alt="Empirical Point Acupuncture"  border="0" align="middle" longdesc="http://www.philadelphia-acupuncture.com"></a> </td> 
+<td align="center"><a href="http://www.dibruno.com/" target="_blank"><img src="/sites/default/files/newsletters/201003/dibruno.jpg" border="0" /></a> 
+</td> 
+<td>&nbsp;</td> 
+</tr> 
+<tr><td align="center" valign="middle"> 
+<p><a href="http://www.philadelphia-acupuncture.com" target="_blank" title="http://www.philadelphia-acupuncture.com/"><strong><font face="Times New Roman" size="2" style="font-weight: bold; font-size: 11pt">Empirical  Point Acupuncture</font></strong></a></p> 
+<p>Comprehensive, individualized care distinguishes Empirical Point as a premier  center for acupuncture and Oriental medicine in Philadelphia. With 9 years of study and  practice, Sharon Sherman creates a supportive environment in which symptoms,  diagnosis and treatment can be thoroughly addressed. PhillyCarShare members  receive 10% off their first appointment.</p></td> 
+<td align="center"> 
+<p><a href="http://www.dibruno.com/" target="_blank" title="http://www.dibruno.com/"><strong><font face="Times New Roman" size="2" style="font-weight: bold; font-size: 11pt">Di Bruno Bros.</font></strong></a></p> 
+<p>is celebrating their 70th year of culinary pioneering in the great city of Philadelphia!  Di Bruno's specializes in imported meats and cheeses, oils and vinegars and a plethora of other fine international ingredients.  Most recently, Di Bruno's has launched a catering division, offering food services ranging from wine and cheese parties for 15 guests to extravagant cocktail parties for 500.</p> 
+<p> 
+Place a catering order of $150 or more and receive a gift card in the amount of $15 to use anywhere in our Chestnut Street store. Use promo code PCS; expires 9/30/10.</p> 
+</p> 
+</td> 
+</tbody> 
+</table>  
+<p>&nbsp;</p> 
+<p align="center">Check back often for the latest on our partners and discounts!</p> 
+<p><em>If you are a business and would like to be a part of the program, please contact <a href="mailto:heather@phillycarshare.org?subject=Key%20to%20the%20City" target="_blank">heather@phillycarshare.org</a></em>.</p> 
+ 
+</div> 
+ 
+ 
+ 
+ 
+ 
+<div class="cont_col_2"> 
+<iframe src="https://reservations.phillycarshare.org/my_mini_login.php" width="0" height="0"  frameborder="0" marginwidth="0" scrolling="No" marginheight="0"><!-- --></iframe> 
+<form id="login" name="login" method="post" action="https://reservations.phillycarshare.org/index.php" target="_top"> 
+<table cellpadding="3" cellspacing="0" width="80%" align="center"> 
+<tr> 
+<td class="label"><strong>Member ID:</strong> </td> 
+</tr> 
+<tr> 
+<td><input type="text" class="text" size="20" name="login[name]" id="login_name_" /></td> 
+</tr> 
+<tr> 
+<td class="label"><strong>Password:</strong> </td> 
+ 
+</tr> 
+<tr> 
+<td><input type="password" class="text" size="20" name="login[password]" id="login_password_" /></td> 
+</tr> 
+<tr> 
+<td><input type="hidden" name="mv_action" value="login"/><input type="image" src="/sites/all/themes/images/btn_signin_home.gif" value="submit" /></td> 
+</tr> 
+</table> 
+<input id="login_tid_" type="hidden" name="login[tid]" value="1"/> 
+</form> 
+<p style="text-align:center;"><a href="https://reservations.phillycarshare.org/index.php?mv_action=password" style="color:#29296e;">Forgot Password?</a></p> 
+<!-- <p><strong>Jonathan Smith</strong><br />you are signed in <br />(Residential Account)</p>
+<p align="right"><a href=""><img src="/sites/all/themes/images/btn_signout.gif" alt="Sign Out" /></a></p> --> 
+<div class="buttons"> 
+<a href="/residents"><img src="/sites/all/themes/images/btn_works_cont.gif" alt="How it Works" class="works" /></a><a href="/join"><img src="/sites/all/themes/images/btn_join_cont.gif" alt="Join Now" class="join" /></a><a href="/refer"><img src="/sites/all/themes/images/btn_refer_cont.gif" alt="Refer a friend" class="refer" /></a> 
+</div> 
+<div class="testimonial"> 
+ 
+</div> 
+</div> 
+<div style="clear:both;"></div>	  </div> 
+ 
+  
+</div></div> <!-- /node-inner, /node --> 
+        </div> 
+ 
+<div id="main_body"> 
+	 </div></div> 
+</div>			<div id="footer"> 
+<table width="100" border="0" align="right" cellpadding="0" cellspacing="2"> 
+  <tr> 
+    <td align="center"><a href="http://www.facebook.com/phillycarshare/" target="_blank"><img src="/sites/all/themes/images/facebook-small.png" alt="facebook" width="25" border="0" /></a></td> 
+    <td align="center"><a href="http://twitter.com/phillycarshare" target="_blank"><img src="/sites/all/themes/images/twitter-small.png" alt="twitter" width="25" border="0" /></a></td> 
+    <td align="center"><a href="http://www.linkedin.com/companies/64730/PhillyCarShare?trk=pp_icon" target="_blank"><img src="/sites/all/themes/images/linkedin-small.png" alt="linkedin" width="27" border="0" /></a></td> 
+  </tr> 
+</table> 
+<p>Join us on <a href="http://www.facebook.com/phillycarshare/" target="_blank">facebook</a>, <a href="http://twitter.com/phillycarshare" target="_blank">twitter</a>, and <a href="http://www.linkedin.com/companies/64730/PhillyCarShare?trk=pp_icon" target="_blank">linkedin</a>!</p> 
+<h3><a href="/partnerships">partnerships:</a></h3> <p style="display:inline;"><a href="/partnerships/developers">Developers</a>&nbsp;&nbsp;&nbsp;<a href="/partnerships/property-managers">Property Managers</a>&nbsp;&nbsp;&nbsp;<a href="/partnerships/universities">Universities</a>&nbsp;&nbsp;&nbsp;<a href="/contact-us">Contact Us</a></p> 
+<p>Our vision is a Philadelphia in which nonprofit car sharing exceeds the convenience, flexibility, and affordability of car ownership.<br /> 
+<table width="95%" border="0" align="right" cellpadding="0" cellspacing="2"> 
+  <tr> 
+    <td align="center">phillycarshare &middot; a non-profit organization &middot; (215) 730-0988</td> 
+    <td align="right"><a href="http://www.dreamhost.com/green.cgi" target="_blank"> 
+<img border="0" alt="Green Web Hosting! This site hosted by DreamHost." src="https://secure.newdream.net/green3.gif" height="15" width="80" /></a> 
+    </td> 
+  </tr> 
+</table> 
+</p> 
+</div>			<div style="clear:both;"></div> 
+</div> 
+ 
+<p class="credit">Copyright &copy; PhillyCarShare 2007 - 2010
+</p> 
+<p class="credit">design: <a href="http://www.northfound.com" target="_blank">northfound</a>&nbsp;&nbsp;|&nbsp;&nbsp;development: <a href="http://www.thoughtprocessinteractive.com" target="_blank">TPI</a></p> 
+      </div></div> <!-- /#content-inner, /#content --> 
+ 
+      
+      
+      
+    </div></div> <!-- /#main-inner, /#main --> 
+ 
+    
+  </div></div> <!-- /#page-inner, /#page --> 
+ 
+  
+  <script type="text/javascript" src="/sites/default/files/js/js_c23fb57b3b2601f44bc0f204c65ad209.js"></script> 
+<script type="text/javascript"> 
+<!--//--><![CDATA[//><!--
+try{var pageTracker = _gat._getTracker("UA-16737291-1");pageTracker._trackPageview();} catch(err) {}
+//--><!]]>
+</script> 
+ 
+</body> 
+</html> '''

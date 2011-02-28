@@ -195,17 +195,6 @@ class ReservationsHandlerTest (unittest.TestCase):
 
 class ReservationHandlerTest (unittest.TestCase):
     def setUp(self):
-        # A fake request class
-        class StubRequest (dict):
-            pass
-        
-        # A fake response class
-        import StringIO
-        class StubResponse (object):
-            out = StringIO.StringIO()
-            def set_status(self, status):
-                self.status = status
-        
         class StubSessionSource (object):
             pass
         StubSessionSource = Stub(_SessionSourceInterface)(StubSessionSource)
@@ -245,6 +234,11 @@ class ReservationHandlerTest (unittest.TestCase):
             return 'ses1234'
         
         @patch(self.handler)
+        def get_mod_action(self):
+            self.modaction_called = True
+            return 'early'
+        
+        @patch(self.handler)
         def get_time_range(self):
             self.timerange_called = True
             return 100, 1000
@@ -260,8 +254,9 @@ class ReservationHandlerTest (unittest.TestCase):
             return 'reservation memo'
         
         @patch(self.reservation_source)
-        def fetch_reservation_modification(self, sessionid, liveid, vehicleid, start_time, end_time, reservation_memo):
+        def fetch_reservation_modification(self, sessionid, mod_type, liveid, vehicleid, start_time, end_time, reservation_memo):
             self.sessionid = sessionid
+            self.mod_type = mod_type
             self.liveid = liveid
             self.vehicleid = vehicleid
             self.start = start_time
@@ -286,10 +281,12 @@ class ReservationHandlerTest (unittest.TestCase):
         response = self.handler.response.out.getvalue()
         self.assert_(not self.error_view.render_called, response)
         self.assert_(self.handler.sessionid_called)
+        self.assert_(self.handler.modaction_called)
         self.assert_(self.handler.vehicleid_called)
         self.assert_(self.handler.timerange_called)
         self.assert_(self.handler.memo_called)
         self.assertEqual(self.reservation_source.sessionid, 'ses1234')
+        self.assertEqual(self.reservation_source.mod_type, 'early')
         self.assertEqual(self.reservation_source.liveid, 'live1234')
         self.assertEqual(self.reservation_source.vehicleid, 'vid1234')
         self.assertEqual(self.reservation_source.start, 100)
@@ -835,11 +832,13 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
     def testModifyResShouldCoordinateParameterPassingCorrectly(self):
         # Verify the orchestration that the modify_reservation method is doing.
         sessionid = 'ses1234'
+        mod_type = 'extend'
         liveid = 'live1234'
         vehicleid = 'vid1234'
         start_time = datetime.datetime(2010,12,6,3,30)
         end_time = datetime.datetime(2010,12,6,5,15)
-        memo = 'my modified reservation'
+        memo = 'res memo'
+        price = 2.3
         
         self.source.transactionid_called = False
         @patch(self.source)
@@ -849,9 +848,10 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         
         self.source.modify_res_called = False
         @patch(self.source)
-        def send_modification_info(self, conn, sessionid, liveid, transactionid, vehicleid, start_time, end_time, memo):
+        def send_modification_info(self, conn, sessionid, mod_type, liveid, transactionid, vehicleid, start_time, end_time, memo):
             self.modify_res_called = True
             self.mod_sessionid = sessionid
+            self.mod_type = mod_type
             self.mod_liveid = liveid
             self.mod_vid = vehicleid
             self.mod_start = start_time
@@ -859,17 +859,9 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
             self.mod_memo = memo
             return 'live5678'
         
-        self.source.res_info_called = False
-        @patch(self.source)
-        def fetch_reservation_information(self, conn, sessionid, liveid):
-            self.res_info_called = True
-            self.res_sessionid = sessionid
-            self.res_liveid = liveid
-            return 'logid', 'model name', 'pod name'
-        
         self.source.res_builder_called = False
         @patch(self.source)
-        def build_reservation(self, logid, liveid, start_time, end_time, vehicleid, modelname, podid, podname):
+        def build_reservation(self, logid, liveid, start_time, end_time, vehicleid, modelname, podid, podname, memo, pricetotal):
             self.res_builder_called = True
             self.bld_logid = logid
             self.bld_liveid = liveid
@@ -877,26 +869,28 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
             self.bld_modname = modelname
             self.bld_podid = podid
             self.bld_podname = podname
+            self.bld_memo = memo
+            self.bld_price = pricetotal
             return 'my reservation'
         
-        reservation = self.source.fetch_reservation_modification(sessionid, liveid, vehicleid, start_time, end_time, memo)
+        reservation = self.source.fetch_reservation_modification(sessionid, mod_type, liveid, vehicleid, start_time, end_time, memo)
         
         self.assert_(self.source.transactionid_called)
         self.assert_(self.source.modify_res_called)
         self.assertEqual(self.source.mod_sessionid, sessionid)
+        self.assertEqual(self.source.mod_type, mod_type)
         self.assertEqual(self.source.mod_liveid, liveid)
         self.assertEqual(self.source.mod_vid, vehicleid)
         self.assertEqual(self.source.mod_start, start_time)
         self.assertEqual(self.source.mod_end, end_time)
         self.assertEqual(self.source.mod_memo, memo)
-        self.assert_(self.source.res_info_called)
-        self.assertEqual(self.source.res_sessionid, sessionid)
-        self.assertEqual(self.source.res_liveid, 'live5678')
         self.assert_(self.source.res_builder_called)
-        self.assertEqual(self.source.bld_logid, 'logid')
+        self.assertEqual(self.source.bld_logid, None)
         self.assertEqual(self.source.bld_liveid, 'live5678')
-        self.assertEqual(self.source.bld_modname, 'model name')
-        self.assertEqual(self.source.bld_podname, 'pod name')
+        self.assertEqual(self.source.bld_modname, None)
+        self.assertEqual(self.source.bld_podname, None)
+        self.assertEqual(self.source.bld_memo, None)
+        self.assertEqual(self.source.bld_price, None)
         self.assertEqual(reservation, 'my reservation')
     
     def testGetResInfoShouldCoordinateParameterPassingCorrectly(self):
@@ -953,12 +947,12 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         memo = None
         
         @patch(self.source.requester)
-        def request_modify_reservation_from_pcs(self, conn, sessionid, liveid, transactionid, vehicleid, start_time, end_time, memo):
+        def request_modify_reservation_from_pcs(self, conn, sessionid, mod_type, liveid, transactionid, vehicleid, start_time, end_time, memo):
             from strings_for_testing import NEW_RESERVATION_REDIRECT_SCRIPT
             return NEW_RESERVATION_REDIRECT_SCRIPT, None
             
         liveid = \
-            self.source.send_modification_info(conn, sid, liveid, tid, vid, stime, etime, memo)
+            self.source.send_modification_info(conn, sid, 'edit', liveid, tid, vid, stime, etime, memo)
         
         self.assertEqual(liveid, '149385106')
     
@@ -1019,12 +1013,12 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         
         self.assertEqual(conn.url, 'http://reservations.phillycarshare.org/lightbox.php?mv_action=add')
         self.assertEqual(conn.method, 'POST')
-        self.assertEqual(conn.data, 'add%5Bend_stamp%5D%5Bend_date%5D%5Bdate%5D=03%2F17%2F11&add%5Bend_stamp%5D%5Bend_time%5D%5Btime%5D=63900&add%5Bstart_stamp%5D%5Bstart_time%5D%5Btime%5D=60300&add%5Bstart_stamp%5D%5Bstart_date%5D%5Bdate%5D=03%2F17%2F11&add%5Bstack_pk%5D=vid1234&add%5Bjob_code%5D=new+reservation&mv_action=add&add%5Btid%5D=tid1234')
+        self.assertEqual(conn.data, 'add%5Bend_stamp%5D%5Bend_date%5D%5Bdate%5D=03%2F17%2F11&add%5Bend_stamp%5D%5Bend_time%5D%5Btime%5D=63900&add%5Bstart_stamp%5D%5Bstart_date%5D%5Bdate%5D=03%2F17%2F11&add%5Bstart_stamp%5D%5Bstart_time%5D%5Btime%5D=60300&add%5Bstack_pk%5D=vid1234&add%5Bjob_code%5D=new+reservation&add%5Btid%5D=tid1234&mv_action=add')
         self.assertEqual(conn.headers, {'Cookie':'sid=sid1234'})
         self.assertEqual(body, 'my body')
         self.assertEqual(head, 'my headers')
     
-    def testShouldConstructCorrectRequestForModifyingReservation(self):
+    def testShouldConstructCorrectRequestForEditingReservation(self):
         conn = StubConnection()
         
         sid = 'sid1234'
@@ -1036,11 +1030,53 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         memo = 'changed reservation'
         
         body, head = \
-            self.source.requester.request_modify_reservation_from_pcs(conn, sid, liveid, tid, vid, stime, etime, memo)
+            self.source.requester.request_modify_reservation_from_pcs(conn, sid, 'edit', liveid, tid, vid, stime, etime, memo)
         
         self.assertEqual(conn.url, 'http://reservations.phillycarshare.org/lightbox.php')
         self.assertEqual(conn.method, 'POST')
-        self.assertEqual(conn.data, 'edit%5Bstart_stamp%5D%5Bstart_date%5D%5Bdate%5D=03%2F17%2F11&edit%5Bstart_stamp%5D%5Bstart_time%5D%5Btime%5D=60300&edit%5Bend_stamp%5D%5Bend_date%5D%5Bdate%5D=03%2F17%2F11&edit%5Bend_stamp%5D%5Bend_time%5D%5Btime%5D=63900&edit%5Bstack_pk%5D=vid1234&edit%5Bjob_code%5D=changed+reservation&edit%5Bpk%5D=live1234&pk=live1234&edit%5Btid%5D=tid1234&mv_action=edit')
+        self.assertEqual(conn.data, 'edit%5Bend_stamp%5D%5Bend_date%5D%5Bdate%5D=03%2F17%2F11&edit%5Bend_stamp%5D%5Bend_time%5D%5Btime%5D=63900&edit%5Bstart_stamp%5D%5Bstart_date%5D%5Bdate%5D=03%2F17%2F11&edit%5Bstart_stamp%5D%5Bstart_time%5D%5Btime%5D=60300&edit%5Bstack_pk%5D=vid1234&edit%5Bjob_code%5D=changed+reservation&edit%5Bpk%5D=live1234&pk=live1234&edit%5Btid%5D=tid1234&mv_action=edit')
+        self.assertEqual(conn.headers, {'Cookie':'sid=sid1234'})
+        self.assertEqual(body, 'my body')
+        self.assertEqual(head, 'my headers')
+    
+    def testShouldConstructCorrectRequestForEndingReservationEarly(self):
+        conn = StubConnection()
+        
+        sid = 'sid1234'
+        liveid = 'live1234'
+        vid = 'vid1234'
+        tid = 'tid1234'
+        stime = datetime.datetime(2011,3,17,16,45)
+        etime = datetime.datetime(2011,3,17,17,45)
+        memo = 'changed reservation'
+        
+        body, head = \
+            self.source.requester.request_modify_reservation_from_pcs(conn, sid, 'early', liveid, tid, vid, stime, etime, memo)
+        
+        self.assertEqual(conn.url, 'http://reservations.phillycarshare.org/lightbox.php')
+        self.assertEqual(conn.method, 'POST')
+        self.assertEqual(conn.data, 'early%5Bend_stamp%5D%5Bend_date%5D%5Bdate%5D=03%2F17%2F11&early%5Bend_stamp%5D%5Bend_time%5D%5Btime%5D=63900&early%5Bstart_stamp%5D%5Bstart_date%5D%5Bdate%5D=03%2F17%2F11&early%5Bstart_stamp%5D%5Bstart_time%5D%5Btime%5D=60300&early%5Bstack_pk%5D=vid1234&early%5Bjob_code%5D=changed+reservation&early%5Bpk%5D=live1234&pk=live1234&early%5Btid%5D=tid1234&mv_action=early')
+        self.assertEqual(conn.headers, {'Cookie':'sid=sid1234'})
+        self.assertEqual(body, 'my body')
+        self.assertEqual(head, 'my headers')
+    
+    def testShouldConstructCorrectRequestForExtendingReservation(self):
+        conn = StubConnection()
+        
+        sid = 'sid1234'
+        liveid = 'live1234'
+        vid = 'vid1234'
+        tid = 'tid1234'
+        stime = datetime.datetime(2011,3,17,16,45)
+        etime = datetime.datetime(2011,3,17,17,45)
+        memo = 'changed reservation'
+        
+        body, head = \
+            self.source.requester.request_modify_reservation_from_pcs(conn, sid, 'extend', liveid, tid, vid, stime, etime, memo)
+        
+        self.assertEqual(conn.url, 'http://reservations.phillycarshare.org/lightbox.php')
+        self.assertEqual(conn.method, 'POST')
+        self.assertEqual(conn.data, 'extend%5Bend_stamp%5D%5Bend_date%5D%5Bdate%5D=03%2F17%2F11&extend%5Bend_stamp%5D%5Bend_time%5D%5Btime%5D=63900&extend%5Bstart_stamp%5D%5Bstart_date%5D%5Bdate%5D=03%2F17%2F11&extend%5Bstart_stamp%5D%5Bstart_time%5D%5Btime%5D=60300&extend%5Bstack_pk%5D=vid1234&extend%5Bjob_code%5D=changed+reservation&extend%5Bpk%5D=live1234&pk=live1234&extend%5Btid%5D=tid1234&mv_action=extend')
         self.assertEqual(conn.headers, {'Cookie':'sid=sid1234'})
         self.assertEqual(body, 'my body')
         self.assertEqual(head, 'my headers')
@@ -1060,12 +1096,12 @@ class ReservationsScreenscrapeSourceTest (unittest.TestCase):
         
         self.assertEqual(conn.url, 'http://reservations.phillycarshare.org/my_reservations.php')
         self.assertEqual(conn.method, 'POST')
-        self.assertEqual(conn.data, 'do_cancel%5Bstart_stamp%5D%5Bstart_time%5D%5Btime%5D=60300&do_cancel%5Bend_stamp%5D%5Bend_time%5D%5Btime%5D=63900&do_cancel%5Bend_stamp%5D%5Bend_date%5D%5Bdate%5D=03%2F17%2F11&do_cancel%5Bstart_stamp%5D%5Bstart_date%5D%5Bdate%5D=03%2F17%2F11&do_cancel%5Bstack_pk%5D=vid1234&do_cancel%5Bpk%5D=live1234&pk=live1234&do_cancel%5Btid%5D=tid1234&mv_action=do_cancel')
+        self.assertEqual(conn.data, 'do_cancel%5Bend_stamp%5D%5Bend_date%5D%5Bdate%5D=03%2F17%2F11&do_cancel%5Bend_stamp%5D%5Bend_time%5D%5Btime%5D=63900&do_cancel%5Bstart_stamp%5D%5Bstart_date%5D%5Bdate%5D=03%2F17%2F11&do_cancel%5Bstart_stamp%5D%5Bstart_time%5D%5Btime%5D=60300&do_cancel%5Bstack_pk%5D=vid1234&do_cancel%5Bpk%5D=live1234&pk=live1234&do_cancel%5Btid%5D=tid1234&mv_action=do_cancel')
         self.assertEqual(conn.headers, {'Cookie':'sid=sid1234'})
         self.assertEqual(body, 'my body')
         self.assertEqual(head, 'my headers')
     
-    def testModifyResShouldCoordinateParameterPassingCorrectly(self):
+    def testCancelResShouldCoordinateParameterPassingCorrectly(self):
         # Verify the orchestration that the modify_reservation method is doing.
         sessionid = 'ses1234'
         liveid = 'live1234'

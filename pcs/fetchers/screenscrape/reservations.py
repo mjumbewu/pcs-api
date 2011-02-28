@@ -95,6 +95,7 @@ class PcsRequestMaker (object):
             transtype + '[start_stamp][start_time][time]' : stime,
             transtype + '[end_stamp][end_date][date]' : edate,
             transtype + '[end_stamp][end_time][time]' : etime}
+        data = sorted(data.iteritems())
         query = urllib.urlencode(data)
         return query
     
@@ -114,6 +115,7 @@ class PcsRequestMaker (object):
         data = {
             'mv_action' : transtype,
             transtype + '[tid]' : transactionid}
+        data = sorted(data.iteritems())
         query = urllib.urlencode(data)
         return query
     
@@ -121,6 +123,7 @@ class PcsRequestMaker (object):
         data = {
             transtype + '[pk]' : liveid,
             'pk' : liveid}
+        data = sorted(data.iteritems())
         query = urllib.urlencode(data)
         return query
     
@@ -179,18 +182,20 @@ class PcsRequestMaker (object):
         response = conn.request(url, "POST", data, headers)
         return(response.read(), response.getheaders())
     
-    def request_modify_reservation_from_pcs(self, conn, sessionid, liveid, transactionid, vehicleid, start_time, end_time, memo):
+    def request_modify_reservation_from_pcs(self, conn, sessionid, mod_type, liveid, transactionid, vehicleid, start_time, end_time, memo):
         host = self.__host
         path = self.__editres_path
         
         headers = {
             'Cookie': 'sid=%s' % sessionid}
         
-        data = self.get_restrans_time_query('edit', start_time, end_time)
-        data += '&' + self.get_restrans_vehicle_query('edit', vehicleid)
-        data += '&' + self.get_restrans_memo_query('edit', memo)
-        data += '&' + self.get_restrans_reservation_query('edit', liveid)
-        data += '&' + self.get_transaction_query('edit', transactionid)
+        data = self.get_restrans_time_query(mod_type, start_time, end_time)
+        if vehicleid:
+            data += '&' + self.get_restrans_vehicle_query(mod_type, vehicleid)
+        if memo:
+            data += '&' + self.get_restrans_memo_query(mod_type, memo)
+        data += '&' + self.get_restrans_reservation_query(mod_type, liveid)
+        data += '&' + self.get_transaction_query(mod_type, transactionid)
         
         query = ''
         connector = ''
@@ -404,6 +409,8 @@ class PcsDocumentDecoder(object):
             error_code = None
             if error_txt == 'You can only make one reservation during a given time period.':
                 error_code = 'time_period_conflict'
+            elif error_txt == 'You must change your reservation in order to update it.':
+                error_code = 'no_change_requested'
             
             raise ScreenscrapeFetchError(error_txt, error_code)
         
@@ -416,7 +423,7 @@ class PcsDocumentDecoder(object):
         
         if script_tag is None:
             raise ScreenscrapeParseError('Resulting reservation confirmation document has no "script" tag: %s' 
-                % (str(script_doc).replace('>','&gt;').replace('<','&lt;')))
+                % (str(script_doc)))
         script_code = script_tag.text
         
         liveid = \
@@ -662,11 +669,11 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
         
         return liveid
     
-    def send_modification_info(self, conn, sessionid, liveid, transactionid, vehicleid, start_time, end_time, memo):
+    def send_modification_info(self, conn, sessionid, mod_type, liveid, transactionid, vehicleid, start_time, end_time, memo):
         # Request for the reservation to be modified and get the Live ID
         pcs_body, pcs_head = \
             self.requester.request_modify_reservation_from_pcs(
-                conn, sessionid, liveid, transactionid, vehicleid, start_time, end_time, memo)
+                conn, sessionid, mod_type, liveid, transactionid, vehicleid, start_time, end_time, memo)
         
         redir_script = self.get_html_document(pcs_body)
         liveid = \
@@ -762,21 +769,22 @@ class ReservationsScreenscrapeSource (_ReservationsSourceInterface):
         return reservation
     
     @override
-    def fetch_reservation_modification(self, sessionid, liveid, vehicleid, start_time, end_time, reservation_memo):
+    def fetch_reservation_modification(self, sessionid, mod_type, liveid, vehicleid, start_time, end_time, reservation_memo):
         conn = self.get_pcs_connection()
         
         transactionid = \
-            self.get_a_transaction_id(conn, sessionid, 'edit', liveid)
+            self.get_a_transaction_id(conn, sessionid, mod_type, liveid)
         
         liveid = \
-            self.send_modification_info(conn, sessionid, liveid, transactionid, 
-                vehicleid, start_time, end_time, reservation_memo)
+            self.send_modification_info(conn, sessionid, mod_type, liveid, 
+                transactionid, vehicleid, start_time, end_time, 
+                reservation_memo)
         
         # We don't know the pod id or vehicle if from the confirmation.
-        logid = modelname = podname = podid = memo = None
+        logid = modelname = podname = podid = memo = price_total = None
         
-        reservation = self.build_reservation(logid, liveid, 
-            start_time, end_time, vehicleid, modelname, podid, podname, memo)
+        reservation = self.build_reservation(logid, liveid, start_time, 
+            end_time, vehicleid, modelname, podid, podname, memo, price_total)
         
         return reservation
     
