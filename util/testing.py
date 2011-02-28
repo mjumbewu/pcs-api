@@ -141,7 +141,7 @@ class patch (object):
         inst_sig = inspect.getargspec(inst_method)
         
         if orig_sig != inst_sig:
-            return 'Method signatures differ.'
+            return 'Method signatures differ:\n %s\n %s' % (orig_sig,inst_sig)
         
         # Otherwise, pass.
         return None
